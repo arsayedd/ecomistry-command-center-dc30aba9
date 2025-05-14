@@ -47,6 +47,7 @@ import EditRevenuePage from "./pages/revenues/[id]/edit";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
+import AddExpensePage from "./pages/finance/expenses/add";
 
 // Database page
 import DatabasePage from "./pages/database/index";

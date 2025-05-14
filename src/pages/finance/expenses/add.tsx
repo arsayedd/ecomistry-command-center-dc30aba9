@@ -39,9 +39,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Sample brands
 const sampleBrands = [
-  { id: "1", name: "براند أزياء" },
-  { id: "2", name: "براند تجميل" },
-  { id: "3", name: "براند أغذية" }
+  { id: "1", name: "براند أزياء", status: "active" },
+  { id: "2", name: "براند تجميل", status: "active" },
+  { id: "3", name: "براند أغذية", status: "active" }
 ];
 
 // Sample employees
@@ -87,7 +87,7 @@ export default function AddExpensePage() {
       try {
         const { data, error } = await supabase
           .from("brands")
-          .select("id, name")
+          .select("id, name, status")
           .order("name");
 
         if (error) throw error;
