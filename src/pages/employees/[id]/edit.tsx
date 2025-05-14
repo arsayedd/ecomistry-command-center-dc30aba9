@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { User } from "@/types";
 
 interface EmployeeFormData {
   full_name: string;
@@ -218,7 +220,6 @@ export default function EditEmployeePage() {
                   value={formData.job_title || ''}
                   onChange={handleChange}
                   placeholder="المسمى الوظيفي"
-                  required
                 />
               </div>
 
@@ -266,7 +267,6 @@ export default function EditEmployeePage() {
                   value={formData.salary_amount || 0}
                   onChange={handleChange}
                   placeholder="قيمة المرتب"
-                  required
                 />
               </div>
 

@@ -199,33 +199,57 @@ export type Database = {
       }
       users: {
         Row: {
+          access_rights: string | null
+          commission_type: string | null
+          commission_value: number | null
           created_at: string | null
           department: string | null
           email: string
+          employment_type: string | null
           full_name: string
           id: string
+          job_title: string | null
           permission_level: string
           role: string
+          salary_amount: number | null
+          salary_type: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
+          access_rights?: string | null
+          commission_type?: string | null
+          commission_value?: number | null
           created_at?: string | null
           department?: string | null
           email: string
+          employment_type?: string | null
           full_name: string
           id?: string
+          job_title?: string | null
           permission_level: string
           role: string
+          salary_amount?: number | null
+          salary_type?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
+          access_rights?: string | null
+          commission_type?: string | null
+          commission_value?: number | null
           created_at?: string | null
           department?: string | null
           email?: string
+          employment_type?: string | null
           full_name?: string
           id?: string
+          job_title?: string | null
           permission_level?: string
           role?: string
+          salary_amount?: number | null
+          salary_type?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
