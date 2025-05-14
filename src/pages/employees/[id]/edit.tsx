@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,14 +13,14 @@ interface EmployeeFormData {
   full_name: string;
   email: string;
   department: string;
-  job_title: string;
-  employment_type: string;
-  salary_type: string;
-  salary_amount: number;
-  commission_type: string;
-  commission_value: number;
-  status: string;
-  access_rights: string;
+  job_title: string | null;
+  employment_type: string | null;
+  salary_type: string | null;
+  salary_amount: number | null;
+  commission_type: string | null;
+  commission_value: number | null;
+  status: string | null;
+  access_rights: string | null;
   role: string;
   permission_level: string;
 }
@@ -35,7 +34,7 @@ export default function EditEmployeePage() {
     full_name: "",
     email: "",
     department: "",
-    job_title: "",
+    job_title: null,
     employment_type: "full-time",
     salary_type: "monthly",
     salary_amount: 0,
@@ -50,7 +49,6 @@ export default function EditEmployeePage() {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        // Fix: Change from "employees" to "users" table which exists in Supabase
         const { data, error } = await supabase
           .from("users")
           .select("*")
@@ -66,7 +64,7 @@ export default function EditEmployeePage() {
             full_name: data.full_name || "",
             email: data.email || "",
             department: data.department || "",
-            job_title: data.job_title || "",
+            job_title: data.job_title || null,
             employment_type: data.employment_type || "full-time",
             salary_type: data.salary_type || "monthly",
             salary_amount: data.salary_amount || 0,
@@ -112,7 +110,6 @@ export default function EditEmployeePage() {
     setSaving(true);
 
     try {
-      // Fix: Change from "employees" to "users" table which exists in Supabase
       const { error } = await supabase
         .from("users")
         .update({
@@ -129,7 +126,7 @@ export default function EditEmployeePage() {
           access_rights: formData.access_rights,
           role: formData.role,
           permission_level: formData.permission_level,
-          updated_at: new Date().toISOString() // Fix: Convert Date to string
+          updated_at: new Date().toISOString()
         })
         .eq("id", id);
 
@@ -218,7 +215,7 @@ export default function EditEmployeePage() {
                 <Input
                   id="job_title"
                   name="job_title"
-                  value={formData.job_title}
+                  value={formData.job_title || ''}
                   onChange={handleChange}
                   placeholder="المسمى الوظيفي"
                   required
@@ -228,7 +225,7 @@ export default function EditEmployeePage() {
               <div className="space-y-2">
                 <Label htmlFor="employment_type">نوع التوظيف</Label>
                 <Select
-                  value={formData.employment_type}
+                  value={formData.employment_type || 'full-time'}
                   onValueChange={(value) => handleSelectChange("employment_type", value)}
                 >
                   <SelectTrigger>
@@ -246,7 +243,7 @@ export default function EditEmployeePage() {
               <div className="space-y-2">
                 <Label htmlFor="salary_type">نوع المرتب</Label>
                 <Select
-                  value={formData.salary_type}
+                  value={formData.salary_type || 'monthly'}
                   onValueChange={(value) => handleSelectChange("salary_type", value)}
                 >
                   <SelectTrigger>
@@ -266,7 +263,7 @@ export default function EditEmployeePage() {
                   id="salary_amount"
                   name="salary_amount"
                   type="number"
-                  value={formData.salary_amount}
+                  value={formData.salary_amount || 0}
                   onChange={handleChange}
                   placeholder="قيمة المرتب"
                   required
@@ -276,7 +273,7 @@ export default function EditEmployeePage() {
               <div className="space-y-2">
                 <Label htmlFor="commission_type">نوع العمولة</Label>
                 <Select
-                  value={formData.commission_type}
+                  value={formData.commission_type || 'none'}
                   onValueChange={(value) => handleSelectChange("commission_type", value)}
                 >
                   <SelectTrigger>
@@ -296,7 +293,7 @@ export default function EditEmployeePage() {
                   id="commission_value"
                   name="commission_value"
                   type="number"
-                  value={formData.commission_value}
+                  value={formData.commission_value || 0}
                   onChange={handleChange}
                   placeholder="قيمة العمولة"
                   disabled={formData.commission_type === "none"}
@@ -306,7 +303,7 @@ export default function EditEmployeePage() {
               <div className="space-y-2">
                 <Label htmlFor="status">الحالة</Label>
                 <Select
-                  value={formData.status}
+                  value={formData.status || 'active'}
                   onValueChange={(value) => handleSelectChange("status", value)}
                 >
                   <SelectTrigger>
@@ -323,7 +320,7 @@ export default function EditEmployeePage() {
               <div className="space-y-2">
                 <Label htmlFor="access_rights">صلاحيات الوصول</Label>
                 <Select
-                  value={formData.access_rights}
+                  value={formData.access_rights || 'view'}
                   onValueChange={(value) => handleSelectChange("access_rights", value)}
                 >
                   <SelectTrigger>

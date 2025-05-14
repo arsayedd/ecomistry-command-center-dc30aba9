@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,7 +25,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Brand } from '@/types';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -36,6 +34,17 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+
+// Adjusted Brand type to match actual type from database
+type Brand = {
+  id: string;
+  name: string;
+  product_type: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  social_links: any;
+};
 
 const formSchema = z.object({
   platform: z.string().min(1, { message: 'يرجى اختيار المنصة' }),
@@ -83,7 +92,7 @@ const AddMediaBuyingPage = () => {
   const cpp = ordersCount > 0 ? spend / ordersCount : 0;
   
   // Fetch brands and employees
-  useState(() => {
+  useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -100,7 +109,7 @@ const AddMediaBuyingPage = () => {
         const { data: usersData, error: usersError } = await supabase
           .from('users')
           .select('id, full_name')
-          .eq('department', 'media_buying')
+          .eq('department', 'media-buying')
           .order('full_name', { ascending: true });
           
         if (usersError) throw usersError;

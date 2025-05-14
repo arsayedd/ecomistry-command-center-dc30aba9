@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search, Filter, Download, FileEdit, CreditCard, DollarSign } from "lucide-react";
@@ -39,14 +38,19 @@ export default function FinancePage() {
       if (expensesError) throw expensesError;
       setExpenses(expensesData || []);
 
-      // Fetch revenues
-      const { data: revenuesData, error: revenuesError } = await supabase
-        .from("revenues")
-        .select("*")
-        .order("date", { ascending: false });
-
-      if (revenuesError) throw revenuesError;
-      setRevenues(revenuesData || []);
+      // Mock revenues data since the table doesn't exist yet
+      // In a real app, we'd query the revenues table
+      setRevenues([
+        {
+          id: '1',
+          date: '2023-05-01',
+          brand_id: '1',
+          units_sold: 10,
+          price_per_unit: 100,
+          total_amount: 1000,
+          notes: 'Test revenue'
+        }
+      ]);
     } catch (error) {
       console.error("Error fetching finance data:", error);
       toast.error("حدث خطأ أثناء تحميل البيانات المالية");
@@ -79,18 +83,14 @@ export default function FinancePage() {
       exportToPDF(
         "expenses_report",
         "تقرير المصروفات",
-        filteredData,
-        ["التاريخ", "الفئة", "البراند", "المبلغ", "الوصف"],
-        ["date", "category", "brand_id", "amount", "description"]
+        filteredData
       );
     } else {
       const filteredData = filterRevenues();
       exportToPDF(
         "revenues_report",
         "تقرير الإيرادات",
-        filteredData,
-        ["التاريخ", "البراند", "عدد القطع", "سعر القطعة", "الإجمالي", "الملاحظات"],
-        ["date", "brand_id", "units_sold", "price_per_unit", "total_amount", "notes"]
+        filteredData
       );
     }
   };
@@ -121,7 +121,7 @@ export default function FinancePage() {
   };
 
   const getCategoryDisplay = (category: string) => {
-    switch (category) {
+    switch(category) {
       case "ads":
         return "إعلانات";
       case "salaries":

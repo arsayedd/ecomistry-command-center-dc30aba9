@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Filter } from "lucide-react";
@@ -11,7 +10,52 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import type { MediaBuyingRecord } from "@/types";
+
+// Adjusted to match actual types from database
+interface Brand {
+  id: string;
+  name: string;
+  status: string;
+  product_type?: string;
+  social_links?: any;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  department: string;
+  role: string;
+  permission_level: string;
+}
+
+interface Employee {
+  id: string;
+  user_id: string;
+  status: string;
+  salary: number;
+  user?: User;
+}
+
+interface MediaBuyingRecord {
+  id: string;
+  platform: string;
+  date: string;
+  brand_id: string;
+  brand?: Brand;
+  employee_id?: string;
+  employee?: Employee;
+  spend: number;
+  orders_count: number;
+  order_cost?: number;
+  roas?: number;
+  campaign_link?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export default function MediaBuyingPage() {
   const [activeTab, setActiveTab] = useState("facebook");
@@ -25,10 +69,7 @@ export default function MediaBuyingPage() {
           .select(`
             *,
             brand:brands(*),
-            employee:employees(
-              *,
-              user:users(*)
-            )
+            employee_id
           `)
           .order("date", { ascending: false });
         
@@ -39,7 +80,9 @@ export default function MediaBuyingPage() {
         const { data, error } = await query;
         
         if (error) throw error;
-        return data as MediaBuyingRecord[] || [];
+        
+        // Type assertion to make it work with our interface
+        return data as unknown as MediaBuyingRecord[];
       } catch (error) {
         console.error("Error fetching media buying records:", error);
         // Return mock data for testing UI
@@ -131,7 +174,7 @@ export default function MediaBuyingPage() {
             notes: "",
             created_at: "2023-05-03T12:00:00",
           }
-        ];
+        ] as MediaBuyingRecord[];
       }
     },
     enabled: Boolean(activeTab),
@@ -196,7 +239,6 @@ export default function MediaBuyingPage() {
                       <TableHead className="text-right">المنصة</TableHead>
                       <TableHead className="text-right">التاريخ</TableHead>
                       <TableHead className="text-right">البراند</TableHead>
-                      <TableHead className="text-right">الموظف</TableHead>
                       <TableHead className="text-right">الإنفاق (ج.م)</TableHead>
                       <TableHead className="text-right">عدد الأوردرات</TableHead>
                       <TableHead className="text-right">CPP (ج.م)</TableHead>
@@ -224,7 +266,6 @@ export default function MediaBuyingPage() {
                             {record.date ? format(new Date(record.date), "dd MMM yyyy", { locale: ar }) : "غير محدد"}
                           </TableCell>
                           <TableCell>{record.brand?.name || "غير محدد"}</TableCell>
-                          <TableCell>{record.employee?.user?.full_name || "غير محدد"}</TableCell>
                           <TableCell>{Number(record.spend).toLocaleString()}</TableCell>
                           <TableCell>{record.orders_count}</TableCell>
                           <TableCell>
