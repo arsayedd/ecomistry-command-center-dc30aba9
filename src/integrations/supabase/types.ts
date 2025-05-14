@@ -68,6 +68,167 @@ export type Database = {
         }
         Relationships: []
       }
+      call_center_orders: {
+        Row: {
+          brand_id: string | null
+          commission_type: string | null
+          commission_value: number | null
+          confirmed_orders: number
+          created_at: string | null
+          date: string
+          delivered_orders: number
+          employee_id: string | null
+          entered_orders: number
+          id: string
+          notes: string | null
+          total_commission: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          commission_type?: string | null
+          commission_value?: number | null
+          confirmed_orders?: number
+          created_at?: string | null
+          date: string
+          delivered_orders?: number
+          employee_id?: string | null
+          entered_orders?: number
+          id?: string
+          notes?: string | null
+          total_commission?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          commission_type?: string | null
+          commission_value?: number | null
+          confirmed_orders?: number
+          created_at?: string | null
+          date?: string
+          delivered_orders?: number
+          employee_id?: string | null
+          entered_orders?: number
+          id?: string
+          notes?: string | null
+          total_commission?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_center_orders_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_center_orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          commission_type: string
+          created_at: string | null
+          due_date: string
+          employee_id: string
+          id: string
+          orders_count: number
+          total_commission: number
+          value_amount: number
+          value_type: string
+        }
+        Insert: {
+          commission_type: string
+          created_at?: string | null
+          due_date: string
+          employee_id: string
+          id?: string
+          orders_count?: number
+          total_commission?: number
+          value_amount?: number
+          value_type: string
+        }
+        Update: {
+          commission_type?: string
+          created_at?: string | null
+          due_date?: string
+          employee_id?: string
+          id?: string
+          orders_count?: number
+          total_commission?: number
+          value_amount?: number
+          value_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_tasks: {
+        Row: {
+          brand_id: string
+          created_at: string | null
+          delivery_link: string | null
+          employee_id: string
+          expected_delivery_date: string
+          id: string
+          notes: string | null
+          status: string
+          task_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string | null
+          delivery_link?: string | null
+          employee_id: string
+          expected_delivery_date: string
+          id?: string
+          notes?: string | null
+          status: string
+          task_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string | null
+          delivery_link?: string | null
+          employee_id?: string
+          expected_delivery_date?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          task_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_tasks_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_tasks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -153,6 +314,53 @@ export type Database = {
           },
         ]
       }
+      moderation: {
+        Row: {
+          average_response_time: number
+          created_at: string | null
+          daily_responses: number
+          date: string
+          employee_id: string
+          id: string
+          open_messages: number
+          performance_rating: number
+          platform: string
+          supervisor_notes: string | null
+        }
+        Insert: {
+          average_response_time?: number
+          created_at?: string | null
+          daily_responses?: number
+          date: string
+          employee_id: string
+          id?: string
+          open_messages?: number
+          performance_rating: number
+          platform: string
+          supervisor_notes?: string | null
+        }
+        Update: {
+          average_response_time?: number
+          created_at?: string | null
+          daily_responses?: number
+          date?: string
+          employee_id?: string
+          id?: string
+          open_messages?: number
+          performance_rating?: number
+          platform?: string
+          supervisor_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
@@ -196,6 +404,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revenues: {
+        Row: {
+          brand_id: string
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+          pieces_sold: number
+          price_per_piece: number
+          total_revenue: number
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string | null
+          date: string
+          id?: string
+          notes?: string | null
+          pieces_sold: number
+          price_per_piece: number
+          total_revenue: number
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          pieces_sold?: number
+          price_per_piece?: number
+          total_revenue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenues_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       users: {
         Row: {

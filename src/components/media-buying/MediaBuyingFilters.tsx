@@ -51,7 +51,24 @@ export function MediaBuyingFilters({
           .select("*");
 
         if (brandsError) throw brandsError;
-        if (brandsData) setBrands(brandsData);
+        if (brandsData) {
+          // Cast the data to match the Brand type
+          const typedBrands = brandsData.map(brand => ({
+            ...brand,
+            status: (brand.status || "active") as "active" | "inactive" | "pending",
+            vertical: brand.vertical as "fashion" | "beauty" | "food" | "tech" | "home" | "travel" | "other",
+            social_links: brand.social_links as {
+              instagram?: string;
+              facebook?: string;
+              tiktok?: string;
+              youtube?: string;
+              linkedin?: string;
+              website?: string;
+            }
+          }));
+          
+          setBrands(typedBrands);
+        }
 
         // Fetch employees
         const { data: employeesData, error: employeesError } = await supabase
@@ -61,12 +78,13 @@ export function MediaBuyingFilters({
 
         if (employeesError) throw employeesError;
         if (employeesData) {
-          // Cast the employment_type to match User type
+          // Cast the data to match User type
           const typedEmployees = employeesData.map(emp => ({
             ...emp,
-            employment_type: emp.employment_type as "full_time" | "part_time" | "freelancer" | "per_piece",
-            status: emp.status as "active" | "inactive" | "trial",
-            access_rights: emp.access_rights as "view" | "add" | "edit" | "full_manage",
+            employment_type: (emp.employment_type || "full_time") as "full_time" | "part_time" | "freelancer" | "per_piece",
+            salary_type: (emp.salary_type || "monthly") as "monthly" | "hourly" | "per_task",
+            status: (emp.status || "active") as "active" | "inactive" | "trial",
+            access_rights: (emp.access_rights || "view") as "view" | "add" | "edit" | "full_manage"
           }));
           setEmployees(typedEmployees);
         }

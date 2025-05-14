@@ -1,227 +1,103 @@
 
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
+  LayoutDashboard,
   Users,
-  TrendingUp,
-  PhoneCall,
-  MessageSquare,
-  PenTool,
-  FileText,
-  Package,
-  DollarSign,
-  Database,
+  Archive,
   BarChart3,
+  MessageSquare,
+  Phone,
+  Banknote,
+  FileText,
   Settings,
   Menu,
   X,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+  Database,
+  Palette,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-type NavItemProps = {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  collapsed: boolean;
-  onClick?: () => void;
-};
+interface SidebarProps {
+  className?: string;
+}
 
-const NavItem: React.FC<NavItemProps> = ({ to, icon, label, collapsed, onClick }) => {
+export default function Sidebar({ className }: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  const navItems = [
+    { path: '/', label: 'الرئيسية', icon: <LayoutDashboard size={20} /> },
+    { path: '/employees', label: 'الموظفين', icon: <Users size={20} /> },
+    { path: '/brands', label: 'البراندات', icon: <Archive size={20} /> },
+    { path: '/media-buying', label: 'الميديا بايينج', icon: <BarChart3 size={20} /> },
+    { path: '/moderation', label: 'المودريشن', icon: <MessageSquare size={20} /> },
+    { path: '/call-center', label: 'الكول سنتر', icon: <Phone size={20} /> },
+    { path: '/finance', label: 'النظام المالي', icon: <Banknote size={20} /> },
+    { path: '/content', label: 'كتابة المحتوى', icon: <FileText size={20} /> },
+    { path: '/design', label: 'التصميم', icon: <Palette size={20} /> },
+    { path: '/database', label: 'قاعدة البيانات', icon: <Database size={20} /> },
+    { path: '/settings', label: 'الإعدادات', icon: <Settings size={20} /> },
+  ];
+
   return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md transition-all",
-          isActive
-            ? "bg-ecomistry-primary text-white"
-            : "hover:bg-ecomistry-accent hover:text-ecomistry-text"
-        )
-      }
-      onClick={onClick}
-    >
-      <div className="text-lg">{icon}</div>
-      {!collapsed && <span>{label}</span>}
-    </NavLink>
-  );
-};
-
-type NavGroupProps = {
-  title: string;
-  children: React.ReactNode;
-  collapsed: boolean;
-  icon: React.ReactNode;
-};
-
-const NavGroup: React.FC<NavGroupProps> = ({ title, children, collapsed, icon }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  
-  return (
-    <div className="mb-4">
-      <div 
-        className="flex items-center justify-between cursor-pointer px-3 py-2 hover:bg-ecomistry-accent rounded-md transition-colors"
+    <>
+      {/* Mobile menu toggle */}
+      <button
+        className="z-50 fixed left-4 top-4 block lg:hidden text-white bg-primary rounded-full p-2"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center gap-2">
-          <div className="text-lg">{icon}</div>
-          {!collapsed && <span className="font-semibold">{title}</span>}
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'bg-muted min-h-screen fixed right-0 top-0 bottom-0 w-64 flex-col shadow-lg transition-transform duration-300 z-40 border-l',
+          isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
+          className
+        )}
+      >
+        {/* Logo */}
+        <div className="flex flex-col items-center justify-center p-6 border-b">
+          <img 
+            src="https://i.postimg.cc/MKhxbvS0/00eab832-4bc4-4519-8510-2a386cf7663d.png" 
+            alt="Company Logo"
+            className="h-16 mb-2" 
+          />
+          <h1 className="text-lg font-semibold">نظام إدارة المنصة</h1>
         </div>
-        {!collapsed && (
-          <div>
-            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </div>
-        )}
-      </div>
-      
-      {(isOpen || collapsed) && <div className="mt-1 ml-2 space-y-1">{children}</div>}
-    </div>
-  );
-};
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+        {/* Nav Links */}
+        <nav className="flex-1 p-4 overflow-y-auto" dir="rtl">
+          <ul className="space-y-1">
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-4 py-2 rounded-md text-sm transition-all hover:bg-accent hover:text-accent-foreground',
+                      isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground'
+                    )
+                  }
+                  end={item.path === '/'}
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-  return (
-    <div
-      className={cn(
-        "flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300 overflow-y-auto",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        {!collapsed && (
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-ecomistry-primary">Ecomistry</h1>
-          </div>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-md hover:bg-ecomistry-accent transition-colors"
-        >
-          {collapsed ? <Menu size={20} /> : <X size={20} />}
-        </button>
-      </div>
-
-      <div className="flex-1 py-4 px-2 space-y-1">
-        <NavItem
-          to="/dashboard"
-          icon={<BarChart3 size={20} />}
-          label="Dashboard"
-          collapsed={collapsed}
-        />
-        
-        <NavGroup title="Hr Management" icon={<Users size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/employees"
-            icon={<Users size={20} />}
-            label="Employees"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Media Buying" icon={<TrendingUp size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/media-buying/performance"
-            icon={<TrendingUp size={20} />}
-            label="Performance"
-            collapsed={collapsed}
-          />
-          <NavItem
-            to="/media-buying/campaigns"
-            icon={<TrendingUp size={20} />}
-            label="Campaigns"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Call Center" icon={<PhoneCall size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/call-center/orders"
-            icon={<PhoneCall size={20} />}
-            label="Orders"
-            collapsed={collapsed}
-          />
-          <NavItem
-            to="/call-center/commissions"
-            icon={<DollarSign size={20} />}
-            label="Commissions"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Moderation" icon={<MessageSquare size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/moderation"
-            icon={<MessageSquare size={20} />}
-            label="Chat Moderation"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Design" icon={<PenTool size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/design"
-            icon={<PenTool size={20} />}
-            label="Design Projects"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Content" icon={<FileText size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/content"
-            icon={<FileText size={20} />}
-            label="Content Writing"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Brands" icon={<Package size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/brands"
-            icon={<Package size={20} />}
-            label="Brand Management"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavGroup title="Finance" icon={<DollarSign size={20} />} collapsed={collapsed}>
-          <NavItem
-            to="/finance/expenses"
-            icon={<DollarSign size={20} />}
-            label="Expenses"
-            collapsed={collapsed}
-          />
-          <NavItem
-            to="/finance/revenue"
-            icon={<DollarSign size={20} />}
-            label="Revenue"
-            collapsed={collapsed}
-          />
-          <NavItem
-            to="/finance/reports"
-            icon={<BarChart3 size={20} />}
-            label="Reports"
-            collapsed={collapsed}
-          />
-        </NavGroup>
-        
-        <NavItem
-          to="/database"
-          icon={<Database size={20} />}
-          label="Database"
-          collapsed={collapsed}
-        />
-        
-        <NavItem
-          to="/settings"
-          icon={<Settings size={20} />}
-          label="Settings"
-          collapsed={collapsed}
-        />
-      </div>
-    </div>
+        {/* Footer */}
+        <div className="p-4 text-center text-xs text-muted-foreground border-t">
+          <p>© {new Date().getFullYear()} شركتكم</p>
+          <p className="mt-1">نظام إدارة المنصة v1.0</p>
+        </div>
+      </aside>
+    </>
   );
 }

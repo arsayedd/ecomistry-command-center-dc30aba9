@@ -1,84 +1,83 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
-import { User } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React from 'react';
+import { MoonIcon, SunIcon, BellIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useLocation } from 'react-router-dom';
+import { getPageTitle } from '@/utils/navigation';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-export function CustomHeader() {
-  const { user } = useAuth();
-  const [userData, setUserData] = useState<User | null>(null);
-  
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (user?.id) {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-          
-        if (!error && data) {
-          // Cast the employment_type to the correct type
-          const typedUserData: User = {
-            ...data,
-            employment_type: data.employment_type as "full_time" | "part_time" | "freelancer" | "per_piece" | undefined,
-            salary_type: data.salary_type as "monthly" | "hourly" | "per_task" | undefined,
-            commission_type: data.commission_type as "percentage" | "fixed" | "none" | undefined,
-            status: data.status as "active" | "inactive" | "trial" | undefined,
-            access_rights: data.access_rights as "view" | "add" | "edit" | "full_manage" | undefined,
-          };
-          setUserData(typedUserData);
-        }
-      }
-    };
-    
-    fetchUserData();
-  }, [user]);
-  
-  const getInitials = (name: string = '') => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+interface CustomHeaderProps {
+  onThemeToggle: () => void;
+  isDarkMode: boolean;
+}
+
+export default function CustomHeader({ onThemeToggle, isDarkMode }: CustomHeaderProps) {
+  const location = useLocation();
+
+  const getPageTitleFromPath = () => {
+    return getPageTitle(location.pathname);
   };
-  
+
   return (
-    <header className="bg-white border-b py-2 px-4">
-      <div className="flex justify-between items-center">
-        <div className="w-1/3">
-          <div className="relative">
-            <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="البحث..."
-              className="pr-8 w-full max-w-xs"
-            />
-          </div>
-        </div>
+    <header className="h-16 border-b flex items-center justify-between px-4 lg:px-6">
+      <div className="flex items-center gap-4">
+        <img 
+          src="https://i.postimg.cc/MKhxbvS0/00eab832-4bc4-4519-8510-2a386cf7663d.png" 
+          alt="Company Logo"
+          className="h-10 hidden sm:block" 
+        />
+        <h1 className="text-xl font-semibold">{getPageTitleFromPath()}</h1>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="icon" onClick={onThemeToggle}>
+          {isDarkMode ? <SunIcon className="h-[1.2rem] w-[1.2rem]" /> : <MoonIcon className="h-[1.2rem] w-[1.2rem]" />}
+        </Button>
         
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-sm font-medium">{userData?.full_name || user?.email}</p>
-              <p className="text-xs text-gray-500">{userData?.department ? `قسم ${userData.department}` : "مستخدم"}</p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="relative">
+              <BellIcon className="h-[1.2rem] w-[1.2rem]" />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                3
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[300px]">
+            <div className="p-3 border-b">
+              <h3 className="font-semibold">الإشعارات</h3>
             </div>
-            <Avatar>
-              <AvatarFallback className="bg-green-100 text-green-600">
-                {getInitials(userData?.full_name)}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
+            <DropdownMenuItem>
+              <div className="flex flex-col gap-1 w-full">
+                <p className="font-medium">طلب جديد من براند الزيتون</p>
+                <p className="text-sm text-muted-foreground">قبل 10 دقائق</p>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <div className="flex flex-col gap-1 w-full">
+                <p className="font-medium">تنبيه: إنفاق عالي في الإعلانات</p>
+                <p className="text-sm text-muted-foreground">قبل 30 دقيقة</p>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <div className="flex flex-col gap-1 w-full">
+                <p className="font-medium">تم تعيين موعد تسليم المحتوى</p>
+                <p className="text-sm text-muted-foreground">قبل ساعة</p>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Avatar>
+          <AvatarImage src="https://github.com/shadcn.png" />
+          <AvatarFallback>أ م</AvatarFallback>
+        </Avatar>
       </div>
     </header>
   );

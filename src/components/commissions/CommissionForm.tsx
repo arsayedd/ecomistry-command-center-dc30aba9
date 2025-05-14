@@ -83,7 +83,16 @@ export default function CommissionForm({ onSave, initialData }: CommissionFormPr
         }
 
         if (data) {
-          setEmployees(data);
+          // Cast the data to match the User type
+          const typedEmployees = data.map(emp => ({
+            ...emp,
+            employment_type: (emp.employment_type || "full_time") as "full_time" | "part_time" | "freelancer" | "per_piece",
+            salary_type: (emp.salary_type || "monthly") as "monthly" | "hourly" | "per_task",
+            status: (emp.status || "active") as "active" | "inactive" | "trial",
+            access_rights: (emp.access_rights || "view") as "view" | "add" | "edit" | "full_manage",
+          }));
+          
+          setEmployees(typedEmployees);
         }
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -101,15 +110,26 @@ export default function CommissionForm({ onSave, initialData }: CommissionFormPr
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // Insert into Supabase if there's a table for commissions
-      // Note: We won't try to insert if the table doesn't exist yet
-      // This would need to be addressed with a SQL migration to create the table
-      
-      // For now, just call the onSave callback with the form data
-      onSave({
-        ...values,
+      // Format the data for submission
+      const formData = {
+        employee_id: values.employee_id,
+        commission_type: values.commission_type,
+        value_type: values.value_type,
+        value_amount: values.value_amount,
+        orders_count: values.orders_count,
+        total_commission: values.total_commission,
         due_date: format(values.due_date, "yyyy-MM-dd"),
-      });
+      };
+      
+      // Insert into Supabase
+      const { error } = await supabase
+        .from("commissions")
+        .insert([formData]);
+        
+      if (error) throw error;
+      
+      // Call the onSave callback with the form data
+      onSave(formData);
 
       toast({
         title: "تم حفظ العمولة بنجاح",

@@ -62,12 +62,6 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
   const pricePerPiece = form.watch("price_per_piece");
 
   useEffect(() => {
-    const totalRevenue = piecesSold * pricePerPiece;
-    form.setValue("total_revenue", totalRevenue);
-  }, [piecesSold, pricePerPiece, form]);
-
-  // Fetch brands from the database
-  useEffect(() => {
     async function fetchBrands() {
       try {
         const { data, error } = await supabase
@@ -79,13 +73,28 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
         }
 
         if (data) {
-          setBrands(data);
+          // Cast the data to match the Brand type
+          const typedBrands = data.map(brand => ({
+            ...brand,
+            status: (brand.status || "active") as "active" | "inactive" | "pending",
+            vertical: brand.vertical as "fashion" | "beauty" | "food" | "tech" | "home" | "travel" | "other",
+            social_links: brand.social_links as {
+              instagram?: string;
+              facebook?: string;
+              tiktok?: string;
+              youtube?: string;
+              linkedin?: string;
+              website?: string;
+            }
+          }));
+          
+          setBrands(typedBrands);
         }
       } catch (error) {
         console.error("Error fetching brands:", error);
         toast({
           title: "خطأ في جلب البراندات",
-          description: "حدث خطأ أثناء محاولة جلب بيانات البراندات.",
+          description: "حدث خطأ أثناء محاولة جلب قائمة البراندات.",
           variant: "destructive",
         });
       }
