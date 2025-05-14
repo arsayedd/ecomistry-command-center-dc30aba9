@@ -1,51 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { 
-  useMutation, 
-  useQuery, 
-  useQueryClient 
-} from "@tanstack/react-query";
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Plus, 
-  Search, 
-  Filter, 
-  FileText, 
-  Eye, 
-  Edit, 
-  MoreHorizontal 
-} from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import EmployeeSearchFilters from "@/components/employees/EmployeeSearchFilters";
+import EmployeesTable from "@/components/employees/EmployeesTable";
 
 // Define proper interface for employee update operation
 interface UpdateEmployeeStatusParams {
@@ -316,38 +279,6 @@ export default function EmployeesPage() {
     return matchesSearch && matchesDepartment && matchesStatus;
   });
 
-  // Status badge color
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">نشط</Badge>;
-      case "inactive":
-        return <Badge className="bg-red-500">غير نشط</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-500">معلق</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  // Convert department code to readable text
-  const getDepartmentText = (departmentCode: string) => {
-    switch (departmentCode) {
-      case "call-center":
-        return "كول سنتر";
-      case "media-buying":
-        return "ميديا بايينج";
-      case "content":
-        return "كتابة المحتوى";
-      case "design":
-        return "تصميم";
-      case "moderation":
-        return "موديريشن";
-      default:
-        return departmentCode;
-    }
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -359,151 +290,26 @@ export default function EmployeesPage() {
         </Link>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">البحث والتصفية</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="بحث..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر القسم" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">جميع الأقسام</SelectItem>
-                <SelectItem value="call-center">كول سنتر</SelectItem>
-                <SelectItem value="media-buying">ميديا بايينج</SelectItem>
-                <SelectItem value="content">كتابة المحتوى</SelectItem>
-                <SelectItem value="design">تصميم</SelectItem>
-                <SelectItem value="moderation">موديريشن</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="حالة الموظف" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">جميع الحالات</SelectItem>
-                <SelectItem value="active">نشط</SelectItem>
-                <SelectItem value="inactive">غير نشط</SelectItem>
-                <SelectItem value="pending">معلق</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <EmployeeSearchFilters
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filterDepartment={filterDepartment}
+        setFilterDepartment={setFilterDepartment}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+      />
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("full_name")}>
-                  اسم الموظف
-                  {sortColumn === "full_name" && (
-                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-                  )}
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("department")}>
-                  القسم
-                  {sortColumn === "department" && (
-                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-                  )}
-                </TableHead>
-                <TableHead>البريد الإلكتروني</TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("salary")}>
-                  المرتب
-                  {sortColumn === "salary" && (
-                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-                  )}
-                </TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("created_at")}>
-                  تاريخ الإنضمام
-                  {sortColumn === "created_at" && (
-                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-                  )}
-                </TableHead>
-                <TableHead>الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10">
-                    جاري التحميل...
-                  </TableCell>
-                </TableRow>
-              ) : filteredEmployees?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10">
-                    لا يوجد موظفين مطابقين للبحث
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredEmployees?.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell>{employee.user?.full_name}</TableCell>
-                    <TableCell>{getDepartmentText(employee.user?.department || "")}</TableCell>
-                    <TableCell>{employee.user?.email}</TableCell>
-                    <TableCell>{new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP' }).format(employee.salary)}</TableCell>
-                    <TableCell>{getStatusBadge(employee.status)}</TableCell>
-                    <TableCell>
-                      {employee.created_at ? format(new Date(employee.created_at), "yyyy-MM-dd") : "غير محدد"}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <Link to={`/employees/${employee.id}`}>
-                            <DropdownMenuItem>
-                              <Eye className="h-4 w-4 ml-2" />
-                              عرض التفاصيل
-                            </DropdownMenuItem>
-                          </Link>
-                          <Link to={`/employees/${employee.id}/edit`}>
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 ml-2" />
-                              تعديل
-                            </DropdownMenuItem>
-                          </Link>
-                          <DropdownMenuItem onClick={() => 
-                            updateEmployeeStatus.mutate({ 
-                              id: employee.id, 
-                              status: employee.status === "active" ? "inactive" : "active" 
-                            })
-                          }>
-                            {employee.status === "active" ? "تعطيل" : "تفعيل"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => deleteEmployee.mutate(employee.id)}
-                            className="text-red-500 focus:text-red-500"
-                          >
-                            حذف
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <EmployeesTable
+            isLoading={isLoading}
+            employees={filteredEmployees}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            handleSort={handleSort}
+            updateEmployeeStatus={(params) => updateEmployeeStatus.mutate(params)}
+            deleteEmployee={(id) => deleteEmployee.mutate(id)}
+          />
         </CardContent>
       </Card>
     </div>
