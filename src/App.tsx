@@ -19,6 +19,7 @@ import EmployeeDetailsPage from "./pages/employees/[id]";
 
 // Brand pages
 import BrandsPage from "./pages/brands/index";
+import AddBrandPage from "./pages/brands/add";
 
 // Media Buying pages
 import MediaBuyingPage from "./pages/media-buying/index";
@@ -79,6 +80,7 @@ const App = () => (
               
               {/* Brand Routes */}
               <Route path="brands" element={<BrandsPage />} />
+              <Route path="brands/add" element={<AddBrandPage />} />
               
               {/* Revenue Routes */}
               <Route path="revenues" element={<RevenuesPage />} />

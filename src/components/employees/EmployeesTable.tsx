@@ -1,259 +1,130 @@
 
-import { format } from "date-fns";
-import { ChevronUp, ChevronDown, MoreHorizontal, Eye, Edit, Trash2, FileText, FileExcel } from "lucide-react";
-import { Link } from "react-router-dom";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+import React from "react";
+import { 
+  Table, TableBody, TableCell, TableHead, 
+  TableHeader, TableRow 
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-interface Employee {
-  id: string;
-  user_id: string;
-  salary: number;
-  commission_type: string | null;
-  commission_value: number | null;
-  status: string;
-  created_at: string;
-  contract_type?: string;
-  user?: {
-    full_name: string;
-    email: string;
-    department: string;
-    role: string;
-    permission_level: string;
-  };
-}
+import { Download, Edit, FileText, Trash2 } from "lucide-react";
+import type { Employee } from "@/types";
 
 interface EmployeesTableProps {
-  isLoading: boolean;
   employees: Employee[];
-  sortColumn: string | null;
-  sortDirection: string;
-  handleSort: (column: string) => void;
-  updateEmployeeStatus: (params: { id: string; status: string }) => void;
-  deleteEmployee: (id: string) => void;
-  exportData: (type: 'pdf' | 'excel') => void;
+  onEdit?: (employee: Employee) => void;
+  onDelete?: (employee: Employee) => void;
+  onExport?: (type: 'pdf' | 'excel') => void;
 }
 
-export default function EmployeesTable({
-  isLoading,
-  employees,
-  sortColumn,
-  sortDirection,
-  handleSort,
-  updateEmployeeStatus,
-  deleteEmployee,
-  exportData,
+export function EmployeesTable({ 
+  employees, 
+  onEdit, 
+  onDelete,
+  onExport
 }: EmployeesTableProps) {
-  // Status badge color
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">نشط</Badge>;
-      case "inactive":
-        return <Badge className="bg-red-500">غير نشط</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-500">معلق</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  // Convert department code to readable text
-  const getDepartmentText = (departmentCode: string) => {
-    switch (departmentCode) {
-      case "call-center":
-        return "كول سنتر";
-      case "media-buying":
-        return "ميديا بايينج";
-      case "content":
-        return "كتابة المحتوى";
-      case "design":
-        return "تصميم";
-      case "moderation":
-        return "موديريشن";
-      default:
-        return departmentCode;
-    }
-  };
-
-  // Convert contract type to readable text
-  const getContractTypeText = (contractType: string | undefined) => {
-    switch (contractType) {
-      case "full-time":
-        return "دوام كامل";
-      case "part-time":
-        return "دوام جزئي";
-      case "freelancer":
-        return "فريلانسر";
-      case "per-task":
-        return "بالقطعة";
-      default:
-        return "غير محدد";
-    }
-  };
-
-  // Convert permission level to readable text
-  const getPermissionText = (permission: string | undefined) => {
-    switch (permission) {
-      case "view":
-        return "مشاهدة فقط";
-      case "add":
-        return "إضافة فقط";
-      case "edit":
-        return "إضافة وتعديل";
-      case "admin":
-        return "تحكم كامل";
-      default:
-        return "غير محدد";
-    }
-  };
-
   return (
-    <div>
-      <div className="flex justify-between items-center p-4">
-        <div>
-          <h2 className="text-xl font-bold">قائمة الموظفين</h2>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportData('pdf')}
-            className="flex items-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            تصدير PDF
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportData('excel')}
-            className="flex items-center gap-2"
-          >
-            <FileExcel className="h-4 w-4" />
-            تصدير Excel
-          </Button>
-        </div>
+    <div className="w-full overflow-auto">
+      <div className="flex justify-end mb-4 gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={() => onExport && onExport('pdf')}
+        >
+          <FileText className="h-4 w-4" />
+          <span>تصدير PDF</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={() => onExport && onExport('excel')}
+        >
+          <Download className="h-4 w-4" />
+          <span>تصدير Excel</span>
+        </Button>
       </div>
 
-      <Table>
+      <Table dir="rtl">
         <TableHeader>
           <TableRow>
-            <TableHead className="cursor-pointer" onClick={() => handleSort("full_name")}>
-              الاسم
-              {sortColumn === "full_name" && (
-                sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-              )}
-            </TableHead>
-            <TableHead>البريد الإلكتروني</TableHead>
-            <TableHead className="cursor-pointer" onClick={() => handleSort("department")}>
-              القسم
-              {sortColumn === "department" && (
-                sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-              )}
-            </TableHead>
-            <TableHead>الوظيفة</TableHead>
-            <TableHead>نوع التعاقد</TableHead>
-            <TableHead className="cursor-pointer" onClick={() => handleSort("salary")}>
-              المرتب
-              {sortColumn === "salary" && (
-                sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
-              )}
-            </TableHead>
-            <TableHead>نوع العمولة</TableHead>
-            <TableHead>قيمة العمولة</TableHead>
-            <TableHead>الحالة</TableHead>
-            <TableHead>صلاحيات</TableHead>
-            <TableHead>الإجراءات</TableHead>
+            <TableHead className="text-right">الاسم</TableHead>
+            <TableHead className="text-right">البريد الإلكتروني</TableHead>
+            <TableHead className="text-right">القسم</TableHead>
+            <TableHead className="text-right">الوظيفة</TableHead>
+            <TableHead className="text-right">نوع التعاقد</TableHead>
+            <TableHead className="text-right">المرتب</TableHead>
+            <TableHead className="text-right">نوع العمولة</TableHead>
+            <TableHead className="text-right">قيمة العمولة</TableHead>
+            <TableHead className="text-right">الحالة</TableHead>
+            <TableHead className="text-right">صلاحيات</TableHead>
+            <TableHead className="text-right">إجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
+          {employees.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center py-10">
-                جاري التحميل...
-              </TableCell>
-            </TableRow>
-          ) : employees?.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={11} className="text-center py-10">
-                لا يوجد موظفين مطابقين للبحث
+              <TableCell colSpan={11} className="text-center py-10 text-gray-500">
+                لا توجد بيانات للموظفين
               </TableCell>
             </TableRow>
           ) : (
-            employees?.map((employee) => (
+            employees.map((employee) => (
               <TableRow key={employee.id}>
-                <TableCell>{employee.user?.full_name}</TableCell>
-                <TableCell>{employee.user?.email}</TableCell>
-                <TableCell>{getDepartmentText(employee.user?.department || "")}</TableCell>
-                <TableCell>{employee.user?.role || "غير محدد"}</TableCell>
-                <TableCell>{getContractTypeText(employee.contract_type)}</TableCell>
-                <TableCell>{new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP' }).format(employee.salary)}</TableCell>
+                <TableCell>{employee.user?.full_name || "غير محدد"}</TableCell>
+                <TableCell>{employee.user?.email || "غير محدد"}</TableCell>
+                <TableCell>{employee.user?.department || "غير محدد"}</TableCell>
+                <TableCell>{employee.job_title || "غير محدد"}</TableCell>
                 <TableCell>
-                  {employee.commission_type === "percentage" ? "نسبة مئوية" : 
-                   employee.commission_type === "fixed" ? "مبلغ ثابت" : "لا يوجد"}
+                  {employee.contract_type === "full_time" && "دوام كامل"}
+                  {employee.contract_type === "part_time" && "دوام جزئي"}
+                  {employee.contract_type === "freelancer" && "عمل حر"}
+                  {employee.contract_type === "per_task" && "بالمهمة"}
+                  {!employee.contract_type && "غير محدد"}
                 </TableCell>
                 <TableCell>
-                  {employee.commission_value 
-                    ? employee.commission_type === "percentage" 
-                      ? `${employee.commission_value}%` 
-                      : new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP' }).format(employee.commission_value)
-                    : "لا يوجد"}
+                  {employee.salary} 
+                  {employee.salary_type === "monthly" && " / شهري"}
+                  {employee.salary_type === "hourly" && " / ساعة"}
+                  {employee.salary_type === "per_task" && " / مهمة"}
                 </TableCell>
-                <TableCell>{getStatusBadge(employee.status)}</TableCell>
-                <TableCell>{getPermissionText(employee.user?.permission_level)}</TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <Link to={`/employees/${employee.id}`}>
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 ml-2" />
-                          عرض التفاصيل
-                        </DropdownMenuItem>
-                      </Link>
-                      <Link to={`/employees/${employee.id}/edit`}>
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 ml-2" />
-                          تعديل
-                        </DropdownMenuItem>
-                      </Link>
-                      <DropdownMenuItem onClick={() => 
-                        updateEmployeeStatus({ 
-                          id: employee.id, 
-                          status: employee.status === "active" ? "inactive" : "active" 
-                        })
-                      }>
-                        {employee.status === "active" ? "تعطيل" : "تفعيل"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => deleteEmployee(employee.id)}
-                        className="text-red-500 focus:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4 ml-2" />
-                        حذف
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {employee.commission_type === "fixed" && "ثابتة"}
+                  {employee.commission_type === "percentage" && "نسبة"}
+                  {employee.commission_type === "none" && "لا يوجد"}
+                  {!employee.commission_type && "غير محدد"}
+                </TableCell>
+                <TableCell>{employee.commission_value || 0}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    employee.status === "active" ? "bg-green-100 text-green-800" :
+                    employee.status === "inactive" ? "bg-red-100 text-red-800" :
+                    employee.status === "probation" ? "bg-yellow-100 text-yellow-800" :
+                    "bg-gray-100 text-gray-800"
+                  }`}>
+                    {employee.status === "active" && "نشط"}
+                    {employee.status === "inactive" && "غير نشط"}
+                    {employee.status === "probation" && "تحت الاختبار"}
+                    {!employee.status && "غير محدد"}
+                  </span>
+                </TableCell>
+                <TableCell>{employee.user?.permission_level || "غير محدد"}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => onEdit && onEdit(employee)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => onDelete && onDelete(employee)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
