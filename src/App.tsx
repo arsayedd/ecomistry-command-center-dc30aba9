@@ -38,6 +38,9 @@ import ModerationPage from "./pages/moderation/index";
 // Design pages
 import DesignPage from "./pages/design/index";
 
+// Revenue pages
+import RevenuesPage from "./pages/revenues/index";
+
 // Finance pages
 import FinancePage from "./pages/finance/index";
 
@@ -75,6 +78,9 @@ const App = () => (
               
               {/* Brand Routes */}
               <Route path="brands" element={<BrandsPage />} />
+              
+              {/* Revenue Routes */}
+              <Route path="revenues" element={<RevenuesPage />} />
               
               {/* Media Buying Routes */}
               <Route path="media-buying" element={<MediaBuyingPage />} />

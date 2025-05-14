@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -52,6 +53,23 @@ interface UpdateEmployeeStatusParams {
   status: string;
 }
 
+// Define proper interface for employee
+interface Employee {
+  id: string;
+  user_id: string;
+  salary: number;
+  commission_type: string;
+  commission_value: number;
+  status: string;
+  created_at: string;
+  user?: {
+    full_name: string;
+    email: string;
+    department: string;
+    role: string;
+  };
+}
+
 export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -75,7 +93,7 @@ export default function EmployeesPage() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data as Employee[] || [];
     },
   });
 
@@ -170,7 +188,7 @@ export default function EmployeesPage() {
   });
 
   // Filter employees based on search query, department, and status
-  const filteredEmployees = sortedEmployees?.filter((employee) => {
+  const filteredEmployees = employees?.filter((employee) => {
     const matchesSearch = 
       !searchQuery || 
       employee.user?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -114,7 +114,7 @@ export default function AddContentTask() {
       
       const { error } = await supabase
         .from("content_tasks")
-        .insert([formattedValues]);
+        .insert(formattedValues);
       
       if (error) throw error;
       return values;

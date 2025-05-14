@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -45,7 +46,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define proper type for the employee_user data structure
+// Define proper type for the content task structure
 interface ContentTask {
   id: string;
   employee_id: string;
@@ -60,9 +61,7 @@ interface ContentTask {
   employee?: {
     id: string;
     user_id: string;
-  };
-  employee_user?: {
-    user_id: {
+    user?: {
       full_name: string;
     };
   };
@@ -89,8 +88,11 @@ export default function ContentPage() {
         .from("content_tasks")
         .select(`
           *,
-          employee:employees(id, user_id),
-          employee_user:employees(user:users(full_name)),
+          employee:employees(
+            id, 
+            user_id,
+            user:users(full_name)
+          ),
           brand:brands(id, name)
         `)
         .order("created_at", { ascending: false });
@@ -163,7 +165,7 @@ export default function ContentPage() {
 
   // Filter tasks based on search query and filters
   const filteredTasks = contentTasks?.filter((task) => {
-    const employeeFullName = task.employee_user?.user?.full_name || "";
+    const employeeFullName = task.employee?.user?.full_name || "";
     const brandName = task.brand?.name || "";
     
     const matchesSearch = 
@@ -294,7 +296,7 @@ export default function ContentPage() {
                 filteredTasks?.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell>
-                      {task.employee_user?.user?.full_name || "غير محدد"}
+                      {task.employee?.user?.full_name || "غير محدد"}
                     </TableCell>
                     <TableCell>{task.brand?.name || "غير محدد"}</TableCell>
                     <TableCell>{task.task_type}</TableCell>
