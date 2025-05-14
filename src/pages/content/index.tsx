@@ -13,7 +13,8 @@ import {
   Filter, 
   FileText, 
   Eye, 
-  Edit 
+  Edit,
+  MoreHorizontal
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -109,7 +110,7 @@ export default function ContentPage() {
 
   // Update task status mutation
   const updateTaskStatus = useMutation({
-    mutationFn: async ({ id, status }) => {
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
       const { error } = await supabase
         .from("content_tasks")
         .update({ status })
@@ -128,7 +129,7 @@ export default function ContentPage() {
     onError: (error) => {
       toast({
         title: "خطأ",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
     },
@@ -150,7 +151,7 @@ export default function ContentPage() {
   });
 
   // Status badge color
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "قيد التنفيذ":
         return <Badge className="bg-yellow-500">قيد التنفيذ</Badge>;

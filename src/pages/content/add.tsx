@@ -43,11 +43,21 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
+interface FormValues {
+  employee_id: string;
+  brand_id: string;
+  task_type: string;
+  deadline: Date;
+  status: string;
+  delivery_link: string;
+  notes: string;
+}
+
 export default function AddContentTask() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const form = useForm({
+  const form = useForm<FormValues>({
     defaultValues: {
       employee_id: "",
       brand_id: "",
@@ -95,7 +105,7 @@ export default function AddContentTask() {
 
   // Create content task mutation
   const createContentTask = useMutation({
-    mutationFn: async (values) => {
+    mutationFn: async (values: FormValues) => {
       const { error } = await supabase
         .from("content_tasks")
         .insert([values]);
@@ -113,13 +123,13 @@ export default function AddContentTask() {
     onError: (error) => {
       toast({
         title: "خطأ",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (values) => {
+  const onSubmit = (values: FormValues) => {
     createContentTask.mutate(values);
   };
 

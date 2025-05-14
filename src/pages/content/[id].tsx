@@ -61,7 +61,7 @@ export default function ContentTaskDetails() {
   });
 
   // Status badge color
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "قيد التنفيذ":
         return <Badge className="bg-yellow-500">قيد التنفيذ</Badge>;
@@ -86,7 +86,7 @@ export default function ContentTaskDetails() {
     return (
       <div className="p-6 max-w-6xl mx-auto text-center">
         <h2 className="text-xl font-bold mb-4">خطأ في تحميل بيانات المهمة</h2>
-        <p className="text-gray-500 mb-6">{error?.message || "لم يتم العثور على المهمة"}</p>
+        <p className="text-gray-500 mb-6">{(error as Error)?.message || "لم يتم العثور على المهمة"}</p>
         <Button onClick={() => navigate("/content")}>
           العودة إلى قائمة المهمات
         </Button>

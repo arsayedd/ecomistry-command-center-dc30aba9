@@ -75,6 +75,60 @@ export type Database = {
         }
         Relationships: []
       }
+      content_tasks: {
+        Row: {
+          brand_id: string | null
+          created_at: string
+          deadline: string | null
+          delivery_link: string | null
+          employee_id: string | null
+          id: string
+          notes: string | null
+          status: string
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          delivery_link?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          delivery_link?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_tasks_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_tasks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           commission_type: string | null
