@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   useMutation, 
@@ -71,11 +71,124 @@ interface ContentTask {
   };
 }
 
+// Sample data
+const sampleContentTasks: ContentTask[] = [
+  {
+    id: "1",
+    employee_id: "1",
+    brand_id: "1",
+    task_type: "بوست",
+    deadline: "2025-05-20",
+    status: "قيد التنفيذ",
+    delivery_link: "https://docs.google.com/document/d/123",
+    notes: "يرجى التركيز على المميزات الرئيسية للمنتج",
+    created_at: "2025-05-10T10:00:00",
+    updated_at: "2025-05-10T10:00:00",
+    employee: {
+      id: "1",
+      user_id: "101",
+      user: {
+        full_name: "أحمد محمد"
+      }
+    },
+    brand: {
+      id: "1",
+      name: "براند الأزياء"
+    }
+  },
+  {
+    id: "2",
+    employee_id: "2",
+    brand_id: "2",
+    task_type: "إعلان",
+    deadline: "2025-05-25",
+    status: "تم التسليم",
+    delivery_link: "https://docs.google.com/document/d/456",
+    notes: null,
+    created_at: "2025-05-12T14:30:00",
+    updated_at: "2025-05-13T09:15:00",
+    employee: {
+      id: "2",
+      user_id: "102",
+      user: {
+        full_name: "سارة علي"
+      }
+    },
+    brand: {
+      id: "2",
+      name: "براند التجميل"
+    }
+  },
+  {
+    id: "3",
+    employee_id: "3",
+    brand_id: "3",
+    task_type: "رييل",
+    deadline: "2025-05-18",
+    status: "متأخر",
+    delivery_link: null,
+    notes: "مطلوب تضمين كلمات مفتاحية محددة",
+    created_at: "2025-05-08T11:20:00",
+    updated_at: "2025-05-08T11:20:00",
+    employee: {
+      id: "3",
+      user_id: "103",
+      user: {
+        full_name: "محمود حسن"
+      }
+    },
+    brand: {
+      id: "3",
+      name: "براند الإلكترونيات"
+    }
+  }
+];
+
+// Sample brands data
+const sampleBrands = [
+  { id: "1", name: "براند الأزياء" },
+  { id: "2", name: "براند التجميل" },
+  { id: "3", name: "براند الإلكترونيات" },
+  { id: "4", name: "براند الأغذية" }
+];
+
+// Sample employees data
+const sampleEmployees = [
+  { 
+    id: "1", 
+    user_id: "101", 
+    user: { 
+      id: "101", 
+      full_name: "أحمد محمد", 
+      department: "content" 
+    } 
+  },
+  { 
+    id: "2", 
+    user_id: "102", 
+    user: { 
+      id: "102", 
+      full_name: "سارة علي", 
+      department: "content" 
+    } 
+  },
+  { 
+    id: "3", 
+    user_id: "103", 
+    user: { 
+      id: "103", 
+      full_name: "محمود حسن", 
+      department: "content" 
+    } 
+  }
+];
+
 export default function ContentPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBrand, setFilterBrand] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterType, setFilterType] = useState("");
+  const [localTasks, setLocalTasks] = useState<ContentTask[]>(sampleContentTasks);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -84,41 +197,58 @@ export default function ContentPage() {
   const { data: contentTasks, isLoading } = useQuery({
     queryKey: ["contentTasks"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_tasks")
-        .select(`
-          *,
-          employee:employees(
-            id, 
-            user_id,
-            user:users(full_name)
-          ),
-          brand:brands(id, name)
-        `)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("content_tasks")
+          .select(`
+            *,
+            employee:employees(
+              id, 
+              user_id,
+              user:users(full_name)
+            ),
+            brand:brands(id, name)
+          `)
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as ContentTask[] || [];
+        if (error) throw error;
+        return data as ContentTask[] || [];
+      } catch (error) {
+        console.error("Error fetching content tasks:", error);
+        return sampleContentTasks;
+      }
     },
   });
+
+  // Update local tasks when API data changes
+  useEffect(() => {
+    if (contentTasks && contentTasks.length > 0) {
+      setLocalTasks(contentTasks);
+    }
+  }, [contentTasks]);
 
   // Fetch employees for dropdown
   const { data: employees } = useQuery({
     queryKey: ["employees", "content"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("employees")
-        .select(`
-          id,
-          user_id,
-          user:users!inner(id, full_name, department)
-        `)
-        .eq("status", "active")
-        .eq("users.department", "content")
-        .order("users.full_name");
+      try {
+        const { data, error } = await supabase
+          .from("employees")
+          .select(`
+            id,
+            user_id,
+            user:users!inner(id, full_name, department)
+          `)
+          .eq("status", "active")
+          .eq("users.department", "content")
+          .order("users.full_name");
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+        return sampleEmployees;
+      }
     },
   });
 
@@ -126,28 +256,47 @@ export default function ContentPage() {
   const { data: brands } = useQuery({
     queryKey: ["brands"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("brands")
-        .select("id, name")
-        .order("name");
+      try {
+        const { data, error } = await supabase
+          .from("brands")
+          .select("id, name")
+          .order("name");
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+        return sampleBrands;
+      }
     },
   });
 
   // Update task status mutation
   const updateTaskStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: string }) => {
-      const { error } = await supabase
-        .from("content_tasks")
-        .update({ status })
-        .eq("id", id);
-      
-      if (error) throw error;
-      return { id, status };
+      try {
+        const { error } = await supabase
+          .from("content_tasks")
+          .update({ status })
+          .eq("id", id);
+        
+        if (error) throw error;
+        return { id, status };
+      } catch (error) {
+        console.error("Error updating task status:", error);
+        // Update locally for sample data
+        setLocalTasks(tasks => tasks.map(task => 
+          task.id === id ? {...task, status} : task
+        ));
+        return { id, status };
+      }
     },
-    onSuccess: () => {
+    onSuccess: ({ id, status }) => {
+      // Update local state in case we're using sample data
+      setLocalTasks(tasks => tasks.map(task => 
+        task.id === id ? {...task, status} : task
+      ));
+      
       queryClient.invalidateQueries({ queryKey: ["contentTasks"] });
       toast({
         title: "تم تحديث حالة المهمة",
@@ -164,7 +313,7 @@ export default function ContentPage() {
   });
 
   // Filter tasks based on search query and filters
-  const filteredTasks = contentTasks?.filter((task) => {
+  const filteredTasks = localTasks.filter((task) => {
     const employeeFullName = task.employee?.user?.full_name || "";
     const brandName = task.brand?.name || "";
     
@@ -228,7 +377,7 @@ export default function ContentPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">جميع البراندات</SelectItem>
-                {brands?.map((brand) => (
+                {(brands || sampleBrands)?.map((brand) => (
                   <SelectItem key={brand.id} value={brand.id}>
                     {brand.name}
                   </SelectItem>

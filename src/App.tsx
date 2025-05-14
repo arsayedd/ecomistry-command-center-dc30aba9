@@ -40,6 +40,7 @@ import DesignPage from "./pages/design/index";
 
 // Revenue pages
 import RevenuesPage from "./pages/revenues/index";
+import AddRevenuePage from "./pages/revenues/add";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
@@ -81,6 +82,7 @@ const App = () => (
               
               {/* Revenue Routes */}
               <Route path="revenues" element={<RevenuesPage />} />
+              <Route path="revenues/add" element={<AddRevenuePage />} />
               
               {/* Media Buying Routes */}
               <Route path="media-buying" element={<MediaBuyingPage />} />
