@@ -37,15 +37,43 @@ export const exportToExcel = (data: any[], fileName: string) => {
 
 /**
  * Export data to PDF file
- * @param data The data to export
- * @param columns The columns to export
  * @param fileName The name of the file to export to
+ * @param title The title to display on the PDF
+ * @param data The data to export
  */
-export const exportToPDF = (data: any[], columns: {header: string, dataKey: string}[], fileName: string) => {
+export const exportToPDF = (fileName: string, title: string, data: any[]) => {
+  // Create a new jsPDF instance
   const doc = new jsPDF();
-  doc.autoTable({
-    head: [columns.map(column => column.header)],
-    body: data.map(row => columns.map(column => row[column.dataKey])),
-  });
+  
+  // Add title
+  doc.setFontSize(18);
+  doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+  
+  // Get headers and columns dynamically from first data item
+  if (data.length > 0) {
+    const headers = Object.keys(data[0]);
+    const rows = data.map(item => Object.values(item));
+    
+    // Add table - need to cast to any to access autoTable
+    (doc as any).autoTable({
+      head: [headers],
+      body: rows,
+      startY: 25,
+      theme: 'grid',
+      styles: { 
+        font: 'helvetica',
+        fontSize: 10
+      },
+      headStyles: {
+        fillColor: [75, 75, 75],
+        textColor: 255
+      }
+    });
+  } else {
+    doc.setFontSize(12);
+    doc.text('No data available', doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+  }
+  
+  // Save PDF
   doc.save(`${fileName}.pdf`);
 };

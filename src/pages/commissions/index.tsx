@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search, Filter, Download, FileEdit } from "lucide-react";
@@ -79,7 +78,6 @@ export default function CommissionsPage() {
   });
 
   const handleExportPDF = () => {
-    // Fix the exportToPDF call to match the expected 3 arguments
     exportToPDF(
       "commissions_report",
       "تقرير العمولات",

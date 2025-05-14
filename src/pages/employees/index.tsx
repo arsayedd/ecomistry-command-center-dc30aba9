@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search, Filter, Download, FileEdit, Trash2 } from "lucide-react";
@@ -37,7 +36,6 @@ export default function EmployeesPage() {
 
   const fetchEmployees = async () => {
     try {
-      // Fix: Change from "employees" to "users" table which exists in Supabase
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -55,7 +53,6 @@ export default function EmployeesPage() {
 
   const handleExportPDF = () => {
     const filteredData = filterEmployees();
-    // Fix: Use only 3 arguments as expected by the function
     exportToPDF(
       "employees_report",
       "تقرير الموظفين",
@@ -72,7 +69,6 @@ export default function EmployeesPage() {
     if (!deleteEmployeeId) return;
 
     try {
-      // Fix: Change from "employees" to "users" table which exists in Supabase
       const { error } = await supabase
         .from("users")
         .delete()
@@ -80,7 +76,6 @@ export default function EmployeesPage() {
 
       if (error) throw error;
 
-      // Update employees list after successful deletion
       setEmployees(employees.filter(emp => emp.id !== deleteEmployeeId));
       toast.success("تم حذف بيانات الموظف بنجاح");
     } catch (error) {
