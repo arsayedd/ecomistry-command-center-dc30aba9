@@ -36,13 +36,6 @@ export type Database = {
             referencedRelation: "brands"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "brand_employees_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
         ]
       }
       brands: {
@@ -74,104 +67,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      content_tasks: {
-        Row: {
-          brand_id: string | null
-          created_at: string
-          deadline: string | null
-          delivery_link: string | null
-          employee_id: string | null
-          id: string
-          notes: string | null
-          status: string
-          task_type: string
-          updated_at: string
-        }
-        Insert: {
-          brand_id?: string | null
-          created_at?: string
-          deadline?: string | null
-          delivery_link?: string | null
-          employee_id?: string | null
-          id?: string
-          notes?: string | null
-          status?: string
-          task_type: string
-          updated_at?: string
-        }
-        Update: {
-          brand_id?: string | null
-          created_at?: string
-          deadline?: string | null
-          delivery_link?: string | null
-          employee_id?: string | null
-          id?: string
-          notes?: string | null
-          status?: string
-          task_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_tasks_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "content_tasks_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      employees: {
-        Row: {
-          commission_type: string | null
-          commission_value: number | null
-          created_at: string | null
-          id: string
-          salary: number | null
-          status: string | null
-          updated_at: string | null
-          user_id: string | null
-          working_hours: number | null
-        }
-        Insert: {
-          commission_type?: string | null
-          commission_value?: number | null
-          created_at?: string | null
-          id?: string
-          salary?: number | null
-          status?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          working_hours?: number | null
-        }
-        Update: {
-          commission_type?: string | null
-          commission_value?: number | null
-          created_at?: string | null
-          id?: string
-          salary?: number | null
-          status?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          working_hours?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "employees_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       expenses: {
         Row: {
@@ -256,13 +151,6 @@ export type Database = {
             referencedRelation: "brands"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "media_buying_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
         ]
       }
       orders: {
@@ -302,48 +190,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orders_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      revenues: {
-        Row: {
-          amount: number
-          brand_id: string | null
-          created_at: string | null
-          date: string
-          id: string
-          source: string | null
-        }
-        Insert: {
-          amount: number
-          brand_id?: string | null
-          created_at?: string | null
-          date: string
-          id?: string
-          source?: string | null
-        }
-        Update: {
-          amount?: number
-          brand_id?: string | null
-          created_at?: string | null
-          date?: string
-          id?: string
-          source?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "revenues_brand_id_fkey"
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"

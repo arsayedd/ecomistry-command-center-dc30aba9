@@ -12,11 +12,6 @@ import Register from "./pages/auth/Register";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
-// Employee pages
-import EmployeesPage from "./pages/employees/index";
-import AddEmployeePage from "./pages/employees/add";
-import EmployeeDetailsPage from "./pages/employees/[id]";
-
 // Brand pages
 import BrandsPage from "./pages/brands/index";
 import AddBrandPage from "./pages/brands/add";
@@ -28,22 +23,11 @@ import MediaBuyingPage from "./pages/media-buying/index";
 // Call Center pages
 import CallCenterPage from "./pages/call-center/index";
 
-// Content pages
-import ContentPage from "./pages/content/index";
-import AddContentTask from "./pages/content/add";
-import ContentTaskDetails from "./pages/content/[id]";
-import EditContentTask from "./pages/content/[id]/edit";
-
 // Moderation pages
 import ModerationPage from "./pages/moderation/index";
 
 // Design pages
 import DesignPage from "./pages/design/index";
-
-// Revenue pages
-import RevenuesPage from "./pages/revenues/index";
-import AddRevenuePage from "./pages/revenues/add";
-import EditRevenuePage from "./pages/revenues/[id]/edit";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
@@ -79,32 +63,16 @@ const App = () => (
             <Route path="/" element={<AppLayout />}>
               <Route path="dashboard" element={<Dashboard />} />
               
-              {/* Employee Routes */}
-              <Route path="employees" element={<EmployeesPage />} />
-              <Route path="employees/add" element={<AddEmployeePage />} />
-              <Route path="employees/:id" element={<EmployeeDetailsPage />} />
-              
               {/* Brand Routes */}
               <Route path="brands" element={<BrandsPage />} />
               <Route path="brands/add" element={<AddBrandPage />} />
               <Route path="brands/:id/edit" element={<EditBrandPage />} />
-              
-              {/* Revenue Routes */}
-              <Route path="revenues" element={<RevenuesPage />} />
-              <Route path="revenues/add" element={<AddRevenuePage />} />
-              <Route path="revenues/:id/edit" element={<EditRevenuePage />} />
               
               {/* Media Buying Routes */}
               <Route path="media-buying" element={<MediaBuyingPage />} />
               
               {/* Call Center Routes */}
               <Route path="call-center" element={<CallCenterPage />} />
-              
-              {/* Content Routes */}
-              <Route path="content" element={<ContentPage />} />
-              <Route path="content/add" element={<AddContentTask />} />
-              <Route path="content/:id" element={<ContentTaskDetails />} />
-              <Route path="content/:id/edit" element={<EditContentTask />} />
               
               {/* Moderation Routes */}
               <Route path="moderation" element={<ModerationPage />} />
@@ -115,7 +83,6 @@ const App = () => (
               {/* Finance Routes */}
               <Route path="finance" element={<FinancePage />} />
               <Route path="finance/expenses/add" element={<AddExpensePage />} />
-              <Route path="finance/revenues/add" element={<AddRevenuePage />} />
               
               {/* Database Routes */}
               <Route path="database" element={<DatabasePage />} />
