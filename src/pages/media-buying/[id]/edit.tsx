@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuyingRecord } from "@/types";
+import { MediaBuying, MediaBuyingRecord } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditMediaBuyingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mediaBuyingRecord, setMediaBuyingRecord] = useState<MediaBuyingRecord | null>(null);
+  const [mediaBuyingRecord, setMediaBuyingRecord] = useState<MediaBuying | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +31,23 @@ export default function EditMediaBuyingPage() {
         if (error) throw error;
         
         if (data) {
-          setMediaBuyingRecord(data as MediaBuyingRecord);
+          // Convert to MediaBuying type
+          const record: MediaBuying = {
+            id: data.id,
+            platform: data.platform,
+            campaign_date: data.date,
+            brand_id: data.brand_id,
+            employee_id: data.employee_id,
+            ad_spend: data.spend,
+            orders_count: data.orders_count,
+            cpp: data.order_cost,
+            roas: data.roas,
+            campaign_link: data.campaign_link || "",
+            notes: data.notes || "",
+            created_at: data.created_at
+          };
+          
+          setMediaBuyingRecord(record);
         }
       } catch (error) {
         console.error("Error fetching media buying record:", error);
@@ -48,14 +64,24 @@ export default function EditMediaBuyingPage() {
     fetchMediaBuyingRecord();
   }, [id, toast]);
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: MediaBuying) => {
     if (!id) return;
 
     try {
       // Update the media buying record
       const { error } = await supabase
         .from("media_buying")
-        .update(data)
+        .update({
+          platform: data.platform,
+          date: data.campaign_date instanceof Date ? data.campaign_date.toISOString().split('T')[0] : data.campaign_date,
+          brand_id: data.brand_id,
+          employee_id: data.employee_id,
+          spend: data.ad_spend,
+          orders_count: data.orders_count,
+          order_cost: data.cpp,
+          campaign_link: data.campaign_link,
+          notes: data.notes
+        })
         .eq("id", id);
 
       if (error) throw error;
@@ -97,7 +123,7 @@ export default function EditMediaBuyingPage() {
           <Skeleton className="h-64 w-full" />
         </div>
       ) : mediaBuyingRecord ? (
-        <MediaBuyingForm onSave={handleSave} initialData={mediaBuyingRecord} />
+        <MediaBuyingForm onSubmit={handleSave} initialData={mediaBuyingRecord} />
       ) : (
         <div className="text-center py-12">
           <p className="text-lg text-gray-500">الحملة الإعلانية غير موجودة</p>

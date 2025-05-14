@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from "react";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -10,7 +10,24 @@ import { MediaBuyingList } from "@/components/media-buying/MediaBuyingList";
 import { MediaBuyingAnalytics } from "@/components/media-buying/MediaBuyingAnalytics";
 import { exportToCSV } from "@/utils/exportUtils";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuyingRecord, Brand, User } from "@/types";
+import { Brand, User } from "@/types";
+
+interface MediaBuyingItem {
+  id: string;
+  platform: string;
+  date: string;
+  brand_id: string;
+  employee_id: string;
+  spend: number;
+  orders_count: number;
+  order_cost: number;
+  brand?: { id: string; name: string };
+  employee?: { id: string; full_name: string };
+  notes?: string;
+  roas?: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function MediaBuyingPage() {
   const [searchValue, setSearchValue] = useState("");
@@ -20,7 +37,6 @@ export default function MediaBuyingPage() {
   const [employeeId, setEmployeeId] = useState("");
   
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Fetch media buying records with related data
   const { data: mediaBuying, isLoading } = useQuery({
@@ -30,8 +46,8 @@ export default function MediaBuyingPage() {
         .from("media_buying")
         .select(`
           *,
-          brand:brand_id (id, name),
-          employee:employee_id (id, full_name)
+          brand:brands(id, name),
+          employee:users(id, full_name)
         `);
       
       // Apply filters
@@ -58,7 +74,7 @@ export default function MediaBuyingPage() {
         throw error;
       }
       
-      return data || [];
+      return (data || []) as MediaBuyingItem[];
     },
   });
 

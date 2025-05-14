@@ -83,22 +83,32 @@ export const useMediaBuyingForm = (initialData?: MediaBuying, onSubmit?: (data: 
         
         if (brandsData) {
           // Cast the data to match the Brand type
-          const typedBrands: Brand[] = brandsData.map(brand => ({
-            id: brand.id,
-            name: brand.name,
-            status: (brand.status || "active") as Brand['status'],
-            product_type: brand.product_type || "",
-            social_links: brand.social_links ? {
-              instagram: brand.social_links.instagram as string,
-              facebook: brand.social_links.facebook as string,
-              tiktok: brand.social_links.tiktok as string,
-              youtube: brand.social_links.youtube as string,
-              linkedin: brand.social_links.linkedin as string,
-              website: brand.social_links.website as string,
-            } : {},
-            created_at: brand.created_at || '',
-            updated_at: brand.updated_at || ''
-          }));
+          const typedBrands: Brand[] = brandsData.map(brand => {
+            let socialLinks = {};
+            
+            // Type-safely handle social_links if it exists and is an object
+            if (brand.social_links && typeof brand.social_links === 'object') {
+              const links = brand.social_links as Record<string, unknown>;
+              socialLinks = {
+                instagram: typeof links.instagram === 'string' ? links.instagram : '',
+                facebook: typeof links.facebook === 'string' ? links.facebook : '',
+                tiktok: typeof links.tiktok === 'string' ? links.tiktok : '',
+                youtube: typeof links.youtube === 'string' ? links.youtube : '',
+                linkedin: typeof links.linkedin === 'string' ? links.linkedin : '',
+                website: typeof links.website === 'string' ? links.website : '',
+              };
+            }
+            
+            return {
+              id: brand.id,
+              name: brand.name,
+              status: (brand.status || "active") as Brand['status'],
+              product_type: brand.product_type || "",
+              social_links: socialLinks,
+              created_at: brand.created_at || '',
+              updated_at: brand.updated_at || ''
+            };
+          });
           
           setBrands(typedBrands);
         }

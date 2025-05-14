@@ -1,45 +1,55 @@
 
 /**
- * Exports data to CSV format.
- * @param filename The name of the file to export
- * @param title The title of the document
- * @param data The data to export
+ * Export data to CSV file and trigger download
+ * @param data Array of objects to export
+ * @param filename Filename without extension
  */
-export function exportToPDF(filename: string, title: string, data: any[]) {
-  if (!data || data.length === 0) {
+export function exportToCSV(data: any[], filename: string): void {
+  if (!data || !data.length) {
     console.error("No data to export");
     return;
   }
-  
-  // Create headers from the first object's keys
+
+  // Get headers from first object
   const headers = Object.keys(data[0]);
   
-  // Create CSV content
-  let csvContent = headers.join(',') + '\n';
+  // Create CSV rows from data
+  const csvRows = [
+    // Headers row
+    headers.join(','),
+    // Data rows
+    ...data.map(row => 
+      headers.map(header => {
+        const cell = row[header] ?? '';
+        // Escape quotes and wrap in quotes if needed
+        const cellStr = String(cell).replace(/"/g, '""');
+        return cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n') 
+          ? `"${cellStr}"`
+          : cellStr;
+      }).join(',')
+    )
+  ];
+
+  // Join rows into a single string
+  const csvContent = csvRows.join('\n');
   
-  // Add data rows
-  data.forEach(item => {
-    const row = headers.map(header => {
-      // Convert value to string and handle commas by wrapping in quotes
-      const value = item[header] === null || item[header] === undefined ? '' : String(item[header]);
-      return `"${value.replace(/"/g, '""')}"`;
-    }).join(',');
-    csvContent += row + '\n';
-  });
-  
-  // Create blob and download link
+  // Create a Blob containing the CSV data
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  
+  // Create a URL for the Blob
   const url = URL.createObjectURL(blob);
+  
+  // Create a download link
   const link = document.createElement('a');
   link.setAttribute('href', url);
   link.setAttribute('download', `${filename}.csv`);
-  link.style.visibility = 'hidden';
+  link.style.display = 'none';
+  
+  // Add to DOM, click, and remove
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   
-  // Clean up
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 100);
+  // Free up the URL object
+  URL.revokeObjectURL(url);
 }

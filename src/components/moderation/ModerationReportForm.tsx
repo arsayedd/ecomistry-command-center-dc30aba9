@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +16,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Slider } from "@/components/ui/slider";
 
 const formSchema = z.object({
   employee_id: z.string().min(1, { message: "يجب اختيار الموظف" }),
@@ -43,7 +45,14 @@ export default function ModerationReportForm({ onSave, initialData }: Moderation
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
-      report_date: initialData.report_date ? new Date(initialData.report_date) : undefined,
+      employee_id: initialData.employee_id,
+      report_date: initialData.date ? new Date(initialData.date) : new Date(),
+      conversations_count: initialData.daily_responses || 0,
+      remaining_messages: initialData.open_messages || 0,
+      avg_response_time: initialData.average_response_time || 0,
+      platform: initialData.platform || "facebook",
+      performance_rating: initialData.performance_rating || 3,
+      notes: initialData.supervisor_notes || "",
     } : {
       employee_id: "",
       report_date: new Date(),
@@ -75,15 +84,16 @@ export default function ModerationReportForm({ onSave, initialData }: Moderation
             id: emp.id,
             email: emp.email || '',
             full_name: emp.full_name || '',
-            phone: emp.phone || '',
             department: emp.department || '',
             role: emp.role || '',
+            permission_level: emp.permission_level || '',
             employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
             salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
             status: (emp.status || 'active') as User['status'],
             access_rights: (emp.access_rights || 'view') as User['access_rights'],
             commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
             commission_value: emp.commission_value || 0,
+            job_title: emp.job_title || '',
             created_at: emp.created_at || '',
             updated_at: emp.updated_at || ''
           }));
@@ -109,13 +119,13 @@ export default function ModerationReportForm({ onSave, initialData }: Moderation
       // Format the data for submission
       const formData = {
         employee_id: values.employee_id,
-        report_date: format(values.report_date, "yyyy-MM-dd"),
-        conversations_count: values.conversations_count,
-        remaining_messages: values.remaining_messages,
-        avg_response_time: values.avg_response_time,
+        date: format(values.report_date, "yyyy-MM-dd"),
+        daily_responses: values.conversations_count,
+        open_messages: values.remaining_messages,
+        average_response_time: values.avg_response_time,
         platform: values.platform,
         performance_rating: values.performance_rating,
-        notes: values.notes,
+        supervisor_notes: values.notes,
       };
       
       // Insert into Supabase or update
@@ -129,7 +139,7 @@ export default function ModerationReportForm({ onSave, initialData }: Moderation
       } else {
         const { error } = await supabase
           .from("moderation")
-          .insert([formData]);
+          .insert(formData);
           
         if (error) throw error;
       }
@@ -323,7 +333,7 @@ export default function ModerationReportForm({ onSave, initialData }: Moderation
                           min={1}
                           max={5}
                           step={1}
-                          defaultValue={[field.value]}
+                          value={[field.value]}
                           onValueChange={(value) => field.onChange(value[0])}
                           className="w-full"
                         />

@@ -8,6 +8,7 @@ import { Revenue } from "@/types";
 import { RevenueBasicFields } from "./RevenueBasicFields";
 import { RevenueCalculationFields } from "./RevenueCalculationFields";
 import { useRevenueForm } from "@/hooks/useRevenueForm";
+import { FormField } from "@/components/ui/form";
 
 interface RevenueFormProps {
   initialData?: Revenue;
@@ -68,6 +69,3 @@ export default function RevenueForm({ initialData, onSave }: RevenueFormProps) {
     </Form>
   );
 }
-
-// For backward compatibility
-export { default as RevenueForm } from "./RevenueForm";

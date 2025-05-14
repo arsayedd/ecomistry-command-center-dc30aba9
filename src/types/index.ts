@@ -14,6 +14,8 @@ export interface User {
   commission_value?: number;
   status?: 'active' | 'inactive' | 'trial';
   access_rights?: 'view' | 'add' | 'edit' | 'full_manage';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Brand {
