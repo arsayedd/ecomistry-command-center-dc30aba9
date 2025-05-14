@@ -6,22 +6,45 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from '@/contexts/AuthContext';
-import { LogIn } from 'lucide-react';
+import { LogIn, MailCheck } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [emailConfirmationNeeded, setEmailConfirmationNeeded] = useState(false);
+  const { signIn, sendEmailConfirmation } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setEmailConfirmationNeeded(false);
     
     try {
       await signIn(email, password);
+    } catch (error: any) {
+      // تحقق مما إذا كانت رسالة الخطأ تتعلق بالبريد الإلكتروني غير المؤكد
+      if (error.message && (
+          error.message.includes('البريد الإلكتروني غير مؤكد') || 
+          error.message.includes('Email not confirmed')
+        )) {
+        setEmailConfirmationNeeded(true);
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) return;
+    
+    setIsResendingEmail(true);
+    try {
+      await sendEmailConfirmation(email);
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -40,6 +63,24 @@ const Login = () => {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6">
+              {emailConfirmationNeeded && (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <MailCheck className="h-5 w-5 text-amber-600" />
+                  <AlertTitle className="text-amber-800 mr-2">البريد الإلكتروني غير مؤكد</AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك
+                    <Button 
+                      variant="link" 
+                      onClick={handleResendConfirmation}
+                      disabled={isResendingEmail}
+                      className="p-0 mr-2 h-auto text-green-600 hover:text-green-700"
+                    >
+                      {isResendingEmail ? 'جاري إرسال رسالة التأكيد...' : 'إعادة إرسال رسالة التأكيد'}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">البريد الإلكتروني</Label>
                 <Input 
