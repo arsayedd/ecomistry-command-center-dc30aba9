@@ -18,18 +18,18 @@ const Register = () => {
   
   const { signUp } = useAuth();
 
-  const validateEmail = (email: string) => {
-    // Basic email validation
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    if (!validateEmail(email)) {
-      setError('يرجى إدخال بريد إلكتروني صحيح');
+    // Validate fields
+    if (!fullName.trim()) {
+      setError('الرجاء إدخال الاسم بالكامل');
+      return;
+    }
+    
+    if (!email.trim()) {
+      setError('الرجاء إدخال البريد الإلكتروني');
       return;
     }
     
@@ -44,6 +44,7 @@ const Register = () => {
       // إنشاء حساب جديد مع دور "admin" افتراضياً
       await signUp(email, password, fullName, 'admin');
     } catch (err: any) {
+      console.error("Register error:", err);
       setError(err.message || 'حدث خطأ أثناء إنشاء الحساب');
     } finally {
       setIsLoading(false);

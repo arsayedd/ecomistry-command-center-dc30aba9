@@ -58,13 +58,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName: string, role: string, department?: string) => {
     try {
-      // Validate email format first
+      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         throw new Error("البريد الإلكتروني غير صحيح");
       }
 
-      // Try to create the user account
+      // Validate password
+      if (password.length < 6) {
+        throw new Error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      }
+
+      // Create the user account
       const { error: authError, data } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -78,22 +83,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (authError) throw authError;
       
+      // Create user profile record if user was created
       if (data.user) {
+        // Insert into users table with a single INSERT operation
         const { error: profileError } = await supabase.from('users').insert({
           id: data.user.id,
           email,
           full_name: fullName,
           role,
-          department,
+          department: department || null,
           permission_level: role === 'admin' ? 'full' : 'read'
         });
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw new Error("فشل إنشاء ملف المستخدم: " + profileError.message);
+        }
       }
       
       toast({ title: "تم إنشاء الحساب بنجاح", description: "يمكنك الآن تسجيل الدخول" });
       navigate('/auth/login');
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast({ 
         title: "فشل إنشاء الحساب", 
         description: error.message || "حدث خطأ أثناء إنشاء الحساب",
