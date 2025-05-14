@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -98,11 +97,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (profileError) {
             console.error("Profile creation error:", profileError);
-            // If there's a recursion error, provide a specific message
+            
+            // Handle different types of errors with more specific messages
             if (profileError.message && profileError.message.includes('infinite recursion')) {
-              throw new Error("هناك مشكلة في إعدادات قواعد البيانات. يرجى الاتصال بمسؤول النظام");
+              // We've improved our policy, but let's keep this check for safety
+              throw new Error("تم إنشاء الحساب ولكن هناك مشكلة في إعدادات قاعدة البيانات. يرجى المحاولة مرة أخرى لاحقًا");
+            } else if (profileError.code === '23505') {
+              // Unique constraint violation
+              throw new Error("البريد الإلكتروني مستخدم بالفعل");
+            } else {
+              throw new Error("فشل إنشاء ملف المستخدم: " + profileError.message);
             }
-            throw new Error("فشل إنشاء ملف المستخدم: " + profileError.message);
           }
         } catch (profileError: any) {
           console.error("Profile creation exception:", profileError);
@@ -114,11 +119,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/auth/login');
     } catch (error: any) {
       console.error("Signup error:", error);
+      
+      // More detailed error messages
+      let errorMessage = error.message || "حدث خطأ أثناء إنشاء الحساب";
+      
+      // Handle specific Supabase error codes
+      if (error.code === '23505') {
+        errorMessage = "البريد الإلكتروني مستخدم بالفعل";
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "البريد الإلكتروني مستخدم بالفعل";
+      } else if (error.message && error.message.includes('email')) {
+        errorMessage = "البريد الإلكتروني غير صحيح أو مستخدم بالفعل";
+      }
+      
       toast({ 
         title: "فشل إنشاء الحساب", 
-        description: error.message || "حدث خطأ أثناء إنشاء الحساب",
+        description: errorMessage,
         variant: "destructive" 
       });
+      
       throw error;
     }
   };
