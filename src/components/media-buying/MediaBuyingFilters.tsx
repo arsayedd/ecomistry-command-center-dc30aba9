@@ -58,7 +58,14 @@ export function MediaBuyingFilters({
             name: brand.name,
             status: (brand.status || "active") as Brand['status'],
             product_type: brand.product_type || "",
-            social_links: brand.social_links || {},
+            social_links: brand.social_links ? {
+              instagram: brand.social_links.instagram as string,
+              facebook: brand.social_links.facebook as string,
+              tiktok: brand.social_links.tiktok as string,
+              youtube: brand.social_links.youtube as string,
+              linkedin: brand.social_links.linkedin as string,
+              website: brand.social_links.website as string,
+            } : {},
             created_at: brand.created_at || '',
             updated_at: brand.updated_at || ''
           }));
@@ -79,15 +86,16 @@ export function MediaBuyingFilters({
             id: emp.id,
             email: emp.email || '',
             full_name: emp.full_name || '',
-            phone: emp.phone || '',
             department: emp.department || '',
             role: emp.role || '',
+            permission_level: emp.permission_level || '',
             employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
             salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
             status: (emp.status || 'active') as User['status'],
             access_rights: (emp.access_rights || 'view') as User['access_rights'],
             commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
             commission_value: emp.commission_value || 0,
+            job_title: emp.job_title || '',
             created_at: emp.created_at || '',
             updated_at: emp.updated_at || ''
           }));

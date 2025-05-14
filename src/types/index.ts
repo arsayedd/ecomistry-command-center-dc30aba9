@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   full_name: string;
@@ -66,6 +67,21 @@ export interface MediaBuyingRecord {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface MediaBuying {
+  id?: string;
+  platform: string;
+  campaign_date: Date | string;
+  brand_id: string;
+  employee_id: string;
+  ad_spend: number;
+  orders_count: number;
+  cpp?: number;
+  roas?: number;
+  campaign_link?: string;
+  notes?: string;
+  created_at?: string;
 }
 
 export interface Order {
