@@ -52,12 +52,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message || "حدث خطأ أثناء تسجيل الدخول",
         variant: "destructive" 
       });
+      throw error;
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: string, department?: string) => {
     try {
-      const { error: authError, data } = await supabase.auth.signUp({ email, password });
+      // Validate email format first
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("البريد الإلكتروني غير صحيح");
+      }
+
+      // Try to create the user account
+      const { error: authError, data } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role
+          }
+        }
+      });
+      
       if (authError) throw authError;
       
       if (data.user) {
@@ -81,6 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message || "حدث خطأ أثناء إنشاء الحساب",
         variant: "destructive" 
       });
+      throw error;
     }
   };
 

@@ -7,22 +7,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const { signUp } = useAuth();
 
+  const validateEmail = (email: string) => {
+    // Basic email validation
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
+    if (!validateEmail(email)) {
+      setError('يرجى إدخال بريد إلكتروني صحيح');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
       // إنشاء حساب جديد مع دور "admin" افتراضياً
       await signUp(email, password, fullName, 'admin');
+    } catch (err: any) {
+      setError(err.message || 'حدث خطأ أثناء إنشاء الحساب');
     } finally {
       setIsLoading(false);
     }
@@ -43,6 +65,11 @@ const Register = () => {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="fullName">الاسم بالكامل</Label>
                 <Input 
@@ -58,7 +85,7 @@ const Register = () => {
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="example@ecomistry.com" 
+                  placeholder="example@example.com" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -73,6 +100,7 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={6}
                   className="text-right"
                 />
               </div>
