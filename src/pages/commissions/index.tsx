@@ -1,12 +1,12 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Filter, Download, FileEdit } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { exportToPDF } from "@/utils/exportUtils";
+import { CommissionsFilters } from "@/components/commissions/CommissionsFilters";
+import { CommissionsList } from "@/components/commissions/CommissionsList";
 
 export default function CommissionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,35 +85,6 @@ export default function CommissionsPage() {
     );
   };
 
-  // Map commission type to Arabic
-  const getCommissionTypeDisplay = (type: string) => {
-    switch (type) {
-      case "confirmation":
-        return "تأكيد";
-      case "delivery":
-        return "تسليم";
-      default:
-        return type;
-    }
-  };
-
-  // Map value type to Arabic
-  const getValueTypeDisplay = (type: string) => {
-    switch (type) {
-      case "percentage":
-        return "نسبة";
-      case "fixed":
-        return "مبلغ ثابت";
-      default:
-        return type;
-    }
-  };
-
-  // Format value display
-  const getValueDisplay = (valueType: string, value: number) => {
-    return valueType === "percentage" ? `${value}%` : `${value} ج.م`;
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -125,90 +96,20 @@ export default function CommissionsPage() {
         </Link>
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="البحث عن عمولات..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            
-            <div className="w-full md:w-48">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 ml-2" />
-                  <SelectValue placeholder="تصفية حسب النوع" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع الأنواع</SelectItem>
-                  <SelectItem value="confirmation">تأكيد</SelectItem>
-                  <SelectItem value="delivery">تسليم</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Button variant="outline" className="w-full md:w-auto" onClick={handleExportPDF}>
-              <Download className="h-4 w-4 ml-2" />
-              تصدير
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <CommissionsFilters
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filterType={filterType}
+        setFilterType={setFilterType}
+        onExport={handleExportPDF}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>العمولات</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>اسم الموظف</TableHead>
-                <TableHead>نوع العمولة</TableHead>
-                <TableHead>نوع القيمة</TableHead>
-                <TableHead>القيمة</TableHead>
-                <TableHead>عدد الطلبات</TableHead>
-                <TableHead>إجمالي العمولة</TableHead>
-                <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>إجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCommissions.length > 0 ? (
-                filteredCommissions.map((commission) => (
-                  <TableRow key={commission.id}>
-                    <TableCell>{commission.id}</TableCell>
-                    <TableCell>{commission.employeeName}</TableCell>
-                    <TableCell>{getCommissionTypeDisplay(commission.commissionType)}</TableCell>
-                    <TableCell>{getValueTypeDisplay(commission.valueType)}</TableCell>
-                    <TableCell>{getValueDisplay(commission.valueType, commission.value)}</TableCell>
-                    <TableCell>{commission.ordersCount}</TableCell>
-                    <TableCell>{commission.totalCommission} ج.م</TableCell>
-                    <TableCell>{new Date(commission.dueDate).toLocaleDateString('ar-EG')}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon">
-                        <FileEdit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
-                    لا توجد عمولات مطابقة للبحث
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <CommissionsList commissions={filteredCommissions} />
         </CardContent>
       </Card>
     </div>
