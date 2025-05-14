@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 export const CustomSidebar = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   
@@ -43,6 +43,14 @@ export const CustomSidebar = () => {
   ];
   
   if (!user) return null;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <aside dir="rtl" className="bg-white border-l border-gray-200 w-64 flex-shrink-0 flex flex-col h-screen">
@@ -85,7 +93,10 @@ export const CustomSidebar = () => {
       </nav>
       
       <div className="p-4 border-t">
-        <button className="flex items-center w-full gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+        <button 
+          onClick={handleSignOut}
+          className="flex items-center w-full gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+        >
           <LogOut size={20} />
           <span>تسجيل الخروج</span>
         </button>
