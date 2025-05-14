@@ -123,11 +123,13 @@ export function EmployeesTable({
                       variant="ghost" 
                       size="icon"
                       onClick={() => {
-                        // Toggle status
-                        const newStatus = employee.status === "active" ? "inactive" : "active";
+                        // Toggle status with type-safe values
+                        const newStatus = employee.status === "active" 
+                          ? "inactive" as const
+                          : "active" as const;
                         updateEmployeeStatus({ 
                           id: employee.id,
-                          status: newStatus as "active" | "inactive" | "probation"
+                          status: newStatus
                         });
                       }}
                     >

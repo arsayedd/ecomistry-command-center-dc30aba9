@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +10,6 @@ import { EmployeesTable } from "@/components/employees/EmployeesTable";
 import { exportToPDF, exportToExcel } from "@/utils/exportUtils";
 import { useEmployees } from "@/hooks/useEmployees";
 import { filterEmployees, sortEmployees } from "@/utils/employeeUtils";
-import { Employee } from "@/types";
 
 export default function EmployeesPage() {
   const { toast } = useToast();
