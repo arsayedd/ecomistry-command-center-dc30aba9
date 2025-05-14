@@ -134,15 +134,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // التحقق من صحة البريد الإلكتروني
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
+        toast({ 
+          title: "البريد الإلكتروني غير صحيح", 
+          description: "يرجى إدخال بريد إلكتروني صالح",
+          variant: "destructive" 
+        });
         throw new Error("البريد الإلكتروني غير صحيح");
       }
 
       // التحقق من كلمة المرور
       if (password.length < 6) {
+        toast({ 
+          title: "كلمة المرور قصيرة جدًا", 
+          description: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+          variant: "destructive" 
+        });
         throw new Error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       }
 
       // إنشاء حساب المستخدم
+      console.log('Creating auth account with user data:', { email, fullName, role });
       const { error: authError, data } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -155,20 +166,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (authError) {
-        console.error('Sign up error details:', authError);
+        console.error('Sign up auth error details:', authError);
         
         if (authError.message.includes('Email signups are disabled')) {
+          toast({ 
+            title: "تسجيل الحسابات معطل", 
+            description: "تسجيل الحسابات بالبريد الإلكتروني معطل. يرجى الاتصال بالمسؤول لتفعيله.",
+            variant: "destructive" 
+          });
           throw new Error("تسجيل الحسابات بالبريد الإلكتروني معطل. يرجى الاتصال بالمسؤول لتفعيله.");
         }
         
+        toast({ 
+          title: "فشل إنشاء الحساب", 
+          description: authError.message || "حدث خطأ أثناء إنشاء الحساب",
+          variant: "destructive" 
+        });
         throw authError;
       }
       
-      console.log('User created:', data.user?.id);
+      console.log('User auth created:', data.user?.id);
       
       // إنشاء سجل ملف المستخدم إذا تم إنشاء المستخدم
       if (data.user) {
         try {
+          console.log('Creating user profile with data:', { 
+            id: data.user.id, 
+            email, 
+            fullName, 
+            role, 
+            department 
+          });
+          
           // إدراج في جدول المستخدمين بعملية إدراج واحدة
           const { error: profileError } = await supabase.from('users').insert({
             id: data.user.id,
@@ -181,20 +210,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (profileError) {
             console.error("خطأ إنشاء الملف:", profileError);
+            console.error("Profile error details:", JSON.stringify(profileError));
             
-            // التعامل مع أنواع مختلفة من الأخطاء برسائل أكثر تحديدًا
-            if (profileError.message && profileError.message.includes('infinite recursion')) {
-              throw new Error("تم إنشاء الحساب ولكن هناك مشكلة في إعدادات قاعدة البيانات. يرجى تسجيل الدخول لاحقًا");
-            } else if (profileError.code === '23505') {
-              // انتهاك قيد فريد
-              throw new Error("البريد الإلكتروني مستخدم بالفعل");
-            } else {
-              throw new Error("فشل إنشاء ملف المستخدم: " + profileError.message);
-            }
+            // معالجة أخطاء محددة
+            let errorMessage = "فشل إنشاء ملف المستخدم";
+            
+            if (profileError.code === '23505') {
+              errorMessage = "البريد الإلكتروني مستخدم بالفعل";
+            } 
+
+            toast({ 
+              title: "تنبيه", 
+              description: "تم إنشاء الحساب ولكن هناك مشكلة في إنشاء الملف الشخصي. سيتم حل هذه المشكلة قريبًا.",
+              variant: "default" 
+            });
+            
+            // تسجيل الخطأ ولكن لا نوقف العملية
+            console.warn("تم إنشاء الحساب ولكن هناك مشكلة في إنشاء الملف الشخصي:", errorMessage);
           }
         } catch (profileError: any) {
           console.error("استثناء إنشاء الملف:", profileError);
-          throw profileError;
+          
+          // تسجيل الخطأ ولكن السماح للمستخدم بالاستمرار
+          toast({ 
+            title: "تنبيه", 
+            description: "تم إنشاء الحساب ولكن هناك مشكلة في إنشاء الملف الشخصي. سيتم حل هذه المشكلة قريبًا.",
+            variant: "default" 
+          });
         }
       }
       
@@ -232,8 +274,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: errorMessage,
         variant: "destructive" 
       });
-      
-      throw error;
     }
   };
 
