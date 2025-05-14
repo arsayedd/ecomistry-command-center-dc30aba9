@@ -12,6 +12,23 @@ import ContentSearchFilters from "@/components/content/ContentSearchFilters";
 import { ContentTasksTable } from "@/components/content/ContentTasksTable";
 import type { ContentTask, Employee, Brand } from "@/types";
 
+// Helper function to map between Arabic and English status values
+const mapStatusToEnglish = (arabicStatus: string): "pending" | "completed" | "delayed" => {
+  if (arabicStatus === "قيد التنفيذ") return "pending";
+  if (arabicStatus === "تم التسليم") return "completed";
+  if (arabicStatus === "متأخر") return "delayed";
+  // Default to pending if the status is not recognized
+  return "pending";
+};
+
+// Helper function to map from English to Arabic status values
+const mapStatusToArabic = (englishStatus: "pending" | "completed" | "delayed"): string => {
+  if (englishStatus === "pending") return "قيد التنفيذ";
+  if (englishStatus === "completed") return "تم التسليم";
+  if (englishStatus === "delayed") return "متأخر";
+  return "قيد التنفيذ";
+};
+
 // Sample brands data
 const sampleBrands: Brand[] = [
   { id: "1", name: "براند الأزياء", status: "active" },
@@ -146,19 +163,13 @@ export default function ContentPage() {
         
         // Transform API response to match ContentTask type
         const typedData = (data || []).map(task => {
-          // Map status to valid enum values
-          let status: "pending" | "completed" | "delayed" = "pending";
-          
-          if (task.status === "completed" || task.status === "تم التسليم") {
-            status = "completed";
-          } else if (task.status === "delayed" || task.status === "متأخر") {
-            status = "delayed";
-          }
+          // Map status from Arabic to English
+          let typedStatus: "pending" | "completed" | "delayed" = mapStatusToEnglish(task.status);
           
           // Create a typed task object
           return {
             ...task,
-            status,
+            status: typedStatus,
             task_type: task.task_type as "post" | "ad" | "reel" | "product" | "landing_page" | "other"
           } as ContentTask;
         });
@@ -201,11 +212,8 @@ export default function ContentPage() {
   const updateTaskStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: "pending" | "completed" | "delayed" }) => {
       try {
-        // Convert status to Arabic for DB if needed
-        let statusValue = status;
-        if (status === "pending") statusValue = "قيد التنفيذ";
-        else if (status === "completed") statusValue = "تم التسليم";
-        else if (status === "delayed") statusValue = "متأخر";
+        // Convert status to Arabic for DB
+        const statusValue = mapStatusToArabic(status);
         
         const { error } = await supabase
           .from("content_tasks")
