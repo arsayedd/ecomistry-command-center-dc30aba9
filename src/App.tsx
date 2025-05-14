@@ -12,6 +12,11 @@ import Register from "./pages/auth/Register";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
+// Employee pages
+import EmployeesPage from "./pages/employees/index";
+import AddEmployeePage from "./pages/employees/add";
+import EmployeeDetailsPage from "./pages/employees/[id]";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -32,6 +37,12 @@ const App = () => (
             {/* App Routes */}
             <Route path="/" element={<AppLayout />}>
               <Route path="dashboard" element={<Dashboard />} />
+              
+              {/* Employee Routes */}
+              <Route path="employees" element={<EmployeesPage />} />
+              <Route path="employees/add" element={<AddEmployeePage />} />
+              <Route path="employees/:id" element={<EmployeeDetailsPage />} />
+              
               <Route index element={<Dashboard />} />
             </Route>
             
