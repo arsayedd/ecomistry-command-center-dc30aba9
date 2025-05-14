@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import AuthLayout from "./layouts/AuthLayout";
 import AppLayout from "./layouts/AppLayout";
 import Login from "./pages/auth/Login";
@@ -60,76 +60,78 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/auth" element={<AuthLayout />}>
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route index element={<Login />} />
-            </Route>
-            
-            {/* App Routes */}
-            <Route path="/" element={<AppLayout />}>
-              <Route path="dashboard" element={<Dashboard />} />
+    <ThemeProvider defaultTheme="system">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/auth" element={<AuthLayout />}>
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route index element={<Login />} />
+              </Route>
               
-              {/* Brand Routes */}
-              <Route path="brands" element={<BrandsPage />} />
-              <Route path="brands/add" element={<AddBrandPage />} />
-              <Route path="brands/:id/edit" element={<EditBrandPage />} />
+              {/* App Routes */}
+              <Route path="/" element={<AppLayout />}>
+                <Route path="dashboard" element={<Dashboard />} />
+                
+                {/* Brand Routes */}
+                <Route path="brands" element={<BrandsPage />} />
+                <Route path="brands/add" element={<AddBrandPage />} />
+                <Route path="brands/:id/edit" element={<EditBrandPage />} />
+                
+                {/* Employees Routes */}
+                <Route path="employees" element={<EmployeesPage />} />
+                <Route path="employees/add" element={<AddEmployeePage />} />
+                <Route path="employees/:id/edit" element={<EditEmployeePage />} />
+                
+                {/* Media Buying Routes */}
+                <Route path="media-buying" element={<MediaBuyingPage />} />
+                <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
+                
+                {/* Call Center Routes */}
+                <Route path="call-center" element={<CallCenterPage />} />
+                <Route path="call-center/orders/add" element={<AddOrderPage />} />
+                
+                {/* Moderation Routes */}
+                <Route path="moderation" element={<ModerationPage />} />
+                <Route path="moderation/add" element={<AddModerationPage />} />
+                
+                {/* Content Routes */}
+                <Route path="content" element={<ContentPage />} />
+                <Route path="content/add" element={<AddContentTaskPage />} />
+                
+                {/* Finance Routes */}
+                <Route path="finance" element={<FinancePage />} />
+                <Route path="finance/expenses/add" element={<AddExpensePage />} />
+                <Route path="finance/revenues/add" element={<AddRevenuePage />} />
+                
+                {/* Commissions Routes */}
+                <Route path="commissions" element={<CommissionsPage />} />
+                <Route path="commissions/add" element={<AddCommissionPage />} />
+                
+                {/* Database Routes */}
+                <Route path="database" element={<DatabasePage />} />
+                
+                {/* Settings Routes */}
+                <Route path="settings" element={<SettingsPage />} />
+                
+                <Route index element={<Navigate to="/dashboard" replace />} />
+              </Route>
               
-              {/* Employees Routes */}
-              <Route path="employees" element={<EmployeesPage />} />
-              <Route path="employees/add" element={<AddEmployeePage />} />
-              <Route path="employees/:id/edit" element={<EditEmployeePage />} />
+              {/* Root Route */}
+              <Route path="/" element={<Index />} />
               
-              {/* Media Buying Routes */}
-              <Route path="media-buying" element={<MediaBuyingPage />} />
-              <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
-              
-              {/* Call Center Routes */}
-              <Route path="call-center" element={<CallCenterPage />} />
-              <Route path="call-center/orders/add" element={<AddOrderPage />} />
-              
-              {/* Moderation Routes */}
-              <Route path="moderation" element={<ModerationPage />} />
-              <Route path="moderation/add" element={<AddModerationPage />} />
-              
-              {/* Content Routes */}
-              <Route path="content" element={<ContentPage />} />
-              <Route path="content/add" element={<AddContentTaskPage />} />
-              
-              {/* Finance Routes */}
-              <Route path="finance" element={<FinancePage />} />
-              <Route path="finance/expenses/add" element={<AddExpensePage />} />
-              <Route path="finance/revenues/add" element={<AddRevenuePage />} />
-              
-              {/* Commissions Routes */}
-              <Route path="commissions" element={<CommissionsPage />} />
-              <Route path="commissions/add" element={<AddCommissionPage />} />
-              
-              {/* Database Routes */}
-              <Route path="database" element={<DatabasePage />} />
-              
-              {/* Settings Routes */}
-              <Route path="settings" element={<SettingsPage />} />
-              
-              <Route index element={<Navigate to="/dashboard" replace />} />
-            </Route>
-            
-            {/* Root Route */}
-            <Route path="/" element={<Index />} />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
