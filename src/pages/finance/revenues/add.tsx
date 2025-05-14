@@ -1,308 +1,267 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { toast } from '@/components/ui/sonner';
-import { Brand } from '@/types';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/sonner";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { arEG } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-const formSchema = z.object({
-  date: z.date(),
-  brand_id: z.string().min(1, { message: "يرجى اختيار البراند" }),
-  pieces_sold: z.number().positive({ message: "يجب أن تكون القيمة رقم موجب" }),
-  price_per_piece: z.number().positive({ message: "يجب أن تكون القيمة رقم موجب" }),
-  notes: z.string().optional(),
-});
+type Brand = {
+  id: string;
+  name: string;
+  product_type: string;
+  status: "active" | "inactive" | "pending";
+  social_links: any;
+  created_at: string;
+  updated_at: string;
+};
 
-type FormValues = z.infer<typeof formSchema>;
-
-const AddRevenuePage = () => {
+export default function AddRevenuePage() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Initialize form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: new Date(),
-      brand_id: '',
-      pieces_sold: 0,
-      price_per_piece: 0,
-      notes: '',
-    }
+  const [formData, setFormData] = useState({
+    date: new Date(),
+    brand_id: "",
+    units_sold: 0,
+    price_per_unit: 0,
+    total_amount: 0,
+    notes: ""
   });
 
-  // Watch values to calculate total
-  const piecesCount = form.watch('pieces_sold');
-  const pricePerPiece = form.watch('price_per_piece');
-  const totalRevenue = piecesCount * pricePerPiece;
-
-  // Fetch brands
-  useState(() => {
-    const fetchBrands = async () => {
-      setIsLoading(true);
-      try {
-        const { data: brandsData, error } = await supabase
-          .from('brands')
-          .select('*');
-          
-        if (error) throw error;
-        setBrands(brandsData || []);
-        
-      } catch (error) {
-        console.error('Error fetching brands:', error);
-        toast.error('حدث خطأ أثناء تحميل بيانات البراندات');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
+  useEffect(() => {
     fetchBrands();
   }, []);
 
-  // Handle form submission
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
+  const fetchBrands = async () => {
     try {
-      // Calculate total revenue
-      const total = data.pieces_sold * data.price_per_piece;
-      
-      // Insert revenue into database
-      const { data: revenue, error } = await supabase
-        .from('revenues')
-        .insert({
-          date: format(data.date, 'yyyy-MM-dd'),
-          brand_id: data.brand_id,
-          pieces_sold: data.pieces_sold,
-          price_per_piece: data.price_per_piece,
-          total_revenue: total,
-          notes: data.notes || null,
-        })
-        .select()
-        .single();
-      
+      const { data, error } = await supabase
+        .from("brands")
+        .select("*");
+
       if (error) throw error;
       
-      toast.success('تم إضافة الإيراد بنجاح');
-      navigate('/finance');
-    } catch (error: any) {
-      console.error('Error adding revenue:', error);
-      toast.error(error.message || 'حدث خطأ أثناء حفظ الإيراد');
+      // Convert string status to the expected enum type
+      const formattedBrands = data?.map(brand => ({
+        ...brand,
+        status: brand.status as "active" | "inactive" | "pending"
+      })) || [];
+      
+      setBrands(formattedBrands);
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+      toast.error("حدث خطأ أثناء تحميل البراندات");
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    // Update form data with the new value
+    const updatedFormData = {
+      ...formData,
+      [name]: type === 'number' ? parseFloat(value) : value
+    };
+    
+    // If units_sold or price_per_unit changed, calculate total_amount
+    if (name === 'units_sold' || name === 'price_per_unit') {
+      const units = name === 'units_sold' ? parseFloat(value) : formData.units_sold;
+      const price = name === 'price_per_unit' ? parseFloat(value) : formData.price_per_unit;
+      
+      updatedFormData.total_amount = units * price;
+    }
+    
+    setFormData(updatedFormData);
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setFormData((prev) => ({ ...prev, date }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (!formData.brand_id) {
+        throw new Error("يجب اختيار البراند");
+      }
+
+      const { error } = await supabase
+        .from("revenues")
+        .insert([
+          {
+            date: formData.date.toISOString().split('T')[0],
+            brand_id: formData.brand_id,
+            units_sold: formData.units_sold,
+            price_per_unit: formData.price_per_unit,
+            total_amount: formData.total_amount,
+            notes: formData.notes
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast.success("تم إضافة الإيراد بنجاح");
+      navigate("/finance");
+    } catch (error) {
+      console.error("Error adding revenue:", error);
+      toast.error("حدث خطأ أثناء إضافة الإيراد");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">إضافة إيراد جديد</h1>
-        <p className="text-gray-600">أدخل بيانات الإيراد</p>
       </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+      <Card>
+        <CardHeader>
+          <CardTitle>بيانات الإيراد</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>التاريخ</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "text-right w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            {field.value ? (
-                              format(field.value, "yyyy-MM-dd")
-                            ) : (
-                              <span>اختر تاريخ</span>
-                            )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="brand_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>اسم البراند</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
+              <div className="space-y-2">
+                <Label htmlFor="date">التاريخ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-right font-normal",
+                        !formData.date && "text-muted-foreground"
+                      )}
                     >
-                      <FormControl>
-                        <SelectTrigger className="text-right">
-                          <SelectValue placeholder="اختر البراند" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="pieces_sold"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>عدد القطع المباعة</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="أدخل عدد القطع" 
-                        className="text-right"
-                        disabled={isLoading}
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="price_per_piece"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>سعر القطعة (ج.م)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="أدخل سعر القطعة" 
-                        className="text-right"
-                        disabled={isLoading}
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ملاحظات (اختياري)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="أدخل ملاحظات الإيراد" 
-                        className="resize-none text-right"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <h3 className="font-medium text-green-900 mb-2">إجمالي الإيراد</h3>
-                <div className="text-3xl font-bold text-green-700">
-                  {totalRevenue.toLocaleString()} ج.م
-                </div>
-                <p className="text-sm text-green-600 mt-1">
-                  {piecesCount} قطعة × {pricePerPiece} ج.م
-                </p>
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {formData.date ? (
+                        format(formData.date, "PPP", { locale: arEG })
+                      ) : (
+                        <span>اختر تاريخ</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.date}
+                      onSelect={handleDateChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="brand_id">البراند</Label>
+                <Select
+                  value={formData.brand_id}
+                  onValueChange={(value) => handleSelectChange("brand_id", value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر البراند" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="units_sold">عدد القطع المباعة</Label>
+                <Input
+                  id="units_sold"
+                  name="units_sold"
+                  type="number"
+                  min={1}
+                  value={formData.units_sold || ""}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="price_per_unit">سعر القطعة</Label>
+                <Input
+                  id="price_per_unit"
+                  name="price_per_unit"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={formData.price_per_unit || ""}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="total_amount">إجمالي الإيراد</Label>
+                <Input
+                  id="total_amount"
+                  name="total_amount"
+                  type="number"
+                  value={formData.total_amount || ""}
+                  readOnly
+                  className="bg-gray-50"
+                />
               </div>
             </div>
-            
-            <div className="flex justify-end space-x-4 rtl:space-x-reverse">
-              <Button 
-                type="button" 
-                variant="outline" 
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">ملاحظات</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                placeholder="أي ملاحظات إضافية متعلقة بالإيراد"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => navigate('/finance')}
-                disabled={isLoading}
+                className="ml-2"
               >
                 إلغاء
               </Button>
-              <Button 
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? 'جاري الحفظ...' : 'حفظ الإيراد'}
+              <Button type="submit" disabled={loading}>
+                {loading ? "جاري الحفظ..." : "حفظ الإيراد"}
               </Button>
             </div>
           </form>
-        </Form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
-};
-
-export default AddRevenuePage;
+}

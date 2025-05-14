@@ -1,341 +1,245 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { toast } from '@/components/ui/sonner';
-import { Brand } from '@/types';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/sonner";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { arEG } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-const formSchema = z.object({
-  category: z.string().min(1, { message: "يرجى اختيار نوع المصروف" }),
-  date: z.date(),
-  brand_id: z.string().optional(),
-  amount: z.number().positive({ message: "يجب أن تكون القيمة رقم موجب" }),
-  description: z.string().optional(),
-  employee_id: z.string().optional(),
-});
+type Brand = {
+  id: string;
+  name: string;
+  product_type: string;
+  status: "active" | "inactive" | "pending";
+  social_links: any;
+  created_at: string;
+  updated_at: string;
+};
 
-type FormValues = z.infer<typeof formSchema>;
-
-const AddExpensePage = () => {
+export default function AddExpensePage() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [users, setUsers] = useState<{ id: string; full_name: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Initialize form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      category: '',
-      date: new Date(),
-      brand_id: undefined,
-      amount: 0,
-      description: '',
-      employee_id: undefined,
-    }
+  const [formData, setFormData] = useState({
+    category: "ads",
+    amount: 0,
+    date: new Date(),
+    brand_id: "",
+    description: ""
   });
 
-  // Fetch brands and employees
-  useState(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch brands
-        const { data: brandsData, error: brandsError } = await supabase
-          .from('brands')
-          .select('*');
-          
-        if (brandsError) throw brandsError;
-        setBrands(brandsData || []);
-        
-        // Fetch users
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, full_name');
-          
-        if (usersError) throw usersError;
-        setUsers(usersData || []);
-        
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast.error('حدث خطأ أثناء تحميل البيانات');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
+  useEffect(() => {
+    fetchBrands();
   }, []);
 
-  // Handle form submission
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
+  const fetchBrands = async () => {
     try {
-      // Insert expense into database
-      const { data: expense, error } = await supabase
-        .from('expenses')
-        .insert({
-          category: data.category,
-          date: format(data.date, 'yyyy-MM-dd'),
-          brand_id: data.brand_id || null,
-          amount: data.amount,
-          description: data.description || null,
-          employee_id: data.employee_id || null,
-        })
-        .select()
-        .single();
-      
+      const { data, error } = await supabase
+        .from("brands")
+        .select("*");
+
       if (error) throw error;
       
-      toast.success('تم إضافة المصروف بنجاح');
-      navigate('/finance');
-    } catch (error: any) {
-      console.error('Error adding expense:', error);
-      toast.error(error.message || 'حدث خطأ أثناء حفظ المصروف');
+      // Convert string status to the expected enum type
+      const formattedBrands = data?.map(brand => ({
+        ...brand,
+        status: brand.status as "active" | "inactive" | "pending"
+      })) || [];
+      
+      setBrands(formattedBrands);
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+      toast.error("حدث خطأ أثناء تحميل البراندات");
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseFloat(value) : value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setFormData((prev) => ({ ...prev, date }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from("expenses")
+        .insert([
+          {
+            category: formData.category,
+            amount: formData.amount,
+            date: formData.date.toISOString().split('T')[0],
+            brand_id: formData.brand_id || null,
+            description: formData.description
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast.success("تم إضافة المصروف بنجاح");
+      navigate("/finance");
+    } catch (error) {
+      console.error("Error adding expense:", error);
+      toast.error("حدث خطأ أثناء إضافة المصروف");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">إضافة مصروف جديد</h1>
-        <p className="text-gray-600">أدخل بيانات المصروف</p>
       </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+      <Card>
+        <CardHeader>
+          <CardTitle>بيانات المصروف</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نوع المصروف</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
+              <div className="space-y-2">
+                <Label htmlFor="category">نوع المصروف</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => handleSelectChange("category", value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر نوع المصروف" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ads">إعلانات</SelectItem>
+                    <SelectItem value="salaries">رواتب</SelectItem>
+                    <SelectItem value="rent">إيجار</SelectItem>
+                    <SelectItem value="supplies">مستلزمات</SelectItem>
+                    <SelectItem value="other">أخرى</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">القيمة بالجنيه</Label>
+                <Input
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={formData.amount || ""}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date">التاريخ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-right font-normal",
+                        !formData.date && "text-muted-foreground"
+                      )}
                     >
-                      <FormControl>
-                        <SelectTrigger className="text-right">
-                          <SelectValue placeholder="اختر نوع المصروف" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="salaries">رواتب</SelectItem>
-                        <SelectItem value="ads">إعلانات</SelectItem>
-                        <SelectItem value="rent">إيجار</SelectItem>
-                        <SelectItem value="supplies">مستلزمات</SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>التاريخ</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "text-right w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                            disabled={isLoading}
-                          >
-                            {field.value ? (
-                              format(field.value, "yyyy-MM-dd")
-                            ) : (
-                              <span>اختر تاريخ</span>
-                            )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {formData.date ? (
+                        format(formData.date, "PPP", { locale: arEG })
+                      ) : (
+                        <span>اختر تاريخ</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.date}
+                      onSelect={handleDateChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="brand_id">البراند المرتبط (اختياري)</Label>
+                <Select
+                  value={formData.brand_id}
+                  onValueChange={(value) => handleSelectChange("brand_id", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر البراند" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">بدون براند</SelectItem>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="brand_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>البراند المرتبط (اختياري)</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="text-right">
-                          <SelectValue placeholder="اختر البراند" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">بدون براند محدد</SelectItem>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>القيمة بالجنيه</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="أدخل المبلغ" 
-                        className="text-right"
-                        disabled={isLoading}
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="employee_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الموظف المسؤول (اختياري)</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="text-right">
-                          <SelectValue placeholder="اختر الموظف" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">بدون موظف محدد</SelectItem>
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.full_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
+
+            <div className="space-y-2">
+              <Label htmlFor="description">وصف المصروف</Label>
+              <Textarea
+                id="description"
                 name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ملاحظات / وصف العملية (اختياري)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="أدخل وصف المصروف" 
-                        className="resize-none text-right"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="وصف تفصيلي للمصروف"
+                rows={4}
               />
             </div>
-            
-            <div className="flex justify-end space-x-4 rtl:space-x-reverse">
-              <Button 
-                type="button" 
-                variant="outline" 
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => navigate('/finance')}
-                disabled={isLoading}
+                className="ml-2"
               >
                 إلغاء
               </Button>
-              <Button 
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? 'جاري الحفظ...' : 'حفظ المصروف'}
+              <Button type="submit" disabled={loading}>
+                {loading ? "جاري الحفظ..." : "حفظ المصروف"}
               </Button>
             </div>
           </form>
-        </Form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
-};
-
-export default AddExpensePage;
+}
