@@ -9,7 +9,327 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      brand_employees: {
+        Row: {
+          brand_id: string | null
+          created_at: string | null
+          employee_id: string | null
+          id: string
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_employees_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          product_type: string | null
+          social_links: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          product_type?: string | null
+          social_links?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          product_type?: string | null
+          social_links?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      employees: {
+        Row: {
+          commission_type: string | null
+          commission_value: number | null
+          created_at: string | null
+          id: string
+          salary: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          working_hours: number | null
+        }
+        Insert: {
+          commission_type?: string | null
+          commission_value?: number | null
+          created_at?: string | null
+          id?: string
+          salary?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          working_hours?: number | null
+        }
+        Update: {
+          commission_type?: string | null
+          commission_value?: number | null
+          created_at?: string | null
+          id?: string
+          salary?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          working_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          brand_id: string | null
+          category: string
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+        }
+        Insert: {
+          amount: number
+          brand_id?: string | null
+          category: string
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+        }
+        Update: {
+          amount?: number
+          brand_id?: string | null
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_buying: {
+        Row: {
+          brand_id: string | null
+          created_at: string | null
+          date: string
+          employee_id: string | null
+          id: string
+          order_cost: number | null
+          orders_count: number
+          platform: string
+          spend: number
+          updated_at: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string | null
+          date: string
+          employee_id?: string | null
+          id?: string
+          order_cost?: number | null
+          orders_count: number
+          platform: string
+          spend: number
+          updated_at?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          id?: string
+          order_cost?: number | null
+          orders_count?: number
+          platform?: string
+          spend?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_buying_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_buying_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          amount: number
+          brand_id: string | null
+          commission: number | null
+          created_at: string | null
+          date: string
+          employee_id: string | null
+          id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          brand_id?: string | null
+          commission?: number | null
+          created_at?: string | null
+          date: string
+          employee_id?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          brand_id?: string | null
+          commission?: number | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenues: {
+        Row: {
+          amount: number
+          brand_id: string | null
+          created_at: string | null
+          date: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          amount: number
+          brand_id?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          amount?: number
+          brand_id?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenues_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          permission_level: string
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          full_name: string
+          id?: string
+          permission_level: string
+          role: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          permission_level?: string
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
