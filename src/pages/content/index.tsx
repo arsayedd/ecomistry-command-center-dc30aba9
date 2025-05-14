@@ -66,7 +66,7 @@ const sampleEmployees: Employee[] = [
   }
 ];
 
-// Sample content tasks that match the ContentTask type from types/index.ts
+// Sample content tasks
 const sampleContentTasks: ContentTask[] = [
   {
     id: "1",
@@ -144,14 +144,24 @@ export default function ContentPage() {
 
         if (error) throw error;
         
-        // Ensure status is one of the allowed values
-        const typedData = (data || []).map(task => ({
-          ...task,
-          status: task.status === "قيد التنفيذ" ? "pending" :
-                  task.status === "تم التسليم" ? "completed" :
-                  task.status === "متأخر" ? "delayed" :
-                  "pending" // Default to pending if unknown status
-        })) as ContentTask[];
+        // Transform API response to match ContentTask type
+        const typedData = (data || []).map(task => {
+          // Map status to valid enum values
+          let status: "pending" | "completed" | "delayed" = "pending";
+          
+          if (task.status === "completed" || task.status === "تم التسليم") {
+            status = "completed";
+          } else if (task.status === "delayed" || task.status === "متأخر") {
+            status = "delayed";
+          }
+          
+          // Create a typed task object
+          return {
+            ...task,
+            status,
+            task_type: task.task_type as "post" | "ad" | "reel" | "product" | "landing_page" | "other"
+          } as ContentTask;
+        });
         
         return typedData;
       } catch (error) {
@@ -191,9 +201,15 @@ export default function ContentPage() {
   const updateTaskStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: "pending" | "completed" | "delayed" }) => {
       try {
+        // Convert status to Arabic for DB if needed
+        let statusValue = status;
+        if (status === "pending") statusValue = "قيد التنفيذ";
+        else if (status === "completed") statusValue = "تم التسليم";
+        else if (status === "delayed") statusValue = "متأخر";
+        
         const { error } = await supabase
           .from("content_tasks")
-          .update({ status })
+          .update({ status: statusValue })
           .eq("id", id);
         
         if (error) throw error;

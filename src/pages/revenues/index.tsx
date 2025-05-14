@@ -7,11 +7,8 @@ import {
   useQueryClient 
 } from "@tanstack/react-query";
 import { 
-  ChevronDown, 
-  ChevronUp, 
   Plus, 
   Search, 
-  Filter,
   MoreHorizontal,
   Edit,
   Trash
@@ -44,19 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Revenue {
-  id: string;
-  amount: number;
-  date: string;
-  created_at: string;
-  brand_id?: string;
-  source?: string;
-  brand?: {
-    id: string;
-    name: string;
-  };
-}
+import type { Revenue } from "@/types";
 
 // Sample data for initial display
 const sampleRevenues: Revenue[] = [
@@ -67,7 +52,7 @@ const sampleRevenues: Revenue[] = [
     created_at: "2025-05-12T00:00:00",
     brand_id: "1",
     source: "مبيعات",
-    brand: { id: "1", name: "براند أزياء" }
+    brand: { id: "1", name: "براند أزياء", status: "active" }
   },
   {
     id: "2",
@@ -76,7 +61,7 @@ const sampleRevenues: Revenue[] = [
     created_at: "2025-05-11T00:00:00",
     brand_id: "2",
     source: "خدمات",
-    brand: { id: "2", name: "براند تجميل" }
+    brand: { id: "2", name: "براند تجميل", status: "active" }
   },
   {
     id: "3",
@@ -85,16 +70,16 @@ const sampleRevenues: Revenue[] = [
     created_at: "2025-05-10T00:00:00",
     brand_id: "3",
     source: "استشارات",
-    brand: { id: "3", name: "براند أغذية" }
+    brand: { id: "3", name: "براند أغذية", status: "active" }
   }
 ];
 
 // Sample data for brands
 const sampleBrands = [
-  { id: "1", name: "براند أزياء" },
-  { id: "2", name: "براند تجميل" },
-  { id: "3", name: "براند أغذية" },
-  { id: "4", name: "براند إلكترونيات" }
+  { id: "1", name: "براند أزياء", status: "active" },
+  { id: "2", name: "براند تجميل", status: "active" },
+  { id: "3", name: "براند أغذية", status: "active" },
+  { id: "4", name: "براند إلكترونيات", status: "active" }
 ];
 
 export default function RevenuesPage() {
@@ -114,12 +99,12 @@ export default function RevenuesPage() {
           .from("revenues")
           .select(`
             *,
-            brand:brands(id, name)
+            brand:brands(id, name, status)
           `)
           .order("date", { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        return data as Revenue[] || [];
       } catch (error) {
         console.error("Error fetching revenues:", error);
         return sampleRevenues; // Fall back to sample data if API fails

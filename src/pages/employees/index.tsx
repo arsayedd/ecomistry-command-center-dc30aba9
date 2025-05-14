@@ -106,13 +106,13 @@ export default function EmployeesPage() {
       <Card>
         <CardContent className="p-0">
           <EmployeesTable
-            isLoading={isLoading}
             employees={filteredEmployees}
+            isLoading={isLoading}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             handleSort={handleSort}
-            updateEmployeeStatus={(params) => updateEmployeeStatus.mutate(params)}
-            deleteEmployee={(id) => deleteEmployee.mutate(id)}
+            updateEmployeeStatus={updateEmployeeStatus.mutate}
+            deleteEmployee={deleteEmployee.mutate}
             exportData={handleExport}
           />
         </CardContent>
