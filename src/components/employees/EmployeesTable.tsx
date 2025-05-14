@@ -5,54 +5,63 @@ import {
   TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Download, Edit, FileText, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import type { Employee } from "@/types";
+import { EmployeeExportOptions } from "./EmployeeExportOptions";
 
-interface EmployeesTableProps {
+export interface EmployeesTableProps {
   employees: Employee[];
-  onEdit?: (employee: Employee) => void;
-  onDelete?: (employee: Employee) => void;
-  onExport?: (type: 'pdf' | 'excel') => void;
+  isLoading?: boolean;
+  sortColumn: string | null;
+  sortDirection: string;
+  handleSort: (column: string) => void;
+  updateEmployeeStatus: (params: { id: string; status: "active" | "inactive" | "probation" }) => void;
+  deleteEmployee: (id: string) => void;
+  exportData: (type: 'pdf' | 'excel') => void;
 }
 
 export function EmployeesTable({ 
   employees, 
-  onEdit, 
-  onDelete,
-  onExport
+  isLoading,
+  sortColumn,
+  sortDirection,
+  handleSort,
+  updateEmployeeStatus,
+  deleteEmployee,
+  exportData
 }: EmployeesTableProps) {
+  if (isLoading) {
+    return <div className="text-center py-10">جاري تحميل البيانات...</div>;
+  }
+
   return (
     <div className="w-full overflow-auto">
-      <div className="flex justify-end mb-4 gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-1"
-          onClick={() => onExport && onExport('pdf')}
-        >
-          <FileText className="h-4 w-4" />
-          <span>تصدير PDF</span>
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-1"
-          onClick={() => onExport && onExport('excel')}
-        >
-          <Download className="h-4 w-4" />
-          <span>تصدير Excel</span>
-        </Button>
-      </div>
+      <EmployeeExportOptions onExport={exportData} />
 
       <Table dir="rtl">
         <TableHeader>
           <TableRow>
-            <TableHead className="text-right">الاسم</TableHead>
+            <TableHead 
+              className="text-right cursor-pointer" 
+              onClick={() => handleSort('full_name')}
+            >
+              الاسم {sortColumn === 'full_name' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </TableHead>
             <TableHead className="text-right">البريد الإلكتروني</TableHead>
-            <TableHead className="text-right">القسم</TableHead>
+            <TableHead 
+              className="text-right cursor-pointer"
+              onClick={() => handleSort('department')}
+            >
+              القسم {sortColumn === 'department' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </TableHead>
             <TableHead className="text-right">الوظيفة</TableHead>
             <TableHead className="text-right">نوع التعاقد</TableHead>
-            <TableHead className="text-right">المرتب</TableHead>
+            <TableHead 
+              className="text-right cursor-pointer"
+              onClick={() => handleSort('salary')}
+            >
+              المرتب {sortColumn === 'salary' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </TableHead>
             <TableHead className="text-right">نوع العمولة</TableHead>
             <TableHead className="text-right">قيمة العمولة</TableHead>
             <TableHead className="text-right">الحالة</TableHead>
@@ -113,14 +122,21 @@ export function EmployeesTable({
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => onEdit && onEdit(employee)}
+                      onClick={() => {
+                        // Toggle status
+                        const newStatus = employee.status === "active" ? "inactive" : "active";
+                        updateEmployeeStatus({ 
+                          id: employee.id,
+                          status: newStatus as "active" | "inactive" | "probation"
+                        });
+                      }}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => onDelete && onDelete(employee)}
+                      onClick={() => deleteEmployee(employee.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
