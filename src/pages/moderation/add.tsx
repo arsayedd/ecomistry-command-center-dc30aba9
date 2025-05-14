@@ -1,22 +1,25 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ModerationReportForm } from "@/components/moderation/ModerationReportForm";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import ModerationReportForm from '@/components/moderation/ModerationReportForm';
 
-export default function AddModerationPage() {
+const AddModerationPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleSubmit = () => {
+    navigate('/moderation');
+  };
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold">إضافة تقرير مودريشن جديد</h1>
+        <p className="text-muted-foreground">أدخل بيانات تقرير المودريشن للموظفين</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>بيانات التقرير</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ModerationReportForm />
-        </CardContent>
-      </Card>
+      <ModerationReportForm onSuccess={handleSubmit} />
     </div>
   );
-}
+};
+
+export default AddModerationPage;

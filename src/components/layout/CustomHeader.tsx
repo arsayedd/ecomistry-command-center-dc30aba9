@@ -1,9 +1,11 @@
 
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 export const CustomHeader = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="bg-background border-b border-border h-16 px-4 flex items-center justify-between">
@@ -18,9 +20,15 @@ export const CustomHeader = () => {
       <div className="flex items-center space-x-4 rtl:space-x-reverse">
         <ThemeToggle />
         {user && (
-          <div className="text-sm font-medium">
-            مرحباً, {user.user_metadata?.full_name || user.email}
-          </div>
+          <>
+            <div className="text-sm font-medium ml-4">
+              مرحباً, {user.user_metadata?.full_name || user.email}
+            </div>
+            <Button variant="ghost" size="sm" onClick={signOut} className="flex items-center gap-2">
+              <LogOut size={16} />
+              <span>تسجيل الخروج</span>
+            </Button>
+          </>
         )}
       </div>
     </header>

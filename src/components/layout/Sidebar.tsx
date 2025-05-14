@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -15,8 +15,11 @@ import {
   X,
   Database,
   Palette,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   className?: string;
@@ -25,6 +28,8 @@ interface SidebarProps {
 export default function Sidebar({ className }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navItems = [
     { path: '/', label: 'الرئيسية', icon: <LayoutDashboard size={20} /> },
@@ -39,6 +44,11 @@ export default function Sidebar({ className }: SidebarProps) {
     { path: '/database', label: 'قاعدة البيانات', icon: <Database size={20} /> },
     { path: '/settings', label: 'الإعدادات', icon: <Settings size={20} /> },
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth/login');
+  };
 
   return (
     <>
@@ -89,6 +99,18 @@ export default function Sidebar({ className }: SidebarProps) {
                 </NavLink>
               </li>
             ))}
+            
+            {/* Logout Button */}
+            <li>
+              <Button
+                variant="ghost"
+                className="flex w-full items-center gap-3 px-4 py-2 rounded-md text-sm text-red-600 hover:bg-red-100 hover:text-red-700"
+                onClick={handleLogout}
+              >
+                <LogOut size={20} />
+                <span>تسجيل الخروج</span>
+              </Button>
+            </li>
           </ul>
         </nav>
 

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
@@ -15,7 +15,10 @@ import {
   ShoppingCart,
   Smartphone,
   Users,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const menuItems = [
   {
@@ -78,6 +81,13 @@ const menuItems = [
 export function CustomSidebar() {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth/login');
+  };
 
   return (
     <div
@@ -144,6 +154,21 @@ export function CustomSidebar() {
               </NavLink>
             ))}
           </div>
+        </div>
+
+        {/* Logout Button */}
+        <div className={cn(
+          "p-4 border-t",
+          isCollapsed && "p-2 flex justify-center"
+        )}>
+          <Button 
+            variant="ghost" 
+            className="w-full flex items-center justify-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+            {!isCollapsed && <span>تسجيل الخروج</span>}
+          </Button>
         </div>
 
         {/* Current Date */}

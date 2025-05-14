@@ -1,55 +1,51 @@
-
-/**
- * Export data to CSV file and trigger download
- * @param data Array of objects to export
- * @param filename Filename without extension
- */
-export function exportToCSV(data: any[], filename: string): void {
-  if (!data || !data.length) {
-    console.error("No data to export");
-    return;
+// إضافة وظيفة تصدير بصيغة PDF
+export const exportToPDF = (data: any[], fileName: string) => {
+  try {
+    // استخدام مكتبة jspdf و jspdf-autotable
+    const { jsPDF } = require("jspdf");
+    const autoTable = require("jspdf-autotable").default;
+    
+    const doc = new jsPDF();
+    
+    // تحديد العنوان
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(fileName, 14, 15);
+    
+    // إعداد البيانات للجدول
+    const headers = Object.keys(data[0]);
+    const rows = data.map(item => Object.values(item));
+    
+    // إنشاء الجدول
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 20
+    });
+    
+    // حفظ الملف
+    doc.save(`${fileName}.pdf`);
+    
+  } catch (error) {
+    console.error('Error exporting to PDF:', error);
+    alert('حدث خطأ أثناء تصدير البيانات إلى PDF');
   }
+};
 
-  // Get headers from first object
-  const headers = Object.keys(data[0]);
-  
-  // Create CSV rows from data
-  const csvRows = [
-    // Headers row
-    headers.join(','),
-    // Data rows
-    ...data.map(row => 
-      headers.map(header => {
-        const cell = row[header] ?? '';
-        // Escape quotes and wrap in quotes if needed
-        const cellStr = String(cell).replace(/"/g, '""');
-        return cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n') 
-          ? `"${cellStr}"`
-          : cellStr;
-      }).join(',')
-    )
-  ];
-
-  // Join rows into a single string
-  const csvContent = csvRows.join('\n');
-  
-  // Create a Blob containing the CSV data
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  
-  // Create a URL for the Blob
-  const url = URL.createObjectURL(blob);
-  
-  // Create a download link
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  link.style.display = 'none';
-  
-  // Add to DOM, click, and remove
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  // Free up the URL object
-  URL.revokeObjectURL(url);
-}
+export const exportToCSV = (data: any[], fileName: string) => {
+  try {
+    const { utils, writeFile } = require("xlsx");
+    
+    // تحويل البيانات إلى جدول بيانات
+    const worksheet = utils.json_to_sheet(data);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    
+    // حفظ الملف
+    writeFile(workbook, `${fileName}.csv`);
+    
+  } catch (error) {
+    console.error('Error exporting to CSV:', error);
+    alert('حدث خطأ أثناء تصدير البيانات إلى CSV');
+  }
+};

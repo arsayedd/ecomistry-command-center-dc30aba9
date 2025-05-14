@@ -1,185 +1,432 @@
-
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
-import { MediaBuyingFilters } from "@/components/media-buying/MediaBuyingFilters";
-import { MediaBuyingList } from "@/components/media-buying/MediaBuyingList";
-import { MediaBuyingAnalytics } from "@/components/media-buying/MediaBuyingAnalytics";
-import { exportToCSV } from "@/utils/exportUtils";
-import { useToast } from "@/hooks/use-toast";
-import { Brand, User } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 
+// Define MediaBuyingItem type
 interface MediaBuyingItem {
   id: string;
-  platform: string;
-  date: string;
   brand_id: string;
   employee_id: string;
+  platform: string;
+  date: string;
   spend: number;
   orders_count: number;
   order_cost: number;
-  brand?: { id: string; name: string };
-  employee?: { id: string; full_name: string };
-  notes?: string;
   roas?: number;
+  campaign_link?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
+  brand?: {
+    id: string;
+    name: string;
+  };
+  employee?: {
+    id: string;
+    full_name: string;
+  };
 }
 
 export default function MediaBuyingPage() {
-  const [searchValue, setSearchValue] = useState("");
-  const [platform, setPlatform] = useState("");
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [brandId, setBrandId] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
-  
+  const [mediaBuying, setMediaBuying] = useState<MediaBuyingItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
+  const [filters, setFilters] = useState({
+    brand_id: "",
+    platform: "",
+    employee_id: "",
+    date_from: "",
+    date_to: "",
+  });
   const { toast } = useToast();
 
-  // Fetch media buying records with related data
-  const { data: mediaBuying, isLoading } = useQuery({
-    queryKey: ["media-buying", searchValue, platform, date, brandId, employeeId],
-    queryFn: async () => {
-      let query = supabase
-        .from("media_buying")
-        .select(`
-          *,
-          brand:brands(id, name),
-          employee:users(id, full_name)
-        `);
-      
-      // Apply filters
-      if (platform) {
-        query = query.eq("platform", platform);
-      }
-      
-      if (date) {
-        const dateString = date.toISOString().split("T")[0];
-        query = query.eq("date", dateString);
-      }
-      
-      if (brandId) {
-        query = query.eq("brand_id", brandId);
-      }
-      
-      if (employeeId) {
-        query = query.eq("employee_id", employeeId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        throw error;
-      }
-      
-      return (data || []) as MediaBuyingItem[];
-    },
-  });
-
-  // Filter data based on search term
-  const filteredData = mediaBuying?.filter(record => {
-    if (!searchValue) return true;
-    
-    const searchTerm = searchValue.toLowerCase();
-    const brandName = record.brand?.name?.toLowerCase() || "";
-    const employeeName = record.employee?.full_name?.toLowerCase() || "";
-    const notes = record.notes?.toLowerCase() || "";
-    
-    return (
-      brandName.includes(searchTerm) ||
-      employeeName.includes(searchTerm) ||
-      notes.includes(searchTerm)
-    );
-  }) || [];
-
-  // Handle export functionality
-  const handleExport = () => {
-    try {
-      if (!filteredData.length) {
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const { data, error } = await supabase.from("brands").select("id, name");
+        if (error) throw error;
+        if (data) setBrands(data);
+      } catch (error: any) {
         toast({
-          title: "لا توجد بيانات للتصدير",
-          description: "لا توجد بيانات متاحة للتصدير حاليًا",
+          title: "خطأ",
+          description: `فشل في جلب بيانات البراندات: ${error.message}`,
           variant: "destructive",
         });
-        return;
       }
+    };
 
-      // Format data for export
-      const dataToExport = filteredData.map(record => ({
-        "المنصة": getPlatformName(record.platform),
-        "التاريخ": new Date(record.date).toLocaleDateString("ar-EG"),
-        "البراند": record.brand?.name || "غير محدد",
-        "الموظف": record.employee?.full_name || "غير محدد",
-        "الإنفاق": record.spend,
-        "عدد الطلبات": record.orders_count,
-        "تكلفة الطلب (CPP)": record.orders_count > 0 ? record.spend / record.orders_count : 0,
-        "العائد على الإنفاق (ROAS)": record.roas || "غير محدد",
-        "ملاحظات": record.notes || ""
+    const fetchEmployees = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("id, full_name")
+          .eq("role", "employee");
+        if (error) throw error;
+        if (data) setEmployees(data);
+      } catch (error: any) {
+        toast({
+          title: "خطأ",
+          description: `فشل في جلب بيانات الموظفين: ${error.message}`,
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchBrands();
+    fetchEmployees();
+  }, [toast]);
+  
+  useEffect(() => {
+    const fetchMediaBuying = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from("media_buying")
+          .select("*, brand:brand_id(*), employee:employee_id(*)");
+        
+        // Apply filters
+        if (filters.brand_id) {
+          query = query.eq("brand_id", filters.brand_id);
+        }
+        if (filters.platform) {
+          query = query.eq("platform", filters.platform);
+        }
+        if (filters.employee_id) {
+          query = query.eq("employee_id", filters.employee_id);
+        }
+        if (filters.date_from) {
+          query = query.gte("date", filters.date_from);
+        }
+        if (filters.date_to) {
+          query = query.lte("date", filters.date_to);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Process data to ensure proper structure
+          const processedData: MediaBuyingItem[] = data.map(item => ({
+            id: item.id,
+            brand_id: item.brand_id,
+            employee_id: item.employee_id,
+            platform: item.platform,
+            date: item.date,
+            spend: item.spend,
+            orders_count: item.orders_count,
+            order_cost: item.order_cost,
+            roas: (item as any).roas,
+            campaign_link: (item as any).campaign_link,
+            notes: (item as any).notes,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            brand: item.brand,
+            employee: {
+              id: item.employee.id || "",
+              full_name: typeof item.employee === 'object' && 'full_name' in item.employee 
+                ? item.employee.full_name 
+                : "غير معروف"
+            }
+          }));
+          
+          setMediaBuying(processedData);
+        }
+      } catch (error: any) {
+        toast({
+          title: "خطأ",
+          description: `فشل في جلب بيانات الميديا بايينج: ${error.message}`,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMediaBuying();
+  }, [filters]);
+
+  const handleFilterChange = (e: any) => {
+    const { name, value } = e.target;
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value,
+    }));
+  };
+
+  const handleDateChange = (name: string, date: Date | undefined) => {
+    if (date) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        [name]: format(date, "yyyy-MM-dd"),
       }));
-
-      exportToCSV(dataToExport, "media-buying-report");
-      
-      toast({
-        title: "تم تصدير البيانات بنجاح",
-        description: "تم تصدير بيانات الحملات الإعلانية بنجاح",
-      });
-    } catch (error) {
-      console.error("Error exporting data:", error);
-      toast({
-        title: "خطأ في تصدير البيانات",
-        description: "حدث خطأ أثناء محاولة تصدير البيانات",
-        variant: "destructive",
-      });
+    } else {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        [name]: "",
+      }));
     }
   };
 
-  // Helper function to get platform names in Arabic
-  function getPlatformName(platform: string): string {
-    const platformNames: Record<string, string> = {
-      facebook: "فيسبوك",
-      instagram: "إنستجرام",
-      tiktok: "تيك توك",
-      google: "جوجل",
-      other: "أخرى",
-    };
-    return platformNames[platform] || platform;
-  }
+  const handleExportCSV = () => {
+    if (!mediaBuying.length) return;
+    
+    const exportData = mediaBuying.map(item => ({
+      'التاريخ': item.date,
+      'المنصة': item.platform,
+      'البراند': item.brand?.name || '',
+      'الموظف': item.employee?.full_name || '',
+      'الإنفاق': item.spend,
+      'عدد الطلبات': item.orders_count,
+      'تكلفة الطلب': item.order_cost,
+      'ROAS': item.roas || 0,
+      'ملاحظات': item.notes || ''
+    }));
+    
+    exportToCSV(exportData, 'media_buying_report');
+  };
+  
+  const handleExportPDF = () => {
+    if (!mediaBuying.length) return;
+    
+    const exportData = mediaBuying.map(item => ({
+      'التاريخ': item.date,
+      'المنصة': item.platform,
+      'البراند': item.brand?.name || '',
+      'الموظف': item.employee?.full_name || '',
+      'الإنفاق': item.spend,
+      'عدد الطلبات': item.orders_count,
+      'تكلفة الطلب': item.order_cost
+    }));
+    
+    exportToPDF(exportData, 'media_buying_report');
+  };
 
   return (
-    <div dir="rtl" className="p-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold">إدارة الميديا بايينج</h1>
-        <Link to="/media-buying/add">
-          <Button className="w-full md:w-auto">
-            <Plus className="ml-2 h-4 w-4" /> إضافة حملة جديدة
-          </Button>
-        </Link>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">إدارة ميديا بايينج</h1>
+        <p className="text-gray-500">
+          عرض وتعديل وإضافة بيانات ميديا بايينج للموظفين
+        </p>
       </div>
 
-      {/* Analytics Charts */}
-      {filteredData.length > 0 && (
-        <MediaBuyingAnalytics data={filteredData} />
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>فلترة البيانات</CardTitle>
+          <CardDescription>
+            استخدم الفلاتر لتضييق نطاق البيانات المعروضة
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          <div>
+            <Label htmlFor="brand_id">البراند</Label>
+            <Select name="brand_id" onValueChange={(value) => setFilters({...filters, brand_id: value})}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="اختر براند" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">إظهار الكل</SelectItem>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Filters */}
-      <MediaBuyingFilters
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        platform={platform}
-        onPlatformChange={setPlatform}
-        date={date}
-        onDateChange={setDate}
-        brandId={brandId}
-        onBrandChange={setBrandId}
-        employeeId={employeeId}
-        onEmployeeChange={setEmployeeId}
-        onExport={handleExport}
-      />
+          <div>
+            <Label htmlFor="platform">المنصة</Label>
+            <Input
+              type="text"
+              id="platform"
+              name="platform"
+              placeholder="اسم المنصة"
+              value={filters.platform}
+              onChange={handleFilterChange}
+            />
+          </div>
 
-      {/* Data Table */}
-      <MediaBuyingList data={filteredData} isLoading={isLoading} />
+          <div>
+            <Label htmlFor="employee_id">الموظف</Label>
+            <Select name="employee_id" onValueChange={(value) => setFilters({...filters, employee_id: value})}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="اختر موظف" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">إظهار الكل</SelectItem>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="md:col-span-1">
+            <Label>من تاريخ</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !filters.date_from && "text-muted-foreground"
+                  )}
+                >
+                  {filters.date_from ? (
+                    format(new Date(filters.date_from), "yyyy-MM-dd")
+                  ) : (
+                    <span>اختر تاريخ</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={filters.date_from ? new Date(filters.date_from) : undefined}
+                  onSelect={(date) => handleDateChange("date_from", date)}
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("2020-01-01")
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="md:col-span-1">
+            <Label>إلى تاريخ</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !filters.date_to && "text-muted-foreground"
+                  )}
+                >
+                  {filters.date_to ? (
+                    format(new Date(filters.date_to), "yyyy-MM-dd")
+                  ) : (
+                    <span>اختر تاريخ</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={filters.date_to ? new Date(filters.date_to) : undefined}
+                  onSelect={(date) => handleDateChange("date_to", date)}
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("2020-01-01")
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="my-6 flex justify-between items-center">
+        <Button asChild>
+          <Link to="/media-buying/add">إضافة ميديا بايينج</Link>
+        </Button>
+        <div>
+          <Button onClick={handleExportCSV} className="ml-2">تصدير CSV</Button>
+          <Button onClick={handleExportPDF}>تصدير PDF</Button>
+        </div>
+      </div>
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>البراند</TableHead>
+              <TableHead>المنصة</TableHead>
+              <TableHead>الموظف</TableHead>
+              <TableHead>تاريخ الحملة</TableHead>
+              <TableHead>الإنفاق</TableHead>
+              <TableHead>عدد الطلبات</TableHead>
+              <TableHead>تكلفة الطلب</TableHead>
+              <TableHead className="text-right">الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center">
+                  جاري التحميل...
+                </TableCell>
+              </TableRow>
+            ) : mediaBuying.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center">
+                  لا توجد بيانات
+                </TableCell>
+              </TableRow>
+            ) : (
+              mediaBuying.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.brand?.name}</TableCell>
+                  <TableCell>{item.platform}</TableCell>
+                  <TableCell>{item.employee?.full_name}</TableCell>
+                  <TableCell>{item.date}</TableCell>
+                  <TableCell>{item.spend}</TableCell>
+                  <TableCell>{item.orders_count}</TableCell>
+                  <TableCell>{item.order_cost}</TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="link">
+                      <Link to={`/media-buying/${item.id}/edit`}>تعديل</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }
