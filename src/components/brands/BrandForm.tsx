@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +27,7 @@ interface BrandFormProps {
   initialData?: Partial<Brand>;
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
+  isEditing?: boolean; // Added isEditing prop to the interface
 }
 
 const formSchema = z.object({
@@ -44,7 +44,7 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-export function BrandForm({ initialData = {}, onSubmit, isSubmitting = false }: BrandFormProps) {
+export function BrandForm({ initialData = {}, onSubmit, isSubmitting = false, isEditing = false }: BrandFormProps) {
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData.logo_url || null);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -294,7 +294,7 @@ export function BrandForm({ initialData = {}, onSubmit, isSubmitting = false }: 
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "جاري الحفظ..." : "حفظ البراند"}
+            {isSubmitting ? "جاري الحفظ..." : isEditing ? "تحديث البراند" : "حفظ البراند"}
           </Button>
         </div>
       </form>

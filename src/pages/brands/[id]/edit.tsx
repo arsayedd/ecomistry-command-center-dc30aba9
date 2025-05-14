@@ -85,7 +85,7 @@ export default function EditBrandPage() {
           </CardContent>
         </Card>
       ) : brand ? (
-        <BrandForm initialData={brand} onSubmit={handleUpdateBrand} isEditing />
+        <BrandForm initialData={brand} onSubmit={handleUpdateBrand} isEditing={true} />
       ) : (
         <Card>
           <CardHeader>
