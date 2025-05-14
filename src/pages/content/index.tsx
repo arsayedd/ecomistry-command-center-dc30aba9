@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -142,7 +143,17 @@ export default function ContentPage() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        return data as ContentTask[] || [];
+        
+        // Ensure status is one of the allowed values
+        const typedData = (data || []).map(task => ({
+          ...task,
+          status: task.status === "قيد التنفيذ" ? "pending" :
+                  task.status === "تم التسليم" ? "completed" :
+                  task.status === "متأخر" ? "delayed" :
+                  "pending" // Default to pending if unknown status
+        })) as ContentTask[];
+        
+        return typedData;
       } catch (error) {
         console.error("Error fetching content tasks:", error);
         return sampleContentTasks;
@@ -178,7 +189,7 @@ export default function ContentPage() {
 
   // Update task status mutation
   const updateTaskStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+    mutationFn: async ({ id, status }: { id: string, status: "pending" | "completed" | "delayed" }) => {
       try {
         const { error } = await supabase
           .from("content_tasks")
@@ -190,7 +201,7 @@ export default function ContentPage() {
       } catch (error) {
         console.error("Error updating task status:", error);
         // Update locally for sample data
-        setLocalTasks(tasks => tasks.map(task => 
+        setLocalTasks(prevTasks => prevTasks.map(task => 
           task.id === id ? {...task, status} : task
         ));
         return { id, status };
@@ -198,7 +209,7 @@ export default function ContentPage() {
     },
     onSuccess: ({ id, status }) => {
       // Update local state in case we're using sample data
-      setLocalTasks(tasks => tasks.map(task => 
+      setLocalTasks(prevTasks => prevTasks.map(task => 
         task.id === id ? {...task, status} : task
       ));
       

@@ -16,12 +16,14 @@ export interface ContentTasksTableProps {
   tasks: ContentTask[];
   isLoading?: boolean;
   onDelete?: (id: string) => void;
+  updateTaskStatus?: (params: { id: string, status: "pending" | "completed" | "delayed" }) => void;
 }
 
 export function ContentTasksTable({ 
   tasks, 
   isLoading, 
-  onDelete 
+  onDelete,
+  updateTaskStatus
 }: ContentTasksTableProps) {
   if (isLoading) {
     return <div className="text-center py-10">جاري تحميل البيانات...</div>;
