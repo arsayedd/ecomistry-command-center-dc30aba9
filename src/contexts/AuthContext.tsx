@@ -85,19 +85,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Create user profile record if user was created
       if (data.user) {
-        // Insert into users table with a single INSERT operation
-        const { error: profileError } = await supabase.from('users').insert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          role,
-          department: department || null,
-          permission_level: role === 'admin' ? 'full' : 'read'
-        });
-        
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          throw new Error("فشل إنشاء ملف المستخدم: " + profileError.message);
+        try {
+          // Insert into users table with a single INSERT operation
+          const { error: profileError } = await supabase.from('users').insert({
+            id: data.user.id,
+            email,
+            full_name: fullName,
+            role,
+            department: department || null,
+            permission_level: role === 'admin' ? 'full' : 'read'
+          });
+          
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            // If there's a recursion error, provide a specific message
+            if (profileError.message && profileError.message.includes('infinite recursion')) {
+              throw new Error("هناك مشكلة في إعدادات قواعد البيانات. يرجى الاتصال بمسؤول النظام");
+            }
+            throw new Error("فشل إنشاء ملف المستخدم: " + profileError.message);
+          }
+        } catch (profileError: any) {
+          console.error("Profile creation exception:", profileError);
+          throw profileError;
         }
       }
       
