@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import EmployeeSearchFilters from "@/components/employees/EmployeeSearchFilters";
-import EmployeesTable from "@/components/employees/EmployeesTable";
+import { EmployeesTable } from "@/components/employees/EmployeesTable";
 import { exportToPDF, exportToExcel } from "@/utils/exportUtils";
 
 // Define proper interface for employee update operation
