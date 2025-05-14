@@ -37,8 +37,9 @@ export default function EmployeesPage() {
 
   const fetchEmployees = async () => {
     try {
+      // Fix: Change from "employees" to "users" table which exists in Supabase
       const { data, error } = await supabase
-        .from("employees")
+        .from("users")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -54,12 +55,11 @@ export default function EmployeesPage() {
 
   const handleExportPDF = () => {
     const filteredData = filterEmployees();
+    // Fix: Use only 3 arguments as expected by the function
     exportToPDF(
       "employees_report",
       "تقرير الموظفين",
-      filteredData,
-      ["الاسم", "البريد الإلكتروني", "القسم", "الحالة"],
-      ["full_name", "email", "department", "status"]
+      filteredData
     );
   };
 
@@ -72,8 +72,9 @@ export default function EmployeesPage() {
     if (!deleteEmployeeId) return;
 
     try {
+      // Fix: Change from "employees" to "users" table which exists in Supabase
       const { error } = await supabase
-        .from("employees")
+        .from("users")
         .delete()
         .eq("id", deleteEmployeeId);
 
@@ -94,8 +95,8 @@ export default function EmployeesPage() {
   const filterEmployees = () => {
     return employees.filter(employee => {
       const matchesSearch = 
-        employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.email.toLowerCase().includes(searchTerm.toLowerCase());
+        employee.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
       const matchesDepartment = departmentFilter === "all" || employee.department === departmentFilter;
@@ -233,7 +234,7 @@ export default function EmployeesPage() {
                     <TableRow key={employee.id}>
                       <TableCell className="font-medium">{employee.full_name}</TableCell>
                       <TableCell>{employee.email}</TableCell>
-                      <TableCell>{getDepartmentDisplay(employee.department)}</TableCell>
+                      <TableCell>{employee.department ? getDepartmentDisplay(employee.department) : "-"}</TableCell>
                       <TableCell>{employee.job_title || "-"}</TableCell>
                       <TableCell>
                         {employee.employment_type === "full-time" && "دوام كامل"}
@@ -242,7 +243,7 @@ export default function EmployeesPage() {
                         {employee.employment_type === "per-piece" && "بالقطعة"}
                         {!employee.employment_type && "-"}
                       </TableCell>
-                      <TableCell>{getStatusBadge(employee.status)}</TableCell>
+                      <TableCell>{employee.status ? getStatusBadge(employee.status) : "-"}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Link to={`/employees/${employee.id}/edit`}>

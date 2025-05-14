@@ -50,8 +50,9 @@ export default function EditEmployeePage() {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
+        // Fix: Change from "employees" to "users" table which exists in Supabase
         const { data, error } = await supabase
-          .from("employees")
+          .from("users")
           .select("*")
           .eq("id", id)
           .single();
@@ -62,9 +63,9 @@ export default function EditEmployeePage() {
 
         if (data) {
           setFormData({
-            full_name: data.full_name,
-            email: data.email,
-            department: data.department,
+            full_name: data.full_name || "",
+            email: data.email || "",
+            department: data.department || "",
             job_title: data.job_title || "",
             employment_type: data.employment_type || "full-time",
             salary_type: data.salary_type || "monthly",
@@ -73,8 +74,8 @@ export default function EditEmployeePage() {
             commission_value: data.commission_value || 0,
             status: data.status || "active",
             access_rights: data.access_rights || "view",
-            role: data.role,
-            permission_level: data.permission_level
+            role: data.role || "",
+            permission_level: data.permission_level || ""
           });
         }
       } catch (error) {
@@ -111,8 +112,9 @@ export default function EditEmployeePage() {
     setSaving(true);
 
     try {
+      // Fix: Change from "employees" to "users" table which exists in Supabase
       const { error } = await supabase
-        .from("employees")
+        .from("users")
         .update({
           full_name: formData.full_name,
           email: formData.email,
@@ -127,7 +129,7 @@ export default function EditEmployeePage() {
           access_rights: formData.access_rights,
           role: formData.role,
           permission_level: formData.permission_level,
-          updated_at: new Date()
+          updated_at: new Date().toISOString() // Fix: Convert Date to string
         })
         .eq("id", id);
 

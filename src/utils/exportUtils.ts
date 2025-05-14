@@ -1,94 +1,66 @@
 
 import jsPDF from 'jspdf';
-// For jspdf-autotable we need to add the type declaration
 import 'jspdf-autotable';
+import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
-// Declare the type for jspdf-autotable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
-
-// Define interfaces for export functions
-interface ExportColumn {
-  header: string;
-  dataKey: string;
-}
-
-export const exportToPDF = (data: any[], title: string, columns: ExportColumn[]) => {
-  const doc = new jsPDF('landscape');
+/**
+ * Export data to PDF
+ * @param fileName The name of the file to save
+ * @param title The title to display on the PDF
+ * @param data The data to export
+ */
+export const exportToPDF = (fileName: string, title: string, data: any[]) => {
+  const doc = new jsPDF();
   
   // Add title
   doc.setFontSize(18);
-  doc.text(title, 14, 22);
+  doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
   
-  // Convert data to array of arrays for autotable
-  const tableData = data.map((item) => {
-    return columns.map((column) => {
-      // Handle nested properties with dot notation (e.g. "user.full_name")
-      if (column.dataKey.includes('.')) {
-        const parts = column.dataKey.split('.');
-        let value = item;
-        for (const part of parts) {
-          value = value?.[part];
-          if (value === undefined || value === null) break;
-        }
-        return value || '';
+  // Get headers and columns dynamically from first data item
+  if (data.length > 0) {
+    const headers = Object.keys(data[0]);
+    const rows = data.map(item => Object.values(item));
+    
+    // Add table
+    (doc as any).autoTable({
+      head: [headers],
+      body: rows,
+      startY: 25,
+      theme: 'grid',
+      styles: { 
+        font: 'helvetica',
+        fontSize: 10
+      },
+      headStyles: {
+        fillColor: [75, 75, 75],
+        textColor: 255
       }
-      return item[column.dataKey] || '';
     });
-  });
-  
-  // Add table
-  doc.autoTable({
-    startY: 30,
-    head: [columns.map((col) => col.header)],
-    body: tableData,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-    },
-    styles: {
-      font: 'helvetica',
-      fontSize: 10,
-      overflow: 'linebreak',
-      cellPadding: 3,
-      halign: 'right', // Right-align for Arabic
-    },
-  });
+  } else {
+    doc.setFontSize(12);
+    doc.text('No data available', doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+  }
   
   // Save PDF
-  doc.save(`${title}.pdf`);
+  doc.save(`${fileName}.pdf`);
 };
 
-export const exportToExcel = (data: any[], title: string, columns: ExportColumn[]) => {
-  // Convert data to worksheet format
-  const worksheet = XLSX.utils.json_to_sheet(data.map((item) => {
-    const row: Record<string, any> = {};
-    columns.forEach((column) => {
-      // Handle nested properties with dot notation
-      if (column.dataKey.includes('.')) {
-        const parts = column.dataKey.split('.');
-        let value = item;
-        for (const part of parts) {
-          value = value?.[part];
-          if (value === undefined || value === null) break;
-        }
-        row[column.header] = value || '';
-      } else {
-        row[column.header] = item[column.dataKey] || '';
-      }
-    });
-    return row;
-  }));
-  
-  // Create workbook and add the worksheet
+/**
+ * Export data to Excel
+ * @param fileName The name of the file to save
+ * @param sheetName The name of the sheet
+ * @param data The data to export
+ */
+export const exportToExcel = (fileName: string, sheetName: string, data: any[]) => {
+  const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, title);
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
   
-  // Save Excel file
-  XLSX.writeFile(workbook, `${title}.xlsx`);
+  // Generate Excel file
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+  
+  // Save file
+  saveAs(blob, `${fileName}.xlsx`);
 };

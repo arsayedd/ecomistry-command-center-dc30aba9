@@ -79,12 +79,11 @@ export default function CommissionsPage() {
   });
 
   const handleExportPDF = () => {
+    // Fix the exportToPDF call to match the expected 3 arguments
     exportToPDF(
       "commissions_report",
       "تقرير العمولات",
-      filteredCommissions,
-      ["الموظف", "نوع العمولة", "نوع القيمة", "القيمة", "عدد الطلبات", "إجمالي العمولة", "تاريخ الاستحقاق"],
-      ["employeeName", "commissionType", "valueType", "value", "ordersCount", "totalCommission", "dueDate"]
+      filteredCommissions
     );
   };
 
