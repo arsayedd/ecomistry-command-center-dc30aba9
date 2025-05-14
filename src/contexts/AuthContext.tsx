@@ -24,6 +24,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('Setting up Auth Provider...');
+    
     // أولاً: قم بإعداد مستمع لتغييرات حالة المصادقة
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
@@ -51,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error, data } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        console.error('Sign in error details:', error);
         // معالجة خطأ البريد الإلكتروني غير المؤكد بشكل خاص
         if (error.message.includes('Email not confirmed') || error.message.includes('email not confirmed')) {
           toast({ 
@@ -59,6 +62,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             variant: "destructive" 
           });
           throw new Error("البريد الإلكتروني غير مؤكد");
+        } else if (error.message.includes('Email logins are disabled')) {
+          toast({ 
+            title: "تسجيل الدخول بالبريد الإلكتروني معطل", 
+            description: "تسجيل الدخول بالبريد الإلكتروني معطل حاليًا. يرجى الاتصال بالمسؤول لتفعيله.",
+            variant: "destructive" 
+          });
+          throw new Error("تسجيل الدخول بالبريد الإلكتروني معطل");
         } else {
           toast({ 
             title: "فشل تسجيل الدخول", 
@@ -77,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // تأخير قليل للسماح بتحديث حالة المصادقة قبل التوجيه
       setTimeout(() => {
         navigate('/dashboard');
-      }, 100);
+      }, 500);
     } catch (error: any) {
       console.error("Login error:", error);
       // الخطأ تم التعامل معه في المحاولة/الخطأ السابق
@@ -144,7 +154,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Sign up error details:', authError);
+        
+        if (authError.message.includes('Email signups are disabled')) {
+          throw new Error("تسجيل الحسابات بالبريد الإلكتروني معطل. يرجى الاتصال بالمسؤول لتفعيله.");
+        }
+        
+        throw authError;
+      }
       
       console.log('User created:', data.user?.id);
       

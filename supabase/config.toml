@@ -3,4 +3,8 @@ project_id = "hsmtojqwtfngzqinlrfv"
 
 [auth.email]
 enable_confirmations = false
+enable_signups = true
 
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]

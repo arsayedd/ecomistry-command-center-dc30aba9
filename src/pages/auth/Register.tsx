@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -18,6 +20,7 @@ const Register = () => {
   const [department, setDepartment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   
   const { signUp } = useAuth();
 
@@ -50,16 +53,21 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
     
     if (!validateForm()) return;
     
     setIsLoading(true);
     
     try {
+      console.log("Attempting to register with:", { email, fullName, role });
       await signUp(email, password, fullName, role, department);
+      console.log("Registration successful");
+      setSuccess(true);
     } catch (error: any) {
+      console.error("Registration error:", error);
       // التعامل مع الخطأ يتم في AuthContext
-      console.error(error);
+      setError(error.message || 'حدث خطأ أثناء إنشاء الحساب');
     } finally {
       setIsLoading(false);
     }
@@ -82,9 +90,22 @@ const Register = () => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6">
               {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
-                  {error}
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>خطأ</AlertTitle>
+                  <AlertDescription>
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {success && (
+                <Alert className="bg-green-50 border-green-200">
+                  <AlertTitle className="text-green-800">تم إنشاء الحساب بنجاح</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    يمكنك الآن تسجيل الدخول باستخدام بيانات حسابك.
+                  </AlertDescription>
+                </Alert>
               )}
               
               <div className="space-y-2">
