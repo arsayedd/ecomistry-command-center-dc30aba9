@@ -1,7 +1,34 @@
-
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { 
+  useMutation, 
+  useQuery, 
+  useQueryClient 
+} from "@tanstack/react-query";
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  Plus, 
+  Search, 
+  Filter, 
+  FileText, 
+  Eye, 
+  Edit, 
+  MoreHorizontal 
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -11,30 +38,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Users,
-  FileText,
-  Search,
-  Filter,
-  FileExcel,
-  FilePlus,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Link } from "react-router-dom";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function EmployeesPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [filterDepartment, setFilterDepartment] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
+  // Fetch employees
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
@@ -42,182 +64,285 @@ export default function EmployeesPage() {
         .from("employees")
         .select(`
           *,
-          users:user_id (
-            full_name,
-            email,
-            department,
-            role
-          )
-        `);
+          user:users!inner(id, full_name, email, department, role)
+        `)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
   });
 
-  const getStatusBadgeClass = (status: string | null) => {
-    if (!status) return "bg-gray-200 text-gray-700";
-    
-    switch (status) {
-      case "نشط":
-        return "bg-green-100 text-green-700";
-      case "موقوف":
-        return "bg-red-100 text-red-700";
-      case "تحت التجربة":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-gray-200 text-gray-700";
+  // Update employee status mutation
+  const updateEmployeeStatus = useMutation({
+    mutationFn: async ({ id, status }) => {
+      const { error } = await supabase
+        .from("employees")
+        .update({ status })
+        .eq("id", id);
+      
+      if (error) throw error;
+      return { id, status };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast({
+        title: "تم تحديث حالة الموظف",
+        description: "تم تحديث حالة الموظف بنجاح",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete employee mutation
+  const deleteEmployee = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from("employees")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast({
+        title: "تم حذف الموظف",
+        description: "تم حذف الموظف بنجاح",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle sorting
+  const handleSort = (column) => {
+    if (column === sortColumn) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
     }
   };
 
-  const getCommissionType = (commissionType: string | null) => {
-    if (!commissionType) return "لا يوجد";
-    
-    switch (commissionType) {
-      case "percentage":
-        return "نسبة مئوية";
-      case "fixed":
-        return "مبلغ ثابت";
-      default:
-        return "لا يوجد";
+  // Sort employees based on sortColumn and sortDirection
+  const sortedEmployees = employees?.sort((a, b) => {
+    if (sortColumn === "full_name") {
+      const nameA = a.user?.full_name || "";
+      const nameB = b.user?.full_name || "";
+      return sortDirection === "asc"
+        ? nameA.localeCompare(nameB)
+        : nameB.localeCompare(nameA);
+    } else if (sortColumn === "department") {
+      const departmentA = a.user?.department || "";
+      const departmentB = b.user?.department || "";
+      return sortDirection === "asc"
+        ? departmentA.localeCompare(departmentB)
+        : departmentB.localeCompare(departmentA);
+    } else if (sortColumn === "salary") {
+      const salaryA = a.salary || 0;
+      const salaryB = b.salary || 0;
+      return sortDirection === "asc" ? salaryA - salaryB : salaryB - salaryA;
+    } else if (sortColumn === "created_at") {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
     }
-  };
+    return 0;
+  });
 
-  const filteredEmployees = employees?.filter((employee) => {
-    const matchesSearch = !searchTerm || 
-      (employee.users?.full_name && employee.users.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter employees based on search query, department, and status
+  const filteredEmployees = sortedEmployees?.filter((employee) => {
+    const matchesSearch = 
+      !searchQuery || 
+      employee.user?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.user?.email?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesDepartment = !departmentFilter || employee.users?.department === departmentFilter;
-    const matchesStatus = !statusFilter || employee.status === statusFilter;
+    const matchesDepartment = !filterDepartment || employee.user?.department === filterDepartment;
+    const matchesStatus = !filterStatus || employee.status === filterStatus;
     
     return matchesSearch && matchesDepartment && matchesStatus;
   });
 
-  const exportToExcel = () => {
-    // Functionality to export to Excel would go here
-    alert("تصدير البيانات إلى Excel");
+  // Status badge color
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-500">نشط</Badge>;
+      case "inactive":
+        return <Badge className="bg-red-500">غير نشط</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-500">معلق</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col mb-6">
-        <h1 className="text-3xl font-bold">إدارة الموظفين</h1>
-        <p className="text-gray-500">عرض وإدارة بيانات جميع موظفي الشركة</p>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">إدارة الموظفين</h1>
+        <Link to="/employees/add">
+          <Button>
+            <Plus className="h-4 w-4 ml-2" /> إضافة موظف جديد
+          </Button>
+        </Link>
       </div>
 
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <div className="flex gap-4 flex-wrap md:flex-nowrap">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              placeholder="بحث بالاسم..."
-              className="pl-10 w-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <Select value={departmentFilter || ""} onValueChange={(value) => setDepartmentFilter(value || null)}>
-            <SelectTrigger className="w-full md:w-44">
-              <SelectValue placeholder="جميع الأقسام" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">جميع الأقسام</SelectItem>
-              <SelectItem value="ميديا">ميديا</SelectItem>
-              <SelectItem value="كول سنتر">كول سنتر</SelectItem>
-              <SelectItem value="مودريشن">مودريشن</SelectItem>
-              <SelectItem value="ديزاين">ديزاين</SelectItem>
-              <SelectItem value="كونتنت">كونتنت</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={statusFilter || ""} onValueChange={(value) => setStatusFilter(value || null)}>
-            <SelectTrigger className="w-full md:w-44">
-              <SelectValue placeholder="جميع الحالات" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">جميع الحالات</SelectItem>
-              <SelectItem value="نشط">نشط</SelectItem>
-              <SelectItem value="موقوف">موقوف</SelectItem>
-              <SelectItem value="تحت التجربة">تحت التجربة</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToExcel}>
-            <FileExcel className="ml-2 h-4 w-4" />
-            تصدير Excel
-          </Button>
-          <Button asChild>
-            <Link to="/employees/add">
-              <FilePlus className="ml-2 h-4 w-4" />
-              إضافة موظف
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl flex items-center">
-            <Users className="ml-2" size={20} />
-            قائمة الموظفين
-          </CardTitle>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">البحث والتصفية</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="بحث..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          ) : filteredEmployees && filteredEmployees.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الاسم بالكامل</TableHead>
-                    <TableHead>القسم</TableHead>
-                    <TableHead>الوظيفة</TableHead>
-                    <TableHead>المرتب</TableHead>
-                    <TableHead>العمولة</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEmployees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell className="font-medium">{employee.users?.full_name}</TableCell>
-                      <TableCell>{employee.users?.department || "-"}</TableCell>
-                      <TableCell>{employee.users?.role || "-"}</TableCell>
-                      <TableCell>{employee.salary ? `${employee.salary} ج.م` : "-"}</TableCell>
-                      <TableCell>
-                        {employee.commission_type ? `${getCommissionType(employee.commission_type)} - ${employee.commission_value || 0}` : "لا يوجد"}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(employee.status)}`}>
-                          {employee.status || "غير محدد"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/employees/${employee.id}`}>
-                              <FileText className="h-4 w-4" />
-                            </Link>
+
+            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر القسم" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">جميع الأقسام</SelectItem>
+                <SelectItem value="call-center">كول سنتر</SelectItem>
+                <SelectItem value="media-buying">ميديا بايينج</SelectItem>
+                <SelectItem value="content">كتابة المحتوى</SelectItem>
+                <SelectItem value="design">تصميم</SelectItem>
+                <SelectItem value="moderation">موديريشن</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="حالة الموظف" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">جميع الحالات</SelectItem>
+                <SelectItem value="active">نشط</SelectItem>
+                <SelectItem value="inactive">غير نشط</SelectItem>
+                <SelectItem value="pending">معلق</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="cursor-pointer" onClick={() => handleSort("full_name")}>
+                  اسم الموظف
+                  {sortColumn === "full_name" && (
+                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
+                  )}
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort("department")}>
+                  القسم
+                  {sortColumn === "department" && (
+                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
+                  )}
+                </TableHead>
+                <TableHead>البريد الإلكتروني</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort("salary")}>
+                  المرتب
+                  {sortColumn === "salary" && (
+                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
+                  )}
+                </TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort("created_at")}>
+                  تاريخ الإنضمام
+                  {sortColumn === "created_at" && (
+                    sortDirection === "asc" ? <ChevronUp className="inline-block w-4 h-4 mr-1" /> : <ChevronDown className="inline-block w-4 h-4 mr-1" />
+                  )}
+                </TableHead>
+                <TableHead>الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10">
+                    جاري التحميل...
+                  </TableCell>
+                </TableRow>
+              ) : filteredEmployees?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10">
+                    لا يوجد موظفين مطابقين للبحث
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredEmployees?.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell>{employee.user?.full_name}</TableCell>
+                    <TableCell>{employee.user?.department}</TableCell>
+                    <TableCell>{employee.user?.email}</TableCell>
+                    <TableCell>{employee.salary}</TableCell>
+                    <TableCell>{getStatusBadge(employee.status)}</TableCell>
+                    <TableCell>
+                      {employee.created_at ? format(new Date(employee.created_at), "yyyy-MM-dd") : "غير محدد"}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-gray-500">لم يتم العثور على موظفين</p>
-            </div>
-          )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <Link to={`/employees/${employee.id}`}>
+                            <DropdownMenuItem>
+                              <Eye className="h-4 w-4 ml-2" />
+                              عرض التفاصيل
+                            </DropdownMenuItem>
+                          </Link>
+                          <Link to={`/employees/${employee.id}/edit`}>
+                            <DropdownMenuItem>
+                              <Edit className="h-4 w-4 ml-2" />
+                              تعديل
+                            </DropdownMenuItem>
+                          </Link>
+                          <DropdownMenuItem onClick={() => 
+                            updateEmployeeStatus.mutate({ 
+                              id: employee.id, 
+                              status: employee.status === "active" ? "inactive" : "active" 
+                            })
+                          }>
+                            {employee.status === "active" ? "تعطيل" : "تفعيل"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => deleteEmployee.mutate(employee.id)}>
+                            حذف
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

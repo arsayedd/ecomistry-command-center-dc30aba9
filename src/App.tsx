@@ -17,6 +17,12 @@ import EmployeesPage from "./pages/employees/index";
 import AddEmployeePage from "./pages/employees/add";
 import EmployeeDetailsPage from "./pages/employees/[id]";
 
+// Content pages
+import ContentPage from "./pages/content/index";
+import AddContentTask from "./pages/content/add";
+import ContentTaskDetails from "./pages/content/[id]";
+import EditContentTask from "./pages/content/[id]/edit";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,6 +48,12 @@ const App = () => (
               <Route path="employees" element={<EmployeesPage />} />
               <Route path="employees/add" element={<AddEmployeePage />} />
               <Route path="employees/:id" element={<EmployeeDetailsPage />} />
+              
+              {/* Content Routes */}
+              <Route path="content" element={<ContentPage />} />
+              <Route path="content/add" element={<AddContentTask />} />
+              <Route path="content/:id" element={<ContentTaskDetails />} />
+              <Route path="content/:id/edit" element={<EditContentTask />} />
               
               <Route index element={<Dashboard />} />
             </Route>
