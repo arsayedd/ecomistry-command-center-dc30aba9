@@ -102,7 +102,7 @@ export function EmployeesTable({
                 <TableCell>{employee.user?.full_name || "غير محدد"}</TableCell>
                 <TableCell>{employee.user?.email || "غير محدد"}</TableCell>
                 <TableCell>{employee.user?.department || "غير محدد"}</TableCell>
-                <TableCell>{employee.job_title || employee.position || "غير محدد"}</TableCell>
+                <TableCell>{employee.job_title || employee.user?.role || "غير محدد"}</TableCell>
                 <TableCell>
                   {employee.contract_type === "full_time" && "دوام كامل"}
                   {employee.contract_type === "part_time" && "دوام جزئي"}
