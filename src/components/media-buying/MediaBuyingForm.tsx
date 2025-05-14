@@ -1,131 +1,135 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MediaBuyingRecord, Brand, User } from "@/types";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Brand, MediaBuying, User } from "@/types";
 
 const formSchema = z.object({
-  platform: z.enum(["facebook", "instagram", "tiktok", "google", "other"]),
-  date: z.date({
-    required_error: "التاريخ مطلوب",
+  platform: z.string().min(1, { message: "يجب تحديد المنصة" }),
+  campaign_date: z.date({
+    required_error: "يجب اختيار تاريخ الحملة",
   }),
   brand_id: z.string().min(1, { message: "يجب اختيار البراند" }),
-  employee_id: z.string().optional(),
-  spend: z.number().min(0, { message: "يجب أن يكون الإنفاق أكبر من أو يساوي 0" }),
-  orders_count: z.number().int().min(0, { message: "يجب أن يكون عدد الطلبات أكبر من أو يساوي 0" }),
-  order_cost: z.number().optional(),
-  roas: z.number().optional(),
+  employee_id: z.string().min(1, { message: "يجب اختيار الموظف المسؤول" }),
+  ad_spend: z.number().min(0, { message: "يجب إدخال مبلغ الإنفاق الإعلاني" }),
+  orders_count: z.number().int().min(0, { message: "يجب إدخال عدد الأوردرات" }),
+  cpp: z.number().min(0).optional(),
+  roas: z.number().min(0).optional(),
   campaign_link: z.string().optional(),
   notes: z.string().optional(),
 });
 
 interface MediaBuyingFormProps {
-  onSave: (data: any) => void;
-  initialData?: MediaBuyingRecord;
+  initialData?: MediaBuying;
+  onSubmit: (data: MediaBuying) => void;
 }
 
-export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingFormProps) {
+export default function MediaBuyingForm({ initialData, onSubmit }: MediaBuyingFormProps) {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
-      date: initialData.date ? new Date(initialData.date) : undefined,
-      employee_id: initialData.employee_id || "",
-      spend: initialData.spend,
+      campaign_date: initialData.campaign_date ? new Date(initialData.campaign_date) : new Date(),
+      ad_spend: initialData.ad_spend,
       orders_count: initialData.orders_count,
-      order_cost: initialData.order_cost || 0,
-      roas: initialData.roas || 0,
-      campaign_link: initialData.campaign_link || "",
-      notes: initialData.notes || "",
+      cpp: initialData.cpp,
+      roas: initialData.roas,
     } : {
-      platform: "facebook",
-      date: new Date(),
+      platform: "",
+      campaign_date: new Date(),
       brand_id: "",
       employee_id: "",
-      spend: 0,
+      ad_spend: 0,
       orders_count: 0,
-      order_cost: 0,
+      cpp: 0,
       roas: 0,
       campaign_link: "",
       notes: "",
     },
   });
 
-  // Calculate CPP (Cost Per Purchase) when spend or orders count changes
-  const spend = form.watch("spend");
+  // Calculate CPP when ad_spend or orders_count changes
+  const adSpend = form.watch("ad_spend");
   const ordersCount = form.watch("orders_count");
 
   useEffect(() => {
     if (ordersCount > 0) {
-      const cpp = spend / ordersCount;
-      form.setValue("order_cost", cpp);
+      const cpp = adSpend / ordersCount;
+      form.setValue("cpp", parseFloat(cpp.toFixed(2)));
     } else {
-      form.setValue("order_cost", 0);
+      form.setValue("cpp", 0);
     }
-  }, [spend, ordersCount, form]);
+  }, [adSpend, ordersCount, form]);
 
-  // Fetch brands and employees from the database
+  // Fetch brands and employees data
   useEffect(() => {
     async function fetchData() {
       try {
         // Fetch brands
         const { data: brandsData, error: brandsError } = await supabase
           .from("brands")
-          .select("*");
+          .select("*")
+          .eq("status", "active");
 
         if (brandsError) throw brandsError;
+        
         if (brandsData) {
           // Cast the data to match the Brand type
-          const typedBrands = brandsData.map(brand => ({
-            ...brand,
-            status: (brand.status || "active") as "active" | "inactive" | "pending",
-            vertical: brand.vertical as "fashion" | "beauty" | "food" | "tech" | "home" | "travel" | "other",
-            social_links: brand.social_links as {
-              instagram?: string;
-              facebook?: string;
-              tiktok?: string;
-              youtube?: string;
-              linkedin?: string;
-              website?: string;
-            }
+          const typedBrands: Brand[] = brandsData.map(brand => ({
+            id: brand.id,
+            name: brand.name,
+            status: (brand.status || "active") as Brand['status'],
+            product_type: brand.product_type || "",
+            social_links: brand.social_links || {},
+            created_at: brand.created_at || '',
+            updated_at: brand.updated_at || ''
           }));
           
           setBrands(typedBrands);
         }
 
-        // Fetch employees
+        // Fetch employees from media_buying department
         const { data: employeesData, error: employeesError } = await supabase
           .from("users")
           .select("*")
           .eq("department", "media_buying");
 
         if (employeesError) throw employeesError;
+        
         if (employeesData) {
           // Cast the data to match User type
-          const typedEmployees = employeesData.map(emp => ({
-            ...emp,
-            employment_type: (emp.employment_type || "full_time") as "full_time" | "part_time" | "freelancer" | "per_piece",
-            salary_type: (emp.salary_type || "monthly") as "monthly" | "hourly" | "per_task",
-            status: (emp.status || "active") as "active" | "inactive" | "trial",
-            access_rights: (emp.access_rights || "view") as "view" | "add" | "edit" | "full_manage"
+          const typedEmployees: User[] = employeesData.map(emp => ({
+            id: emp.id,
+            email: emp.email || '',
+            full_name: emp.full_name || '',
+            phone: emp.phone || '',
+            department: emp.department || '',
+            role: emp.role || '',
+            employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
+            salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
+            status: (emp.status || 'active') as User['status'],
+            access_rights: (emp.access_rights || 'view') as User['access_rights'],
+            commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
+            commission_value: emp.commission_value || 0,
+            created_at: emp.created_at || '',
+            updated_at: emp.updated_at || ''
           }));
           
           setEmployees(typedEmployees);
@@ -143,66 +147,58 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
     fetchData();
   }, [toast]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
+  async function handleSubmit(values: z.infer<typeof formSchema>) {
+    setLoading(true);
     try {
+      // Format the data for submission
       const formData = {
-        platform: values.platform,
-        date: format(values.date, "yyyy-MM-dd"),
-        brand_id: values.brand_id,
-        employee_id: values.employee_id || null,
-        spend: values.spend,
-        orders_count: values.orders_count,
-        order_cost: values.order_cost || null,
-        roas: values.roas || null,
-        campaign_link: values.campaign_link || null,
-        notes: values.notes || null
+        ...values,
+        campaign_date: format(values.campaign_date, "yyyy-MM-dd"),
+        created_at: new Date().toISOString(),
       };
-
-      // Try to insert or update in the database
+      
+      // If editing, update the record, otherwise insert
       if (initialData?.id) {
-        // Update existing record
         const { error } = await supabase
           .from("media_buying")
           .update(formData)
           .eq("id", initialData.id);
-
+          
         if (error) throw error;
       } else {
-        // Insert new record
         const { error } = await supabase
           .from("media_buying")
           .insert([formData]);
-
+          
         if (error) throw error;
       }
-
-      // Call the onSave callback
-      onSave(formData);
+      
+      // Call the onSubmit callback with the form data
+      onSubmit(formData as unknown as MediaBuying);
 
       toast({
-        title: "تم حفظ بيانات الحملة الإعلانية بنجاح",
+        title: initialData ? "تم تحديث الحملة بنجاح" : "تم إضافة الحملة بنجاح",
         variant: "default",
       });
     } catch (error) {
-      console.error("Error saving media buying record:", error);
+      console.error("Error saving media buying data:", error);
       toast({
         title: "خطأ في حفظ البيانات",
         description: "حدث خطأ أثناء محاولة حفظ بيانات الحملة الإعلانية.",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" dir="rtl">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Platform */}
+              {/* Platform Selection */}
               <FormField
                 control={form.control}
                 name="platform"
@@ -231,26 +227,26 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 )}
               />
 
-              {/* Date */}
+              {/* Campaign Date */}
               <FormField
                 control={form.control}
-                name="date"
+                name="campaign_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>التاريخ</FormLabel>
+                    <FormLabel>تاريخ الحملة</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={`w-full pl-3 text-right font-normal ${!field.value && "text-muted-foreground"}`}
+                            className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
                           >
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
                               <span>اختر التاريخ</span>
                             )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -259,7 +255,7 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) => date > new Date()}
+                          disabled={(date) => date < new Date("1900-01-01")}
                           initialFocus
                         />
                       </PopoverContent>
@@ -327,10 +323,10 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 )}
               />
 
-              {/* Spend */}
+              {/* Ad Spend */}
               <FormField
                 control={form.control}
-                name="spend"
+                name="ad_spend"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>مبلغ الإنفاق الإعلاني</FormLabel>
@@ -352,7 +348,7 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 name="orders_count"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>عدد الطلبات</FormLabel>
+                    <FormLabel>عدد الأوردرات</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -365,18 +361,17 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 )}
               />
 
-              {/* Order Cost (CPP) */}
+              {/* CPP (Calculated) */}
               <FormField
                 control={form.control}
-                name="order_cost"
+                name="cpp"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>تكلفة الطلب (CPP)</FormLabel>
+                    <FormLabel>CPP (تكلفة الأوردر)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         {...field}
-                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                         readOnly
                       />
                     </FormControl>
@@ -391,7 +386,7 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 name="roas"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>العائد على الإنفاق الإعلاني (ROAS)</FormLabel>
+                    <FormLabel>ROAS (عائد الإنفاق الإعلاني)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -409,10 +404,13 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 control={form.control}
                 name="campaign_link"
                 render={({ field }) => (
-                  <FormItem className="col-span-1 md:col-span-2">
-                    <FormLabel>رابط الحملة الإعلانية</FormLabel>
+                  <FormItem>
+                    <FormLabel>رابط الحملة</FormLabel>
                     <FormControl>
-                      <Input placeholder="أدخل رابط الحملة الإعلانية..." {...field} />
+                      <Input
+                        type="text"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -424,11 +422,10 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
                 control={form.control}
                 name="notes"
                 render={({ field }) => (
-                  <FormItem className="col-span-1 md:col-span-2">
+                  <FormItem>
                     <FormLabel>ملاحظات</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="أدخل ملاحظات إضافية هنا..."
                         className="resize-none"
                         {...field}
                       />
@@ -442,8 +439,8 @@ export default function MediaBuyingForm({ onSave, initialData }: MediaBuyingForm
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-            {isSubmitting ? "جاري الحفظ..." : "حفظ البيانات"}
+          <Button type="submit" className="w-full md:w-auto" disabled={loading}>
+            {loading ? "جاري الحفظ..." : "حفظ الحملة"}
           </Button>
         </div>
       </form>

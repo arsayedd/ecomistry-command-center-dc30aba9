@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoonIcon, SunIcon, BellIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,16 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-interface CustomHeaderProps {
-  onThemeToggle: () => void;
-  isDarkMode: boolean;
-}
-
-export default function CustomHeader({ onThemeToggle, isDarkMode }: CustomHeaderProps) {
+export function CustomHeader() {
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
 
-  const getPageTitleFromPath = () => {
-    return getPageTitle(location.pathname);
+  const onThemeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+    // In a real implementation, this would toggle the theme
   };
 
   return (
@@ -32,7 +29,7 @@ export default function CustomHeader({ onThemeToggle, isDarkMode }: CustomHeader
           alt="Company Logo"
           className="h-10 hidden sm:block" 
         />
-        <h1 className="text-xl font-semibold">{getPageTitleFromPath()}</h1>
+        <h1 className="text-xl font-semibold">{getPageTitle(location.pathname)}</h1>
       </div>
       
       <div className="flex items-center gap-3">

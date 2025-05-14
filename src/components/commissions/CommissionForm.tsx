@@ -83,13 +83,22 @@ export default function CommissionForm({ onSave, initialData }: CommissionFormPr
         }
 
         if (data) {
-          // Cast the data to match the User type
-          const typedEmployees = data.map(emp => ({
-            ...emp,
-            employment_type: (emp.employment_type || "full_time") as "full_time" | "part_time" | "freelancer" | "per_piece",
-            salary_type: (emp.salary_type || "monthly") as "monthly" | "hourly" | "per_task",
-            status: (emp.status || "active") as "active" | "inactive" | "trial",
-            access_rights: (emp.access_rights || "view") as "view" | "add" | "edit" | "full_manage",
+          // Convert raw data to User type with proper type assertions
+          const typedEmployees: User[] = data.map(emp => ({
+            id: emp.id,
+            email: emp.email || '',
+            full_name: emp.full_name || '',
+            phone: emp.phone || '',
+            department: emp.department || '',
+            role: emp.role || '',
+            employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
+            salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
+            status: (emp.status || 'active') as User['status'],
+            access_rights: (emp.access_rights || 'view') as User['access_rights'],
+            commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
+            commission_value: emp.commission_value || 0,
+            created_at: emp.created_at || '',
+            updated_at: emp.updated_at || ''
           }));
           
           setEmployees(typedEmployees);

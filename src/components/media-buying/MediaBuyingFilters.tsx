@@ -53,18 +53,14 @@ export function MediaBuyingFilters({
         if (brandsError) throw brandsError;
         if (brandsData) {
           // Cast the data to match the Brand type
-          const typedBrands = brandsData.map(brand => ({
-            ...brand,
-            status: (brand.status || "active") as "active" | "inactive" | "pending",
-            vertical: brand.vertical as "fashion" | "beauty" | "food" | "tech" | "home" | "travel" | "other",
-            social_links: brand.social_links as {
-              instagram?: string;
-              facebook?: string;
-              tiktok?: string;
-              youtube?: string;
-              linkedin?: string;
-              website?: string;
-            }
+          const typedBrands: Brand[] = brandsData.map(brand => ({
+            id: brand.id,
+            name: brand.name,
+            status: (brand.status || "active") as Brand['status'],
+            product_type: brand.product_type || "",
+            social_links: brand.social_links || {},
+            created_at: brand.created_at || '',
+            updated_at: brand.updated_at || ''
           }));
           
           setBrands(typedBrands);
@@ -79,12 +75,21 @@ export function MediaBuyingFilters({
         if (employeesError) throw employeesError;
         if (employeesData) {
           // Cast the data to match User type
-          const typedEmployees = employeesData.map(emp => ({
-            ...emp,
-            employment_type: (emp.employment_type || "full_time") as "full_time" | "part_time" | "freelancer" | "per_piece",
-            salary_type: (emp.salary_type || "monthly") as "monthly" | "hourly" | "per_task",
-            status: (emp.status || "active") as "active" | "inactive" | "trial",
-            access_rights: (emp.access_rights || "view") as "view" | "add" | "edit" | "full_manage"
+          const typedEmployees: User[] = employeesData.map(emp => ({
+            id: emp.id,
+            email: emp.email || '',
+            full_name: emp.full_name || '',
+            phone: emp.phone || '',
+            department: emp.department || '',
+            role: emp.role || '',
+            employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
+            salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
+            status: (emp.status || 'active') as User['status'],
+            access_rights: (emp.access_rights || 'view') as User['access_rights'],
+            commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
+            commission_value: emp.commission_value || 0,
+            created_at: emp.created_at || '',
+            updated_at: emp.updated_at || ''
           }));
           setEmployees(typedEmployees);
         }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,23 +7,23 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  brand_id: z.string().min(1, { message: "يجب اختيار البراند" }),
   date: z.date({
     required_error: "يجب اختيار التاريخ",
   }),
-  pieces_sold: z.number().int().min(1, { message: "يجب أن يكون عدد القطع المباعة أكبر من 0" }),
-  price_per_piece: z.number().min(0, { message: "يجب أن يكون سعر القطعة أكبر من أو يساوي 0" }),
-  total_revenue: z.number().min(0, { message: "يجب أن يكون الإيراد الإجمالي أكبر من أو يساوي 0" }),
+  brand_id: z.string().min(1, { message: "يجب اختيار البراند" }),
+  units_sold: z.number().int().min(1, { message: "يجب إدخال عدد القطع المباعة" }),
+  unit_price: z.number().min(1, { message: "يجب إدخال سعر القطعة" }),
+  total_revenue: z.number().min(0, { message: "يجب حساب إجمالي الإيراد" }),
   notes: z.string().optional(),
 });
 
@@ -43,24 +42,26 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
     defaultValues: initialData ? {
       ...initialData,
       date: initialData.date ? new Date(initialData.date) : undefined,
-      pieces_sold: initialData.pieces_sold,
-      price_per_piece: initialData.price_per_piece,
-      total_revenue: initialData.total_revenue,
-      notes: initialData.notes || "",
     } : {
-      brand_id: "",
       date: new Date(),
-      pieces_sold: 0,
-      price_per_piece: 0,
+      brand_id: "",
+      units_sold: 0,
+      unit_price: 0,
       total_revenue: 0,
       notes: "",
     },
   });
 
-  // Calculate total revenue when pieces sold or price per piece changes
-  const piecesSold = form.watch("pieces_sold");
-  const pricePerPiece = form.watch("price_per_piece");
+  // Calculate total revenue when units_sold or unit_price changes
+  const unitsSold = form.watch("units_sold");
+  const unitPrice = form.watch("unit_price");
 
+  useEffect(() => {
+    const totalRevenue = unitsSold * unitPrice;
+    form.setValue("total_revenue", totalRevenue);
+  }, [unitsSold, unitPrice, form]);
+
+  // Fetch brands
   useEffect(() => {
     async function fetchBrands() {
       try {
@@ -74,18 +75,14 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
 
         if (data) {
           // Cast the data to match the Brand type
-          const typedBrands = data.map(brand => ({
-            ...brand,
-            status: (brand.status || "active") as "active" | "inactive" | "pending",
-            vertical: brand.vertical as "fashion" | "beauty" | "food" | "tech" | "home" | "travel" | "other",
-            social_links: brand.social_links as {
-              instagram?: string;
-              facebook?: string;
-              tiktok?: string;
-              youtube?: string;
-              linkedin?: string;
-              website?: string;
-            }
+          const typedBrands: Brand[] = data.map(brand => ({
+            id: brand.id,
+            name: brand.name,
+            status: (brand.status || "active") as Brand['status'],
+            product_type: brand.product_type || "",
+            social_links: brand.social_links || {},
+            created_at: brand.created_at || '',
+            updated_at: brand.updated_at || ''
           }));
           
           setBrands(typedBrands);
@@ -93,8 +90,8 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
       } catch (error) {
         console.error("Error fetching brands:", error);
         toast({
-          title: "خطأ في جلب البراندات",
-          description: "حدث خطأ أثناء محاولة جلب قائمة البراندات.",
+          title: "خطأ في جلب بيانات البراندات",
+          description: "حدث خطأ أثناء محاولة جلب بيانات البراندات.",
           variant: "destructive",
         });
       }
@@ -103,18 +100,28 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
     fetchBrands();
   }, [toast]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function handleSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // Insert into Supabase if there's a table for revenues
-      // Note: We won't try to insert if the table doesn't exist yet
-      // This would need to be addressed with a SQL migration to create the table
-      
-      // For now, just call the onSave callback with the form data
-      onSave({
-        ...values,
+      // Format the data for submission
+      const formData = {
         date: format(values.date, "yyyy-MM-dd"),
-      });
+        brand_id: values.brand_id,
+        units_sold: values.units_sold,
+        unit_price: values.unit_price,
+        total_revenue: values.total_revenue,
+        notes: values.notes,
+      };
+      
+      // Insert into Supabase
+      const { error } = await supabase
+        .from("revenues")
+        .insert([formData]);
+        
+      if (error) throw error;
+      
+      // Call the onSave callback with the form data
+      onSave(formData);
 
       toast({
         title: "تم حفظ الإيراد بنجاح",
@@ -134,10 +141,48 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Date */}
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>التاريخ</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={format(field.value, "PPP")}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>اختر التاريخ</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date("1900-01-01")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Brand Selection */}
               <FormField
                 control={form.control}
@@ -167,48 +212,10 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
                 )}
               />
 
-              {/* Date */}
+              {/* Units Sold */}
               <FormField
                 control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>التاريخ</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>اختر التاريخ</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date > new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Pieces Sold */}
-              <FormField
-                control={form.control}
-                name="pieces_sold"
+                name="units_sold"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>عدد القطع المباعة</FormLabel>
@@ -224,10 +231,10 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
                 )}
               />
 
-              {/* Price Per Piece */}
+              {/* Unit Price */}
               <FormField
                 control={form.control}
-                name="price_per_piece"
+                name="unit_price"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>سعر القطعة</FormLabel>
@@ -254,7 +261,6 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
                       <Input
                         type="number"
                         {...field}
-                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                         readOnly
                       />
                     </FormControl>
@@ -268,11 +274,11 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
                 control={form.control}
                 name="notes"
                 render={({ field }) => (
-                  <FormItem className="col-span-1 md:col-span-2">
+                  <FormItem>
                     <FormLabel>ملاحظات</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="أدخل الملاحظات هنا..."
+                        placeholder="أدخل ملاحظاتك هنا..."
                         className="resize-none"
                         {...field}
                       />
@@ -286,7 +292,7 @@ export default function RevenueForm({ onSave, initialData }: RevenueFormProps) {
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "جاري الحفظ..." : "حفظ الإيراد"}
           </Button>
         </div>
