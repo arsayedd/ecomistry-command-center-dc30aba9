@@ -24,15 +24,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // أولاً: قم بإعداد مستمع لتغييرات حالة المصادقة
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession?.user?.email);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
       }
     );
 
+    // ثانياً: تحقق من وجود جلسة حالية
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Current session:', currentSession?.user?.email);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
@@ -43,6 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting to sign in:', email);
       const { error, data } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -66,8 +71,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
       
-      navigate('/dashboard');
+      console.log('Login successful, navigating to /dashboard');
       toast({ title: "تم تسجيل الدخول بنجاح", description: "مرحبًا بك في نظام Ecomistry" });
+
+      // تأخير قليل للسماح بتحديث حالة المصادقة قبل التوجيه
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (error: any) {
       console.error("Login error:", error);
       // الخطأ تم التعامل معه في المحاولة/الخطأ السابق
@@ -110,6 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName: string, role: string, department?: string) => {
     try {
+      console.log('Attempting to sign up:', email);
       // التحقق من صحة البريد الإلكتروني
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
@@ -134,6 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (authError) throw authError;
+      
+      console.log('User created:', data.user?.id);
       
       // إنشاء سجل ملف المستخدم إذا تم إنشاء المستخدم
       if (data.user) {
@@ -208,6 +221,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      console.log('Signing out');
       await supabase.auth.signOut();
       navigate('/auth/login');
       toast({ title: "تم تسجيل الخروج بنجاح" });

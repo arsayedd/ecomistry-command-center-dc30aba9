@@ -23,8 +23,11 @@ const Login = () => {
     setEmailConfirmationNeeded(false);
     
     try {
+      console.log('Submitting login form with email:', email);
       await signIn(email, password);
+      console.log('Login function completed successfully');
     } catch (error: any) {
+      console.error('Login error caught in form handler:', error);
       // تحقق مما إذا كانت رسالة الخطأ تتعلق بالبريد الإلكتروني غير المؤكد
       if (error.message && (
           error.message.includes('البريد الإلكتروني غير مؤكد') || 
