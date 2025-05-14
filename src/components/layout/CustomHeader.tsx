@@ -22,7 +22,16 @@ export function CustomHeader() {
           .single();
           
         if (!error && data) {
-          setUserData(data);
+          // Cast the employment_type to the correct type
+          const typedUserData: User = {
+            ...data,
+            employment_type: data.employment_type as "full_time" | "part_time" | "freelancer" | "per_piece" | undefined,
+            salary_type: data.salary_type as "monthly" | "hourly" | "per_task" | undefined,
+            commission_type: data.commission_type as "percentage" | "fixed" | "none" | undefined,
+            status: data.status as "active" | "inactive" | "trial" | undefined,
+            access_rights: data.access_rights as "view" | "add" | "edit" | "full_manage" | undefined,
+          };
+          setUserData(typedUserData);
         }
       }
     };
