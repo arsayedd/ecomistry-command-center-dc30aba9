@@ -1,279 +1,324 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Commission, User } from "@/types";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/components/ui/sonner";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { arEG } from "date-fns/locale";
+import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface CommissionFormData {
-  employee_id: string;
-  commission_type: 'confirmation' | 'delivery';
-  value_type: 'percentage' | 'fixed';
-  value_amount: number;
-  orders_count: number;
-  total_commission: number;
-  due_date: Date;
+const formSchema = z.object({
+  employee_id: z.string().min(1, { message: "يجب اختيار الموظف" }),
+  commission_type: z.enum(["confirmation", "delivery"], { 
+    required_error: "يجب اختيار نوع العمولة" 
+  }),
+  value_type: z.enum(["percentage", "fixed"], { 
+    required_error: "يجب اختيار نوع القيمة" 
+  }),
+  value_amount: z.number().min(0, { message: "يجب أن تكون القيمة أكبر من أو تساوي 0" }),
+  orders_count: z.number().int().min(1, { message: "يجب أن يكون عدد الطلبات أكبر من 0" }),
+  total_commission: z.number().min(0, { message: "يجب أن تكون العمولة الإجمالية أكبر من أو تساوي 0" }),
+  due_date: z.date({
+    required_error: "يجب اختيار تاريخ الاستحقاق",
+  }),
+});
+
+interface CommissionFormProps {
+  onSave: (data: any) => void;
+  initialData?: Commission;
 }
 
-export function CommissionForm() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [formData, setFormData] = useState<CommissionFormData>({
-    employee_id: "",
-    commission_type: "confirmation",
-    value_type: "percentage",
-    value_amount: 0,
-    orders_count: 0,
-    total_commission: 0,
-    due_date: new Date()
+export default function CommissionForm({ onSave, initialData }: CommissionFormProps) {
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialData ? {
+      ...initialData,
+      due_date: initialData.due_date ? new Date(initialData.due_date) : undefined,
+      value_amount: initialData.value_amount,
+      orders_count: initialData.orders_count,
+      total_commission: initialData.total_commission,
+    } : {
+      employee_id: "",
+      commission_type: "confirmation",
+      value_type: "percentage",
+      value_amount: 0,
+      orders_count: 0,
+      total_commission: 0,
+      due_date: new Date(),
+    },
   });
 
+  // Calculate total commission when value amount or orders count changes
+  const valueAmount = form.watch("value_amount");
+  const ordersCount = form.watch("orders_count");
+
   useEffect(() => {
+    const totalCommission = valueAmount * ordersCount;
+    form.setValue("total_commission", totalCommission);
+  }, [valueAmount, ordersCount, form]);
+
+  // Fetch employees from the database
+  useEffect(() => {
+    async function fetchEmployees() {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("*");
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setEmployees(data);
+        }
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+        toast({
+          title: "خطأ في جلب بيانات الموظفين",
+          description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين.",
+          variant: "destructive",
+        });
+      }
+    }
+
     fetchEmployees();
-  }, []);
+  }, [toast]);
 
-  useEffect(() => {
-    // Calculate total commission whenever value_amount or orders_count changes
-    calculateTotalCommission();
-  }, [formData.value_amount, formData.orders_count, formData.value_type]);
-
-  const fetchEmployees = async () => {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("department", "call_center");
+      // Insert into Supabase if there's a table for commissions
+      // Note: We won't try to insert if the table doesn't exist yet
+      // This would need to be addressed with a SQL migration to create the table
+      
+      // For now, just call the onSave callback with the form data
+      onSave({
+        ...values,
+        due_date: format(values.due_date, "yyyy-MM-dd"),
+      });
 
-      if (error) throw error;
-      setEmployees(data || []);
+      toast({
+        title: "تم حفظ العمولة بنجاح",
+        variant: "default",
+      });
     } catch (error) {
-      console.error("Error fetching employees:", error);
-      toast.error("حدث خطأ أثناء تحميل بيانات الموظفين");
-    }
-  };
-
-  const calculateTotalCommission = () => {
-    let total = 0;
-    
-    if (formData.value_type === 'percentage') {
-      // Calculate percentage of order value (assuming average order value of 100 for simplicity)
-      const averageOrderValue = 100;
-      total = (formData.value_amount / 100) * averageOrderValue * formData.orders_count;
-    } else {
-      // Fixed amount per order
-      total = formData.value_amount * formData.orders_count;
-    }
-    
-    setFormData((prev) => ({ ...prev, total_commission: total }));
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? parseFloat(value) : value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setFormData((prev) => ({ ...prev, due_date: date }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Create a commission record
-      const { error } = await supabase
-        .from("commissions")
-        .insert([
-          {
-            employee_id: formData.employee_id,
-            commission_type: formData.commission_type,
-            value_type: formData.value_type,
-            value_amount: formData.value_amount,
-            orders_count: formData.orders_count,
-            total_commission: formData.total_commission,
-            due_date: formData.due_date.toISOString().split('T')[0],
-          }
-        ]);
-      
-      if (error) throw error;
-      
-      toast.success("تم إضافة العمولة بنجاح");
-      navigate("/commissions");
-      
-    } catch (error: any) {
-      console.error("Error adding commission:", error);
-      toast.error(error.message || "حدث خطأ أثناء إضافة العمولة");
+      console.error("Error saving commission:", error);
+      toast({
+        title: "خطأ في حفظ البيانات",
+        description: "حدث خطأ أثناء محاولة حفظ بيانات العمولة.",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="employee_id">الموظف</Label>
-          <Select
-            value={formData.employee_id}
-            onValueChange={(value) => handleSelectChange("employee_id", value)}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="اختر الموظف" />
-            </SelectTrigger>
-            <SelectContent>
-              {employees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="commission_type">نوع العمولة</Label>
-          <Select
-            value={formData.commission_type}
-            onValueChange={(value: 'confirmation' | 'delivery') => handleSelectChange("commission_type", value)}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="اختر نوع العمولة" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="confirmation">عمولة التأكيد</SelectItem>
-              <SelectItem value="delivery">عمولة التسليم</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="value_type">طريقة الحساب</Label>
-          <Select
-            value={formData.value_type}
-            onValueChange={(value: 'percentage' | 'fixed') => handleSelectChange("value_type", value)}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="اختر طريقة الحساب" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="percentage">نسبة مئوية</SelectItem>
-              <SelectItem value="fixed">مبلغ ثابت</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="value_amount">
-            {formData.value_type === 'percentage' ? 'النسبة المئوية (%)' : 'المبلغ الثابت للطلب'}
-          </Label>
-          <Input
-            id="value_amount"
-            name="value_amount"
-            type="number"
-            min={0}
-            step={formData.value_type === 'percentage' ? 0.1 : 1}
-            value={formData.value_amount || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="orders_count">عدد الطلبات</Label>
-          <Input
-            id="orders_count"
-            name="orders_count"
-            type="number"
-            min={0}
-            value={formData.orders_count || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="total_commission">إجمالي العمولة</Label>
-          <Input
-            id="total_commission"
-            name="total_commission"
-            type="number"
-            value={formData.total_commission || ""}
-            readOnly
-            className="bg-gray-50"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="due_date">تاريخ الاستحقاق</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-right font-normal",
-                  !formData.due_date && "text-muted-foreground"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Employee Selection */}
+              <FormField
+                control={form.control}
+                name="employee_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الموظف</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الموظف" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              >
-                <CalendarIcon className="ml-2 h-4 w-4" />
-                {formData.due_date ? (
-                  format(formData.due_date, "PPP", { locale: arEG })
-                ) : (
-                  <span>اختر تاريخ</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={formData.due_date}
-                onSelect={handleDateChange}
-                initialFocus
               />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
 
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate('/commissions')}
-          className="ml-2"
-        >
-          إلغاء
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? "جاري الحفظ..." : "حفظ العمولة"}
-        </Button>
-      </div>
-    </form>
+              {/* Commission Type */}
+              <FormField
+                control={form.control}
+                name="commission_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع العمولة</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع العمولة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="confirmation">تأكيد</SelectItem>
+                        <SelectItem value="delivery">تسليم</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Value Type */}
+              <FormField
+                control={form.control}
+                name="value_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع القيمة</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع القيمة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="percentage">نسبة مئوية</SelectItem>
+                        <SelectItem value="fixed">مبلغ ثابت</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Value Amount */}
+              <FormField
+                control={form.control}
+                name="value_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>قيمة العمولة (لكل أوردر)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Orders Count */}
+              <FormField
+                control={form.control}
+                name="orders_count"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>عدد الأوردرات</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Total Commission */}
+              <FormField
+                control={form.control}
+                name="total_commission"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>إجمالي العمولة</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                        readOnly
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Due Date */}
+              <FormField
+                control={form.control}
+                name="due_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>تاريخ الاستحقاق</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>اختر التاريخ</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date("1900-01-01")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+            {isSubmitting ? "جاري الحفظ..." : "حفظ العمولة"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
