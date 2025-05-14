@@ -36,92 +36,88 @@ import { toast } from '@/components/ui/sonner';
 import { Brand } from '@/types';
 
 const formSchema = z.object({
-  category: z.string().min(1, { message: "يرجى اختيار نوع المصروف" }),
   date: z.date(),
-  brand_id: z.string().optional(),
-  amount: z.number().positive({ message: "يجب أن تكون القيمة رقم موجب" }),
-  description: z.string().optional(),
-  employee_id: z.string().optional(),
+  brand_id: z.string().min(1, { message: "يرجى اختيار البراند" }),
+  pieces_sold: z.number().positive({ message: "يجب أن تكون القيمة رقم موجب" }),
+  price_per_piece: z.number().positive({ message: "يجب أن تكون القيمة رقم موجب" }),
+  notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const AddExpensePage = () => {
+const AddRevenuePage = () => {
   const navigate = useNavigate();
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [users, setUsers] = useState<{ id: string; full_name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      category: '',
       date: new Date(),
-      brand_id: undefined,
-      amount: 0,
-      description: '',
-      employee_id: undefined,
+      brand_id: '',
+      pieces_sold: 0,
+      price_per_piece: 0,
+      notes: '',
     }
   });
 
-  // Fetch brands and employees
+  // Watch values to calculate total
+  const piecesCount = form.watch('pieces_sold');
+  const pricePerPiece = form.watch('price_per_piece');
+  const totalRevenue = piecesCount * pricePerPiece;
+
+  // Fetch brands
   useState(() => {
-    const fetchData = async () => {
+    const fetchBrands = async () => {
       setIsLoading(true);
       try {
-        // Fetch brands
-        const { data: brandsData, error: brandsError } = await supabase
+        const { data: brandsData, error } = await supabase
           .from('brands')
           .select('*');
           
-        if (brandsError) throw brandsError;
+        if (error) throw error;
         setBrands(brandsData || []);
         
-        // Fetch users
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, full_name');
-          
-        if (usersError) throw usersError;
-        setUsers(usersData || []);
-        
       } catch (error) {
-        console.error('Error fetching data:', error);
-        toast.error('حدث خطأ أثناء تحميل البيانات');
+        console.error('Error fetching brands:', error);
+        toast.error('حدث خطأ أثناء تحميل بيانات البراندات');
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchData();
+    fetchBrands();
   }, []);
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
-      // Insert expense into database
-      const { data: expense, error } = await supabase
-        .from('expenses')
+      // Calculate total revenue
+      const total = data.pieces_sold * data.price_per_piece;
+      
+      // Insert revenue into database
+      const { data: revenue, error } = await supabase
+        .from('revenues')
         .insert({
-          category: data.category,
           date: format(data.date, 'yyyy-MM-dd'),
-          brand_id: data.brand_id || null,
-          amount: data.amount,
-          description: data.description || null,
-          employee_id: data.employee_id || null,
+          brand_id: data.brand_id,
+          pieces_sold: data.pieces_sold,
+          price_per_piece: data.price_per_piece,
+          total_revenue: total,
+          notes: data.notes || null,
         })
         .select()
         .single();
       
       if (error) throw error;
       
-      toast.success('تم إضافة المصروف بنجاح');
+      toast.success('تم إضافة الإيراد بنجاح');
       navigate('/finance');
     } catch (error: any) {
-      console.error('Error adding expense:', error);
-      toast.error(error.message || 'حدث خطأ أثناء حفظ المصروف');
+      console.error('Error adding revenue:', error);
+      toast.error(error.message || 'حدث خطأ أثناء حفظ الإيراد');
     } finally {
       setIsLoading(false);
     }
@@ -130,43 +126,14 @@ const AddExpensePage = () => {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">إضافة مصروف جديد</h1>
-        <p className="text-gray-600">أدخل بيانات المصروف</p>
+        <h1 className="text-2xl font-bold">إضافة إيراد جديد</h1>
+        <p className="text-gray-600">أدخل بيانات الإيراد</p>
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نوع المصروف</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="text-right">
-                          <SelectValue placeholder="اختر نوع المصروف" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="salaries">رواتب</SelectItem>
-                        <SelectItem value="ads">إعلانات</SelectItem>
-                        <SelectItem value="rent">إيجار</SelectItem>
-                        <SelectItem value="supplies">مستلزمات</SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="date"
@@ -209,15 +176,13 @@ const AddExpensePage = () => {
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
               <FormField
                 control={form.control}
                 name="brand_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>البراند المرتبط (اختياري)</FormLabel>
+                    <FormLabel>اسم البراند</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -229,7 +194,6 @@ const AddExpensePage = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">بدون براند محدد</SelectItem>
                         {brands.map((brand) => (
                           <SelectItem key={brand.id} value={brand.id}>
                             {brand.name}
@@ -241,17 +205,40 @@ const AddExpensePage = () => {
                   </FormItem>
                 )}
               />
-              
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="amount"
+                name="pieces_sold"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>القيمة بالجنيه</FormLabel>
+                    <FormLabel>عدد القطع المباعة</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder="أدخل المبلغ" 
+                        placeholder="أدخل عدد القطع" 
+                        className="text-right"
+                        disabled={isLoading}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="price_per_piece"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>سعر القطعة (ج.م)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="أدخل سعر القطعة" 
                         className="text-right"
                         disabled={isLoading}
                         {...field}
@@ -267,43 +254,13 @@ const AddExpensePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="employee_id"
+                name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الموظف المسؤول (اختياري)</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="text-right">
-                          <SelectValue placeholder="اختر الموظف" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">بدون موظف محدد</SelectItem>
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.full_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ملاحظات / وصف العملية (اختياري)</FormLabel>
+                    <FormLabel>ملاحظات (اختياري)</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="أدخل وصف المصروف" 
+                        placeholder="أدخل ملاحظات الإيراد" 
                         className="resize-none text-right"
                         disabled={isLoading}
                         {...field}
@@ -313,6 +270,16 @@ const AddExpensePage = () => {
                   </FormItem>
                 )}
               />
+              
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h3 className="font-medium text-green-900 mb-2">إجمالي الإيراد</h3>
+                <div className="text-3xl font-bold text-green-700">
+                  {totalRevenue.toLocaleString()} ج.م
+                </div>
+                <p className="text-sm text-green-600 mt-1">
+                  {piecesCount} قطعة × {pricePerPiece} ج.م
+                </p>
+              </div>
             </div>
             
             <div className="flex justify-end space-x-4 rtl:space-x-reverse">
@@ -328,7 +295,7 @@ const AddExpensePage = () => {
                 type="submit"
                 disabled={isLoading}
               >
-                {isLoading ? 'جاري الحفظ...' : 'حفظ المصروف'}
+                {isLoading ? 'جاري الحفظ...' : 'حفظ الإيراد'}
               </Button>
             </div>
           </form>
@@ -338,4 +305,4 @@ const AddExpensePage = () => {
   );
 };
 
-export default AddExpensePage;
+export default AddRevenuePage;

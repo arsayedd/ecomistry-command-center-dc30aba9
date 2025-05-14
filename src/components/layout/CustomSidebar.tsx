@@ -1,106 +1,156 @@
 
-import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Users,
-  Store,
   BarChart3,
-  Phone,
-  FileText,
-  PenTool,
+  Building2,
+  Calendar,
+  CircleDollarSign,
+  Coins,
+  FileEdit,
   MessageSquare,
-  DollarSign,
-  Database,
+  Phone,
   Settings,
-  LayoutDashboard,
-  LogOut
+  ShoppingCart,
+  Smartphone,
+  Users,
 } from "lucide-react";
 
-export const CustomSidebar = () => {
-  const { user, signOut } = useAuth();
-  const location = useLocation();
-  const currentPath = location.pathname;
-  
-  // Navigation items with icons and path based on the provided image
-  const navItems = [
-    { label: "الرئيسية", path: "/dashboard", icon: LayoutDashboard },
-    { label: "إدارة", path: "#", icon: null, isHeader: true },
-    { label: "الموظفين", path: "/employees", icon: Users },
-    { label: "البراندات", path: "/brands", icon: Store },
-    { label: "الإيرادات", path: "/revenues", icon: DollarSign },
-    { label: "أقسام", path: "#", icon: null, isHeader: true },
-    { label: "ميديا بايينج", path: "/media-buying", icon: BarChart3 },
-    { label: "كول سنتر", path: "/call-center", icon: Phone },
-    { label: "كتابة المحتوى", path: "/content", icon: FileText },
-    { label: "التصميم", path: "/design", icon: PenTool },
-    { label: "موديريشن", path: "/moderation", icon: MessageSquare },
-    { label: "المالية", path: "#", icon: null, isHeader: true },
-    { label: "المالية", path: "/finance", icon: DollarSign },
-    { label: "النظام", path: "#", icon: null, isHeader: true },
-    { label: "قاعدة البيانات", path: "/database", icon: Database },
-    { label: "الإعدادات", path: "/settings", icon: Settings },
-  ];
-  
-  if (!user) return null;
+const menuItems = [
+  {
+    title: "الرئيسية",
+    path: "/dashboard",
+    icon: <BarChart3 className="h-5 w-5" />,
+  },
+  {
+    title: "إدارة البراندات",
+    path: "/brands",
+    icon: <Building2 className="h-5 w-5" />,
+  },
+  {
+    title: "إدارة الموظفين",
+    path: "/employees",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    title: "ميديا بايينج",
+    path: "/media-buying",
+    icon: <Smartphone className="h-5 w-5" />,
+  },
+  {
+    title: "كول سنتر",
+    path: "/call-center",
+    icon: <Phone className="h-5 w-5" />,
+  },
+  {
+    title: "المودريشن",
+    path: "/moderation",
+    icon: <MessageSquare className="h-5 w-5" />,
+  },
+  {
+    title: "كتابة المحتوى",
+    path: "/content",
+    icon: <FileEdit className="h-5 w-5" />,
+  },
+  {
+    title: "النظام المالي",
+    path: "/finance",
+    icon: <CircleDollarSign className="h-5 w-5" />,
+  },
+  {
+    title: "العمولات",
+    path: "/commissions",
+    icon: <Coins className="h-5 w-5" />,
+  },
+  {
+    title: "قاعدة البيانات",
+    path: "/database",
+    icon: <ShoppingCart className="h-5 w-5" />,
+  },
+  {
+    title: "الإعدادات",
+    path: "/settings",
+    icon: <Settings className="h-5 w-5" />,
+  },
+];
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
+export function CustomSidebar() {
+  const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <aside dir="rtl" className="bg-white border-l border-gray-200 w-64 flex-shrink-0 flex flex-col h-screen">
-      <div className="h-16 border-b border-gray-200 flex items-center justify-center">
-        <h2 className="text-xl font-bold text-green-600">Ecomistry</h2>
-      </div>
-      
-      <nav className="p-4 flex-grow overflow-y-auto">
-        <ul className="space-y-1">
-          {navItems.map((item, index) => {
-            if (item.isHeader) {
-              return (
-                <li key={`header-${index}`} className="text-gray-500 text-sm py-2 mt-1">
-                  {item.label}
-                </li>
-              );
-            }
-            
-            const Icon = item.icon;
-            const isActive = currentPath.startsWith(item.path);
-            
-            return (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-green-50 text-green-700" 
-                      : "text-gray-700 hover:bg-gray-100"
-                  )}
-                >
-                  {Icon && <Icon size={20} />}
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-      
-      <div className="p-4 border-t">
-        <button 
-          onClick={handleSignOut}
-          className="flex items-center w-full gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+    <div
+      className={cn(
+        "h-screen bg-white border-l transition-all duration-300 overflow-hidden",
+        isCollapsed ? "w-20" : "w-64"
+      )}
+    >
+      <div className="flex flex-col h-full">
+        {/* Logo */}
+        <div className="h-16 border-b flex items-center justify-center p-4">
+          <div className="flex items-center justify-center">
+            <span className={cn("text-xl font-bold text-green-600", isCollapsed && "hidden")}>
+              Ecomistry
+            </span>
+            <span className={cn("hidden", isCollapsed && "block text-xl font-bold text-green-600")}>
+              E
+            </span>
+          </div>
+        </div>
+
+        {/* Collapse Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 ml-4 mt-2 mb-2 border rounded-full w-8 h-8 flex items-center justify-center self-end"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <LogOut size={20} />
-          <span>تسجيل الخروج</span>
+          {isCollapsed ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6"></path>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m9 18 6-6-6-6"></path>
+            </svg>
+          )}
         </button>
+
+        {/* Menu Items */}
+        <div className="flex-1 overflow-y-auto py-2">
+          <div className="space-y-1 px-3">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                  isActive
+                    ? "bg-green-50 text-green-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-100",
+                  isCollapsed && "justify-center"
+                )}
+              >
+                {item.icon}
+                {!isCollapsed && <span>{item.title}</span>}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+
+        {/* Current Date */}
+        <div className={cn(
+          "p-4 border-t text-center text-xs text-gray-500",
+          isCollapsed && "text-center p-2"
+        )}>
+          <div className="flex items-center justify-center gap-2">
+            <Calendar className="h-4 w-4" />
+            {!isCollapsed && (
+              <span>{new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            )}
+          </div>
+        </div>
       </div>
-    </aside>
+    </div>
   );
-};
+}

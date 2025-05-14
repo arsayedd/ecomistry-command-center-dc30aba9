@@ -17,21 +17,35 @@ import BrandsPage from "./pages/brands/index";
 import AddBrandPage from "./pages/brands/add";
 import EditBrandPage from "./pages/brands/[id]/edit";
 
+// Employee pages
+import EmployeesPage from "./pages/employees/index";
+import AddEmployeePage from "./pages/employees/add";
+import EditEmployeePage from "./pages/employees/[id]/edit";
+
 // Media Buying pages
 import MediaBuyingPage from "./pages/media-buying/index";
+import AddMediaBuyingPage from "./pages/media-buying/add";
 
 // Call Center pages
 import CallCenterPage from "./pages/call-center/index";
+import AddOrderPage from "./pages/call-center/orders/add";
 
 // Moderation pages
 import ModerationPage from "./pages/moderation/index";
+import AddModerationPage from "./pages/moderation/add";
 
-// Design pages
-import DesignPage from "./pages/design/index";
+// Content Writing pages
+import ContentPage from "./pages/content/index";
+import AddContentTaskPage from "./pages/content/add";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
 import AddExpensePage from "./pages/finance/expenses/add";
+import AddRevenuePage from "./pages/finance/revenues/add";
+
+// Commission pages
+import CommissionsPage from "./pages/commissions/index";
+import AddCommissionPage from "./pages/commissions/add";
 
 // Database page
 import DatabasePage from "./pages/database/index";
@@ -68,21 +82,35 @@ const App = () => (
               <Route path="brands/add" element={<AddBrandPage />} />
               <Route path="brands/:id/edit" element={<EditBrandPage />} />
               
+              {/* Employees Routes */}
+              <Route path="employees" element={<EmployeesPage />} />
+              <Route path="employees/add" element={<AddEmployeePage />} />
+              <Route path="employees/:id/edit" element={<EditEmployeePage />} />
+              
               {/* Media Buying Routes */}
               <Route path="media-buying" element={<MediaBuyingPage />} />
+              <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
               
               {/* Call Center Routes */}
               <Route path="call-center" element={<CallCenterPage />} />
+              <Route path="call-center/orders/add" element={<AddOrderPage />} />
               
               {/* Moderation Routes */}
               <Route path="moderation" element={<ModerationPage />} />
+              <Route path="moderation/add" element={<AddModerationPage />} />
               
-              {/* Design Routes */}
-              <Route path="design" element={<DesignPage />} />
+              {/* Content Routes */}
+              <Route path="content" element={<ContentPage />} />
+              <Route path="content/add" element={<AddContentTaskPage />} />
               
               {/* Finance Routes */}
               <Route path="finance" element={<FinancePage />} />
               <Route path="finance/expenses/add" element={<AddExpensePage />} />
+              <Route path="finance/revenues/add" element={<AddRevenuePage />} />
+              
+              {/* Commissions Routes */}
+              <Route path="commissions" element={<CommissionsPage />} />
+              <Route path="commissions/add" element={<AddCommissionPage />} />
               
               {/* Database Routes */}
               <Route path="database" element={<DatabasePage />} />
