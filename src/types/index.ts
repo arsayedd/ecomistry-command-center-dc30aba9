@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -111,6 +110,7 @@ export interface Revenue {
   notes?: string;
   date: string;
   created_at?: string;
+  brand?: Brand;
 }
 
 export interface ContentTask {
@@ -119,11 +119,22 @@ export interface ContentTask {
   brand_id?: string;
   task_type: 'post' | 'ad' | 'reel' | 'product' | 'landing_page' | 'other';
   deadline?: string;
-  status: 'in_progress' | 'delivered' | 'delayed';
+  status: string;  // Using string instead of union to match Arabic values
   delivery_link?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
+  employee?: {
+    id: string;
+    user_id: string;
+    user?: {
+      full_name: string;
+    };
+  };
+  brand?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface ModerationTask {

@@ -1,11 +1,12 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { 
   Table, TableBody, TableCell, TableHead, 
   TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, FileText, Download } from "lucide-react";
 import type { Employee } from "@/types";
 import { EmployeeExportOptions } from "./EmployeeExportOptions";
 
@@ -36,7 +37,26 @@ export function EmployeesTable({
 
   return (
     <div className="w-full overflow-auto">
-      <EmployeeExportOptions onExport={exportData} />
+      <div className="flex justify-end mb-4 gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={() => exportData('pdf')}
+        >
+          <FileText className="h-4 w-4" />
+          <span>تصدير PDF</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={() => exportData('excel')}
+        >
+          <Download className="h-4 w-4" />
+          <span>تصدير Excel</span>
+        </Button>
+      </div>
 
       <Table dir="rtl">
         <TableHeader>
@@ -119,22 +139,14 @@ export function EmployeesTable({
                 <TableCell>{employee.user?.permission_level || "غير محدد"}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => {
-                        // Toggle status with type-safe values
-                        const newStatus = employee.status === "active" 
-                          ? "inactive" as const
-                          : "active" as const;
-                        updateEmployeeStatus({ 
-                          id: employee.id,
-                          status: newStatus
-                        });
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <Link to={`/employees/${employee.id}`}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
                     <Button 
                       variant="ghost" 
                       size="icon"

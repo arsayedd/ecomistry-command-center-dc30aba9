@@ -1,17 +1,17 @@
 
 import jsPDF from 'jspdf';
-// لتضمين jspdf-autotable نقوم بالاستيراد والتعريف بالنوع يدويًا
+// For jspdf-autotable we need to add the type declaration
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
-// تعريف النوع لملحق jspdf-autotable
+// Declare the type for jspdf-autotable
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
 }
 
-// تعريف واجهات البيانات
+// Define interfaces for export functions
 interface ExportColumn {
   header: string;
   dataKey: string;

@@ -113,6 +113,8 @@ const App = () => (
               
               {/* Finance Routes */}
               <Route path="finance" element={<FinancePage />} />
+              <Route path="finance/expenses/add" element={<AddExpensePage />} />
+              <Route path="finance/revenues/add" element={<AddRevenuePage />} />
               
               {/* Database Routes */}
               <Route path="database" element={<DatabasePage />} />

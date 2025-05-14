@@ -19,30 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface ContentTask {
-  id: string;
-  employee_id: string;
-  brand_id: string;
-  task_type: string;
-  deadline: string;
-  status: string;
-  delivery_link: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  employee?: {
-    id: string;
-    user_id: string;
-    user?: {
-      full_name: string;
-    };
-  };
-  brand?: {
-    id: string;
-    name: string;
-  };
-}
+import { ContentTask } from "@/types";
 
 interface ContentTasksTableProps {
   isLoading: boolean;
@@ -69,6 +46,19 @@ export default function ContentTasksTable({
     }
   };
 
+  // Map task type to Arabic
+  const getTaskType = (type: string) => {
+    switch (type) {
+      case "post": return "بوست";
+      case "ad": return "إعلان";
+      case "reel": return "رييل";
+      case "product": return "منتج";
+      case "landing_page": return "صفحة هبوط";
+      case "other": return "أخرى";
+      default: return type;
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -79,19 +69,20 @@ export default function ContentTasksTable({
           <TableHead>تاريخ التسليم</TableHead>
           <TableHead>الحالة</TableHead>
           <TableHead>رابط التسليم</TableHead>
+          <TableHead>ملاحظات</TableHead>
           <TableHead>الإجراءات</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {isLoading ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-10">
+            <TableCell colSpan={8} className="text-center py-10">
               جاري التحميل...
             </TableCell>
           </TableRow>
         ) : tasks?.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-10">
+            <TableCell colSpan={8} className="text-center py-10">
               لا توجد مهام مطابقة للبحث
             </TableCell>
           </TableRow>
@@ -102,7 +93,7 @@ export default function ContentTasksTable({
                 {task.employee?.user?.full_name || "غير محدد"}
               </TableCell>
               <TableCell>{task.brand?.name || "غير محدد"}</TableCell>
-              <TableCell>{task.task_type}</TableCell>
+              <TableCell>{getTaskType(task.task_type)}</TableCell>
               <TableCell>
                 {task.deadline ? format(new Date(task.deadline), "yyyy-MM-dd") : "غير محدد"}
               </TableCell>
@@ -121,6 +112,7 @@ export default function ContentTasksTable({
                   "لا يوجد"
                 )}
               </TableCell>
+              <TableCell>{task.notes || "لا توجد ملاحظات"}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
