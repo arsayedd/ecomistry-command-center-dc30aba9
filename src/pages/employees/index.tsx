@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,30 +10,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import EmployeeSearchFilters from "@/components/employees/EmployeeSearchFilters";
 import { EmployeesTable } from "@/components/employees/EmployeesTable";
 import { exportToPDF, exportToExcel } from "@/utils/exportUtils";
+import { Employee } from "@/types"; // Import Employee type from types file
 
 // Define proper interface for employee update operation
 interface UpdateEmployeeStatusParams {
   id: string;
   status: string;
-}
-
-// Define proper interface for employee
-interface Employee {
-  id: string;
-  user_id: string;
-  salary: number;
-  commission_type: string | null;
-  commission_value: number | null;
-  status: string;
-  created_at: string;
-  contract_type?: string;
-  user?: {
-    full_name: string;
-    email: string;
-    department: string;
-    role: string;
-    permission_level: string;
-  };
 }
 
 // Sample employee data with more fields
@@ -47,7 +28,8 @@ const sampleEmployees: Employee[] = [
     commission_value: 5,
     status: "active",
     created_at: "2025-01-15",
-    contract_type: "full-time",
+    contract_type: "full_time",
+    salary_type: "monthly", // Add the required salary_type field
     user: {
       full_name: "أحمد محمد",
       email: "ahmed@example.com",
@@ -64,7 +46,8 @@ const sampleEmployees: Employee[] = [
     commission_value: 500,
     status: "active",
     created_at: "2025-02-01",
-    contract_type: "part-time",
+    contract_type: "part_time",
+    salary_type: "monthly", // Add the required salary_type field
     user: {
       full_name: "سارة علي",
       email: "sara@example.com",
@@ -77,11 +60,12 @@ const sampleEmployees: Employee[] = [
     id: "3",
     user_id: "103",
     salary: 3500,
-    commission_type: null,
-    commission_value: null,
+    commission_type: "none",
+    commission_value: 0,
     status: "inactive",
     created_at: "2025-01-10",
     contract_type: "freelancer",
+    salary_type: "hourly", // Add the required salary_type field
     user: {
       full_name: "محمود حسن",
       email: "mahmoud@example.com",
@@ -96,9 +80,10 @@ const sampleEmployees: Employee[] = [
     salary: 4800,
     commission_type: "percentage",
     commission_value: 3,
-    status: "pending",
+    status: "probation",
     created_at: "2025-03-05",
-    contract_type: "full-time",
+    contract_type: "full_time",
+    salary_type: "monthly", // Add the required salary_type field
     user: {
       full_name: "نورا أحمد",
       email: "nora@example.com",
@@ -115,7 +100,8 @@ const sampleEmployees: Employee[] = [
     commission_value: 700,
     status: "active",
     created_at: "2025-02-20",
-    contract_type: "per-task",
+    contract_type: "per_task",
+    salary_type: "per_task", // Add the required salary_type field
     user: {
       full_name: "خالد عمر",
       email: "khaled@example.com",
@@ -132,7 +118,8 @@ const sampleEmployees: Employee[] = [
     commission_value: 7,
     status: "active",
     created_at: "2025-03-10",
-    contract_type: "full-time",
+    contract_type: "full_time",
+    salary_type: "monthly", // Add the required salary_type field
     user: {
       full_name: "ليلى سعيد",
       email: "laila@example.com",
@@ -149,7 +136,8 @@ const sampleEmployees: Employee[] = [
     commission_value: 300,
     status: "active",
     created_at: "2025-02-05",
-    contract_type: "part-time",
+    contract_type: "part_time",
+    salary_type: "monthly", // Add the required salary_type field
     user: {
       full_name: "عمر خالد",
       email: "omar@example.com",
@@ -162,11 +150,12 @@ const sampleEmployees: Employee[] = [
     id: "8",
     user_id: "108",
     salary: 3800,
-    commission_type: null,
-    commission_value: null,
+    commission_type: "none",
+    commission_value: 0,
     status: "inactive",
     created_at: "2025-01-25",
     contract_type: "freelancer",
+    salary_type: "hourly", // Add the required salary_type field
     user: {
       full_name: "هدى محمود",
       email: "hoda@example.com",
