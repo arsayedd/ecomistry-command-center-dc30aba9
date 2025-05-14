@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -50,6 +49,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Attempting to sign in:', email);
+      if (!email || !password) {
+        toast({ 
+          title: "بيانات غير كاملة", 
+          description: "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
+          variant: "destructive" 
+        });
+        throw new Error("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
+      }
+
       const { error, data } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -69,12 +77,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             variant: "destructive" 
           });
           throw new Error("تسجيل الدخول بالبريد الإلكتروني معطل");
+        } else if (error.message.includes('Invalid login credentials')) {
+          toast({ 
+            title: "بيانات الدخول غير صحيحة", 
+            description: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+            variant: "destructive" 
+          });
+          throw new Error("بيانات الدخول غير صحيحة");
         } else {
           toast({ 
             title: "فشل تسجيل الدخول", 
-            description: error.message === 'Invalid login credentials' 
-              ? "بيانات الدخول غير صحيحة" 
-              : error.message || "حدث خطأ أثناء تسجيل الدخول",
+            description: error.message || "حدث خطأ أثناء تسجيل الدخول",
             variant: "destructive" 
           });
           throw error;
@@ -87,10 +100,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // تأخير قليل للسماح بتحديث حالة المصادقة قبل التوجيه
       setTimeout(() => {
         navigate('/dashboard');
-      }, 500);
+      }, 1000);
     } catch (error: any) {
       console.error("Login error:", error);
-      // الخطأ تم التعامل معه في المحاولة/الخطأ السابق
+      throw error; // إعادة رمي الخطأ للتعامل معه في مكون تسجيل الدخول
     }
   };
 

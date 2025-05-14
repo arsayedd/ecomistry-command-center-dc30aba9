@@ -15,12 +15,14 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [emailConfirmationNeeded, setEmailConfirmationNeeded] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { signIn, sendEmailConfirmation } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setEmailConfirmationNeeded(false);
+    setLoginError(null);
     
     try {
       console.log('Submitting login form with email:', email);
@@ -34,6 +36,8 @@ const Login = () => {
           error.message.includes('Email not confirmed')
         )) {
         setEmailConfirmationNeeded(true);
+      } else {
+        setLoginError(error.message || 'حدث خطأ أثناء تسجيل الدخول');
       }
     } finally {
       setIsLoading(false);
@@ -80,6 +84,15 @@ const Login = () => {
                     >
                       {isResendingEmail ? 'جاري إرسال رسالة التأكيد...' : 'إعادة إرسال رسالة التأكيد'}
                     </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {loginError && (
+                <Alert className="bg-red-50 border-red-200">
+                  <AlertTitle className="text-red-800 mr-2">فشل تسجيل الدخول</AlertTitle>
+                  <AlertDescription className="text-red-700">
+                    {loginError}
                   </AlertDescription>
                 </Alert>
               )}
