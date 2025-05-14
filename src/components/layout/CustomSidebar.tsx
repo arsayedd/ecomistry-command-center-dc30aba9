@@ -90,12 +90,20 @@ export function CustomSidebar() {
         {/* Logo */}
         <div className="h-16 border-b flex items-center justify-center p-4">
           <div className="flex items-center justify-center">
-            <span className={cn("text-xl font-bold text-green-600", isCollapsed && "hidden")}>
-              Ecomistry
-            </span>
-            <span className={cn("hidden", isCollapsed && "block text-xl font-bold text-green-600")}>
-              E
-            </span>
+            {!isCollapsed && (
+              <img 
+                src="https://i.postimg.cc/MKhxbvS0/00eab832-4bc4-4519-8510-2a386cf7663d.png" 
+                alt="Ecomistry Logo" 
+                className="h-10"
+              />
+            )}
+            {isCollapsed && (
+              <img 
+                src="https://i.postimg.cc/MKhxbvS0/00eab832-4bc4-4519-8510-2a386cf7663d.png" 
+                alt="Ecomistry Logo" 
+                className="h-8 w-8 object-contain"
+              />
+            )}
           </div>
         </div>
 
