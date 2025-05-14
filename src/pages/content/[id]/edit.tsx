@@ -135,9 +135,15 @@ export default function EditContentTask() {
   // Update content task mutation
   const updateContentTask = useMutation({
     mutationFn: async (values: FormValues) => {
+      // Convert Date object to ISO string for the database
+      const formattedValues = {
+        ...values,
+        deadline: values.deadline.toISOString(),
+      };
+      
       const { error } = await supabase
         .from("content_tasks")
-        .update(values)
+        .update(formattedValues)
         .eq("id", id);
       
       if (error) throw error;

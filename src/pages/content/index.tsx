@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -46,6 +45,33 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define proper type for the employee_user data structure
+interface ContentTask {
+  id: string;
+  employee_id: string;
+  brand_id: string;
+  task_type: string;
+  deadline: string;
+  status: string;
+  delivery_link: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  employee?: {
+    id: string;
+    user_id: string;
+  };
+  employee_user?: {
+    user_id: {
+      full_name: string;
+    };
+  };
+  brand?: {
+    id: string;
+    name: string;
+  };
+}
+
 export default function ContentPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBrand, setFilterBrand] = useState("");
@@ -64,13 +90,13 @@ export default function ContentPage() {
         .select(`
           *,
           employee:employees(id, user_id),
-          employee_user:employees(user_id(full_name)),
+          employee_user:employees(user:users(full_name)),
           brand:brands(id, name)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data as ContentTask[] || [];
     },
   });
 
@@ -137,10 +163,13 @@ export default function ContentPage() {
 
   // Filter tasks based on search query and filters
   const filteredTasks = contentTasks?.filter((task) => {
+    const employeeFullName = task.employee_user?.user?.full_name || "";
+    const brandName = task.brand?.name || "";
+    
     const matchesSearch = 
       !searchQuery || 
-      task.employee_user?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.brand?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employeeFullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      brandName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.task_type?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesBrand = !filterBrand || task.brand_id === filterBrand;
@@ -265,7 +294,7 @@ export default function ContentPage() {
                 filteredTasks?.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell>
-                      {task.employee_user?.full_name || "غير محدد"}
+                      {task.employee_user?.user?.full_name || "غير محدد"}
                     </TableCell>
                     <TableCell>{task.brand?.name || "غير محدد"}</TableCell>
                     <TableCell>{task.task_type}</TableCell>

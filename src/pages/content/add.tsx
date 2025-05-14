@@ -106,9 +106,15 @@ export default function AddContentTask() {
   // Create content task mutation
   const createContentTask = useMutation({
     mutationFn: async (values: FormValues) => {
+      // Convert Date object to ISO string for the database
+      const formattedValues = {
+        ...values,
+        deadline: values.deadline.toISOString(),
+      };
+      
       const { error } = await supabase
         .from("content_tasks")
-        .insert([values]);
+        .insert([formattedValues]);
       
       if (error) throw error;
       return values;

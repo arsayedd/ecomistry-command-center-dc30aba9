@@ -46,9 +46,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Define proper interface for employee update operation
+interface UpdateEmployeeStatusParams {
+  id: string;
+  status: string;
+}
+
 export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortColumn, setSortColumn] = useState(null);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [filterDepartment, setFilterDepartment] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -75,7 +81,7 @@ export default function EmployeesPage() {
 
   // Update employee status mutation
   const updateEmployeeStatus = useMutation({
-    mutationFn: async ({ id, status }) => {
+    mutationFn: async ({ id, status }: UpdateEmployeeStatusParams) => {
       const { error } = await supabase
         .from("employees")
         .update({ status })
@@ -94,7 +100,7 @@ export default function EmployeesPage() {
     onError: (error) => {
       toast({
         title: "خطأ",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
     },
@@ -102,7 +108,7 @@ export default function EmployeesPage() {
 
   // Delete employee mutation
   const deleteEmployee = useMutation({
-    mutationFn: async (id) => {
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("employees")
         .delete()
@@ -121,14 +127,14 @@ export default function EmployeesPage() {
     onError: (error) => {
       toast({
         title: "خطأ",
-        description: error.message,
+        description: (error as Error).message,
         variant: "destructive",
       });
     },
   });
 
   // Handle sorting
-  const handleSort = (column) => {
+  const handleSort = (column: string) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
