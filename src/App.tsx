@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import AuthLayout from "./layouts/AuthLayout";
 import AppLayout from "./layouts/AppLayout";
@@ -20,6 +20,7 @@ import EmployeeDetailsPage from "./pages/employees/[id]";
 // Brand pages
 import BrandsPage from "./pages/brands/index";
 import AddBrandPage from "./pages/brands/add";
+import EditBrandPage from "./pages/brands/[id]/edit";
 
 // Media Buying pages
 import MediaBuyingPage from "./pages/media-buying/index";
@@ -42,6 +43,7 @@ import DesignPage from "./pages/design/index";
 // Revenue pages
 import RevenuesPage from "./pages/revenues/index";
 import AddRevenuePage from "./pages/revenues/add";
+import EditRevenuePage from "./pages/revenues/[id]/edit";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
@@ -51,6 +53,9 @@ import DatabasePage from "./pages/database/index";
 
 // Settings page
 import SettingsPage from "./pages/settings/index";
+
+// Create Home page to redirect users
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -81,10 +86,12 @@ const App = () => (
               {/* Brand Routes */}
               <Route path="brands" element={<BrandsPage />} />
               <Route path="brands/add" element={<AddBrandPage />} />
+              <Route path="brands/:id/edit" element={<EditBrandPage />} />
               
               {/* Revenue Routes */}
               <Route path="revenues" element={<RevenuesPage />} />
               <Route path="revenues/add" element={<AddRevenuePage />} />
+              <Route path="revenues/:id/edit" element={<EditRevenuePage />} />
               
               {/* Media Buying Routes */}
               <Route path="media-buying" element={<MediaBuyingPage />} />
@@ -113,8 +120,11 @@ const App = () => (
               {/* Settings Routes */}
               <Route path="settings" element={<SettingsPage />} />
               
-              <Route index element={<Dashboard />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
             </Route>
+            
+            {/* Root Route */}
+            <Route path="/" element={<Index />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
