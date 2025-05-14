@@ -44,6 +44,7 @@ export interface Brand {
     tiktok?: string;
     youtube?: string;
     linkedin?: string;
+    website?: string;
   };
 }
 

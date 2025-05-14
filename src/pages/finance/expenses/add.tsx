@@ -1,157 +1,139 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
-// Form schema
-const formSchema = z.object({
-  category: z.string({
-    required_error: "يرجى اختيار نوع المصروف",
-  }),
-  amount: z.number({
-    required_error: "يرجى إدخال المبلغ",
-    invalid_type_error: "يرجى إدخال رقم صحيح",
-  }).positive("يجب أن يكون المبلغ أكبر من صفر"),
-  date: z.date({
-    required_error: "يرجى اختيار التاريخ",
-  }),
+const expenseFormSchema = z.object({
+  category: z.string(),
+  amount: z.coerce.number().positive("يجب أن تكون القيمة أكبر من صفر"),
+  date: z.date(),
   brand_id: z.string().optional(),
   employee_id: z.string().optional(),
   description: z.string().optional(),
 });
 
+type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
+
 export default function AddExpensePage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  // Form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: "",
-    },
-  });
-  
+
   // Fetch brands for dropdown
   const { data: brands } = useQuery({
     queryKey: ["brands"],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("brands")
-          .select("id, name")
-          .order("name");
-        
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        console.error("Error fetching brands:", error);
-        return [];
-      }
+      const { data } = await supabase
+        .from("brands")
+        .select("id, name")
+        .order("name");
+      return data || [];
     },
   });
-  
+
   // Fetch employees for dropdown
   const { data: employees } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("employees")
-          .select(`
-            id,
-            user:users!inner(id, full_name)
-          `);
-        
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-        return [];
-      }
+      const { data } = await supabase
+        .from("employees")
+        .select(`
+          id,
+          user:users(id, full_name)
+        `)
+        .order("created_at");
+      return data || [];
     },
   });
-  
-  // Submit mutation
-  const submitExpense = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const { data, error } = await supabase
+
+  const form = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseFormSchema),
+    defaultValues: {
+      category: "",
+      amount: 0,
+      date: new Date(),
+      description: "",
+    },
+  });
+
+  const onSubmit = async (data: ExpenseFormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
         .from("expenses")
-        .insert({
-          category: values.category,
-          amount: values.amount,
-          date: format(values.date, "yyyy-MM-dd"),
-          brand_id: values.brand_id || null,
-          employee_id: values.employee_id || null,
-          description: values.description || "",
-        });
-        
+        .insert([{
+          category: data.category,
+          amount: data.amount,
+          date: format(data.date, "yyyy-MM-dd"),
+          brand_id: data.brand_id || null,
+          employee_id: data.employee_id || null,
+          description: data.description || null,
+        }]);
+
       if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: "تمت الإضافة بنجاح",
-        description: "تم إضافة المصروف بنجاح",
-      });
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      
+      toast.success("تم إضافة المصروف بنجاح");
       navigate("/finance");
-    },
-    onError: (error) => {
-      toast({
-        title: "حدث خطأ",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Form submit handler
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    submitExpense.mutate(values);
+    } catch (error) {
+      console.error("Error adding expense:", error);
+      toast.error("حدث خطأ أثناء إضافة المصروف");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">إضافة مصروف جديد</h1>
-      
       <Card>
         <CardHeader>
-          <CardTitle>بيانات المصروف</CardTitle>
+          <CardTitle>إضافة مصروف جديد</CardTitle>
+          <CardDescription>سجل تفاصيل المصروف الجديد</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* نوع المصروف */}
                 <FormField
                   control={form.control}
                   name="category"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>نوع المصروف</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
+                        dir="rtl"
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -170,50 +152,48 @@ export default function AddExpensePage() {
                     </FormItem>
                   )}
                 />
-                
-                {/* المبلغ */}
+
                 <FormField
                   control={form.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>المبلغ (ج.م)</FormLabel>
+                      <FormLabel>قيمة المصروف (ج.م)</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           type="number"
-                          placeholder="أدخل المبلغ"
+                          placeholder="أدخل قيمة المصروف"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          dir="rtl"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                {/* التاريخ */}
+
                 <FormField
                   control={form.control}
                   name="date"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>التاريخ</FormLabel>
+                    <FormItem>
+                      <FormLabel>تاريخ المصروف</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant={"outline"}
                               className={cn(
-                                "text-right font-normal",
+                                "w-full flex items-center justify-between text-right",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "dd/MM/yyyy", { locale: ar })
+                                format(field.value, "PPP", { locale: ar })
                               ) : (
-                                <span>اختر التاريخ</span>
+                                <span>اختر تاريخ المصروف</span>
                               )}
-                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              <CalendarIcon className="h-4 w-4" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
@@ -230,8 +210,7 @@ export default function AddExpensePage() {
                     </FormItem>
                   )}
                 />
-                
-                {/* البراند المرتبط */}
+
                 <FormField
                   control={form.control}
                   name="brand_id"
@@ -241,6 +220,7 @@ export default function AddExpensePage() {
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        dir="rtl"
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -259,8 +239,7 @@ export default function AddExpensePage() {
                     </FormItem>
                   )}
                 />
-                
-                {/* الموظف المسؤول */}
+
                 <FormField
                   control={form.control}
                   name="employee_id"
@@ -270,6 +249,7 @@ export default function AddExpensePage() {
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        dir="rtl"
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -289,27 +269,27 @@ export default function AddExpensePage() {
                   )}
                 />
               </div>
-              
-              {/* الوصف */}
+
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ملاحظات / وصف العملية (اختياري)</FormLabel>
+                    <FormLabel>وصف المصروف (اختياري)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="أدخل الملاحظات أو وصف العملية"
-                        className="resize-none"
+                        placeholder="أدخل وصفاً للمصروف"
                         {...field}
+                        dir="rtl"
+                        rows={3}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <div className="flex justify-end gap-2">
+
+              <div className="flex justify-end space-x-4 rtl:space-x-reverse">
                 <Button
                   type="button"
                   variant="outline"
@@ -317,8 +297,8 @@ export default function AddExpensePage() {
                 >
                   إلغاء
                 </Button>
-                <Button type="submit" disabled={submitExpense.isPending}>
-                  {submitExpense.isPending ? "جاري الحفظ..." : "حفظ المصروف"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "جاري الحفظ..." : "حفظ المصروف"}
                 </Button>
               </div>
             </form>

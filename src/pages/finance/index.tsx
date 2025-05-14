@@ -34,7 +34,8 @@ export default function FinancePage() {
           .order("date", { ascending: false });
 
         if (error) throw error;
-        return data as Expense[] || [];
+        // Type casting to handle potential mismatches from Supabase
+        return (data as unknown as Expense[]) || [];
       } catch (error) {
         console.error("Error fetching expenses:", error);
         // Return mock data
@@ -57,7 +58,7 @@ export default function FinancePage() {
           .order("date", { ascending: false });
 
         if (error) throw error;
-        return data as Revenue[] || [];
+        return (data as unknown as Revenue[]) || [];
       } catch (error) {
         console.error("Error fetching revenues:", error);
         // Return mock data

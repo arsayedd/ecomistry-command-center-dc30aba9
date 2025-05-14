@@ -91,8 +91,8 @@ export function BrandsList({ brands, loading, onDelete }: BrandsListProps) {
                       <Instagram size={16} />
                     </a>
                   )}
-                  {brand.social_links?.website && (
-                    <a href={brand.social_links.website} target="_blank" rel="noopener noreferrer" className="text-gray-500">
+                  {brand.website || brand.social_links?.website && (
+                    <a href={brand.website || brand.social_links?.website} target="_blank" rel="noopener noreferrer" className="text-gray-500">
                       <Link2 size={16} />
                     </a>
                   )}
