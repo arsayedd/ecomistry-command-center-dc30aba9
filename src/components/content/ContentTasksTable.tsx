@@ -1,169 +1,126 @@
 
-import { format } from "date-fns";
-import { MoreHorizontal, Eye, Edit } from "lucide-react";
+import React from "react";
 import { Link } from "react-router-dom";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
+import { 
+  Table, TableBody, TableCell, TableHead, 
+  TableHeader, TableRow 
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ContentTask } from "@/types";
+import { Edit, Eye, Trash2 } from "lucide-react";
+import type { ContentTask } from "@/types";
 
-interface ContentTasksTableProps {
-  isLoading: boolean;
+export interface ContentTasksTableProps {
   tasks: ContentTask[];
-  updateTaskStatus: (params: { id: string; status: string }) => void;
+  isLoading?: boolean;
+  onDelete?: (id: string) => void;
 }
 
-export default function ContentTasksTable({
-  isLoading,
-  tasks,
-  updateTaskStatus,
+export function ContentTasksTable({ 
+  tasks, 
+  isLoading, 
+  onDelete 
 }: ContentTasksTableProps) {
-  // Status badge color
+  if (isLoading) {
+    return <div className="text-center py-10">جاري تحميل البيانات...</div>;
+  }
+  
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "قيد التنفيذ":
-        return <Badge className="bg-yellow-500">قيد التنفيذ</Badge>;
-      case "تم التسليم":
-        return <Badge className="bg-green-500">تم التسليم</Badge>;
-      case "متأخر":
-        return <Badge className="bg-red-500">متأخر</Badge>;
+    switch(status) {
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">قيد التنفيذ</Badge>;
+      case "completed":
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">تم التسليم</Badge>;
+      case "delayed":
+        return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">متأخر</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">غير محدد</Badge>;
     }
   };
-
-  // Map task type to Arabic
-  const getTaskType = (type: string) => {
-    switch (type) {
-      case "post": return "بوست";
-      case "ad": return "إعلان";
-      case "reel": return "رييل";
-      case "product": return "منتج";
-      case "landing_page": return "صفحة هبوط";
-      case "other": return "أخرى";
-      default: return type;
+  
+  const getTaskTypeText = (type: string) => {
+    switch(type) {
+      case "post":
+        return "بوست";
+      case "ad":
+        return "إعلان";
+      case "reel":
+        return "رييل";
+      case "product":
+        return "منتج";
+      case "landing_page":
+        return "صفحة هبوط";
+      default:
+        return "أخرى";
     }
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>كاتب المحتوى</TableHead>
-          <TableHead>البراند</TableHead>
-          <TableHead>نوع المهمة</TableHead>
-          <TableHead>تاريخ التسليم</TableHead>
-          <TableHead>الحالة</TableHead>
-          <TableHead>رابط التسليم</TableHead>
-          <TableHead>ملاحظات</TableHead>
-          <TableHead>الإجراءات</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {isLoading ? (
+    <div className="w-full overflow-auto">
+      <Table dir="rtl">
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={8} className="text-center py-10">
-              جاري التحميل...
-            </TableCell>
+            <TableHead className="text-right">الموظف</TableHead>
+            <TableHead className="text-right">البراند</TableHead>
+            <TableHead className="text-right">نوع المهمة</TableHead>
+            <TableHead className="text-right">تاريخ التسليم</TableHead>
+            <TableHead className="text-right">الحالة</TableHead>
+            <TableHead className="text-right">تاريخ الإنشاء</TableHead>
+            <TableHead className="text-right">إجراءات</TableHead>
           </TableRow>
-        ) : tasks?.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={8} className="text-center py-10">
-              لا توجد مهام مطابقة للبحث
-            </TableCell>
-          </TableRow>
-        ) : (
-          tasks?.map((task) => (
-            <TableRow key={task.id}>
-              <TableCell>
-                {task.employee?.user?.full_name || "غير محدد"}
-              </TableCell>
-              <TableCell>{task.brand?.name || "غير محدد"}</TableCell>
-              <TableCell>{getTaskType(task.task_type)}</TableCell>
-              <TableCell>
-                {task.deadline ? format(new Date(task.deadline), "yyyy-MM-dd") : "غير محدد"}
-              </TableCell>
-              <TableCell>{getStatusBadge(task.status)}</TableCell>
-              <TableCell>
-                {task.delivery_link ? (
-                  <a
-                    href={task.delivery_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    عرض التسليم
-                  </a>
-                ) : (
-                  "لا يوجد"
-                )}
-              </TableCell>
-              <TableCell>{task.notes || "لا توجد ملاحظات"}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <Link to={`/content/${task.id}`}>
-                      <DropdownMenuItem>
-                        <Eye className="h-4 w-4 ml-2" />
-                        عرض التفاصيل
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link to={`/content/${task.id}/edit`}>
-                      <DropdownMenuItem>
-                        <Edit className="h-4 w-4 ml-2" />
-                        تعديل
-                      </DropdownMenuItem>
-                    </Link>
-                    <DropdownMenuItem onClick={() => 
-                      updateTaskStatus({ 
-                        id: task.id, 
-                        status: "قيد التنفيذ" 
-                      })
-                    }>
-                      تحديث إلى: قيد التنفيذ
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => 
-                      updateTaskStatus({ 
-                        id: task.id, 
-                        status: "تم التسليم" 
-                      })
-                    }>
-                      تحديث إلى: تم التسليم
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => 
-                      updateTaskStatus({ 
-                        id: task.id, 
-                        status: "متأخر" 
-                      })
-                    }>
-                      تحديث إلى: متأخر
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+        </TableHeader>
+        <TableBody>
+          {tasks.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-10 text-gray-500">
+                لا توجد مهام حتى الآن
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : (
+            tasks.map((task) => (
+              <TableRow key={task.id}>
+                <TableCell>{task.employee?.user?.full_name || "غير محدد"}</TableCell>
+                <TableCell>{task.brand?.name || "غير محدد"}</TableCell>
+                <TableCell>{getTaskTypeText(task.task_type)}</TableCell>
+                <TableCell>
+                  {task.deadline || task.due_date ? 
+                    format(new Date(task.deadline || task.due_date), "dd MMM yyyy", { locale: ar }) : 
+                    "غير محدد"
+                  }
+                </TableCell>
+                <TableCell>{getStatusBadge(task.status)}</TableCell>
+                <TableCell>
+                  {task.created_at ? 
+                    format(new Date(task.created_at), "dd MMM yyyy", { locale: ar }) : 
+                    "غير محدد"
+                  }
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Link to={`/content/${task.id}`}>
+                      <Button variant="ghost" size="icon">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link to={`/content/${task.id}/edit`}>
+                      <Button variant="ghost" size="icon">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    {onDelete && (
+                      <Button variant="ghost" size="icon" onClick={() => onDelete(task.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

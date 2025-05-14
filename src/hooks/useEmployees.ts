@@ -18,7 +18,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "full_time",
     salary_type: "monthly",
     user: {
-      id: "101", // Added id field to match User type
+      id: "101",
       full_name: "أحمد محمد",
       email: "ahmed@example.com",
       department: "call-center",
@@ -37,7 +37,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "part_time",
     salary_type: "monthly",
     user: {
-      id: "102", // Added id field to match User type
+      id: "102",
       full_name: "سارة علي",
       email: "sara@example.com",
       department: "media-buying",
@@ -56,7 +56,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "freelancer",
     salary_type: "hourly",
     user: {
-      id: "103", // Added id field to match User type
+      id: "103",
       full_name: "محمود حسن",
       email: "mahmoud@example.com",
       department: "content",
@@ -75,7 +75,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "full_time",
     salary_type: "monthly",
     user: {
-      id: "104", // Added id field to match User type
+      id: "104",
       full_name: "نورا أحمد",
       email: "nora@example.com",
       department: "design",
@@ -94,7 +94,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "per_task",
     salary_type: "per_task",
     user: {
-      id: "105", // Added id field to match User type
+      id: "105",
       full_name: "خالد عمر",
       email: "khaled@example.com",
       department: "moderation",
@@ -113,7 +113,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "full_time",
     salary_type: "monthly",
     user: {
-      id: "106", // Added id field to match User type
+      id: "106",
       full_name: "ليلى سعيد",
       email: "laila@example.com",
       department: "call-center",
@@ -132,7 +132,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "part_time",
     salary_type: "monthly",
     user: {
-      id: "107", // Added id field to match User type
+      id: "107",
       full_name: "عمر خالد",
       email: "omar@example.com",
       department: "media-buying",
@@ -151,7 +151,7 @@ const sampleEmployees: Employee[] = [
     contract_type: "freelancer",
     salary_type: "hourly",
     user: {
-      id: "108", // Added id field to match User type
+      id: "108",
       full_name: "هدى محمود",
       email: "hoda@example.com",
       department: "content",
@@ -164,7 +164,7 @@ const sampleEmployees: Employee[] = [
 // Define interface for employee update operation
 export interface UpdateEmployeeStatusParams {
   id: string;
-  status: "active" | "inactive" | "probation"; // Using proper union type
+  status: "active" | "inactive" | "probation";
 }
 
 export const useEmployees = () => {
@@ -193,7 +193,7 @@ export const useEmployees = () => {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        return data as Employee[] || [];
+        return data as unknown as Employee[] || [];
       } catch (error) {
         console.error("Error fetching employees:", error);
         return sampleEmployees; // Fall back to sample data if API fails
@@ -223,7 +223,7 @@ export const useEmployees = () => {
         console.error("Error updating employee status:", error);
         // For sample data, implement local update
         const updatedEmployees = localEmployees.map(emp => 
-          emp.id === id ? { ...emp, status: status as "active" | "inactive" | "probation" } : emp
+          emp.id === id ? { ...emp, status } : emp
         );
         setLocalEmployees(updatedEmployees);
         return { id, status };
@@ -232,7 +232,7 @@ export const useEmployees = () => {
     onSuccess: ({ id, status }) => {
       // Update local state in case we're using sample data
       const updatedEmployees = localEmployees.map(emp => 
-        emp.id === id ? { ...emp, status: status as "active" | "inactive" | "probation" } : emp
+        emp.id === id ? { ...emp, status } : emp
       );
       setLocalEmployees(updatedEmployees);
       

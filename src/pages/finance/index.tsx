@@ -1,102 +1,23 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Download, FileSpreadsheet, FilePdf } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { Brand } from "@/types";
-
-// Sample data
-const sampleBrands = [
-  { id: "1", name: "براند أزياء", status: "active" },
-  { id: "2", name: "براند تجميل", status: "active" },
-  { id: "3", name: "براند أغذية", status: "active" },
-];
-
-const sampleExpenses = [
-  {
-    id: "1",
-    category: "مرتبات",
-    amount: 5000,
-    date: "2025-05-10",
-    brand_id: "1",
-    brand: { id: "1", name: "براند أزياء", status: "active" },
-    description: "مرتبات شهر مايو",
-  },
-  {
-    id: "2",
-    category: "إعلانات",
-    amount: 3000,
-    date: "2025-05-08",
-    brand_id: "2",
-    brand: { id: "2", name: "براند تجميل", status: "active" },
-    description: "إعلانات فيسبوك",
-  },
-  {
-    id: "3",
-    category: "إيجار",
-    amount: 10000,
-    date: "2025-05-05",
-    brand_id: null,
-    description: "إيجار المقر الرئيسي",
-  },
-];
-
-const sampleRevenues = [
-  {
-    id: "1",
-    date: "2025-05-12",
-    brand_id: "1",
-    brand: { id: "1", name: "براند أزياء", status: "active" },
-    quantity_sold: 50,
-    price_per_unit: 300,
-    total_amount: 15000,
-    notes: "مبيعات الأسبوع الأول",
-  },
-  {
-    id: "2",
-    date: "2025-05-11",
-    brand_id: "2",
-    brand: { id: "2", name: "براند تجميل", status: "active" },
-    quantity_sold: 30,
-    price_per_unit: 200,
-    total_amount: 6000,
-    notes: "مبيعات نهاية الأسبوع",
-  },
-  {
-    id: "3",
-    date: "2025-05-09",
-    brand_id: "3",
-    brand: { id: "3", name: "براند أغذية", status: "active" },
-    quantity_sold: 100,
-    price_per_unit: 50,
-    total_amount: 5000,
-    notes: "طلبات أونلاين",
-  },
-];
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Expense, Revenue } from "@/types";
 
 export default function FinancePage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("expenses");
 
-  // Fetch expenses data
-  const { data: expenses } = useQuery({
+  // Fetch expenses
+  const { data: expenses, isLoading: isLoadingExpenses } = useQuery({
     queryKey: ["expenses"],
     queryFn: async () => {
       try {
@@ -104,21 +25,26 @@ export default function FinancePage() {
           .from("expenses")
           .select(`
             *,
-            brand:brands(id, name, status)
+            brand:brands(*),
+            employee:employees(
+              *,
+              user:users(*)
+            )
           `)
           .order("date", { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        return data as Expense[] || [];
       } catch (error) {
         console.error("Error fetching expenses:", error);
-        return sampleExpenses;
+        // Return mock data
+        return [] as Expense[];
       }
     },
   });
 
-  // Fetch revenues data
-  const { data: revenues } = useQuery({
+  // Fetch revenues
+  const { data: revenues, isLoading: isLoadingRevenues } = useQuery({
     queryKey: ["revenues"],
     queryFn: async () => {
       try {
@@ -126,306 +52,201 @@ export default function FinancePage() {
           .from("revenues")
           .select(`
             *,
-            brand:brands(id, name, status)
+            brand:brands(*)
           `)
           .order("date", { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        return data as Revenue[] || [];
       } catch (error) {
         console.error("Error fetching revenues:", error);
-        return sampleRevenues;
+        // Return mock data
+        return [] as Revenue[];
       }
     },
   });
 
-  // Calculate summary metrics
-  const totalExpenses =
-    expenses?.reduce((sum, expense) => sum + Number(expense.amount), 0) || 0;
-  const totalRevenues =
-    revenues?.reduce((sum, revenue) => sum + Number(revenue.total_amount), 0) || 0;
+  // Get category name in Arabic
+  const getCategoryName = (category: string) => {
+    switch(category) {
+      case "salaries": return "رواتب";
+      case "ads": return "إعلانات";
+      case "rent": return "إيجار";
+      case "supplies": return "مستلزمات";
+      case "other": return "أخرى";
+      default: return category;
+    }
+  };
+
+  // Calculate total expenses
+  const totalExpenses = expenses?.reduce((acc, expense) => acc + Number(expense.amount), 0) || 0;
+  
+  // Calculate total revenues
+  const totalRevenues = revenues?.reduce((acc, revenue) => acc + Number(revenue.amount), 0) || 0;
+  
+  // Calculate profit
   const profit = totalRevenues - totalExpenses;
-  const profitMargin =
-    totalRevenues > 0 ? ((profit / totalRevenues) * 100).toFixed(1) : "0";
-
-  // Export to Excel function
-  const exportToExcel = (data, filename) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-    XLSX.writeFile(workbook, `${filename}.xlsx`);
-  };
-
-  // Export to PDF function
-  const exportToPdf = (data, columns, filename) => {
-    const doc = new jsPDF();
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(20);
-    doc.text(filename, 105, 15, { align: "center" });
-
-    autoTable(doc, {
-      head: [columns.map((col) => col.header)],
-      body: data.map((item) =>
-        columns.map((col) => {
-          if (col.key === "brand") {
-            return item.brand?.name || "—";
-          }
-          if (col.key === "date") {
-            return format(new Date(item[col.key]), "yyyy-MM-dd");
-          }
-          return item[col.key]?.toString() || "—";
-        })
-      ),
-      headStyles: {
-        fillColor: [76, 175, 80],
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-      },
-      startY: 25,
-      theme: "grid",
-      styles: {
-        fontSize: 10,
-        cellPadding: 5,
-        overflow: "linebreak",
-        halign: "right",
-      },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 40 },
-      },
-    });
-
-    doc.save(`${filename}.pdf`);
-  };
+  
+  // Calculate profit margin
+  const profitMargin = totalRevenues > 0 ? (profit / totalRevenues) * 100 : 0;
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">النظام المالي</h1>
-        <div className="flex space-x-4 space-x-reverse mt-4 sm:mt-0">
-          {activeTab === "expenses" && (
-            <Button
-              onClick={() => navigate("/finance/expenses/add")}
-              className="flex items-center"
-            >
-              <Plus className="ml-2 h-4 w-4" />
-              إضافة مصروف
-            </Button>
-          )}
-          {activeTab === "revenues" && (
-            <Button
-              onClick={() => navigate("/finance/revenues/add")}
-              className="flex items-center"
-            >
-              <Plus className="ml-2 h-4 w-4" />
-              إضافة إيراد
-            </Button>
-          )}
-        </div>
       </div>
 
+      {/* Financial Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الإيرادات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalRevenues.toLocaleString()} ج.م</div>
+          <CardContent className="p-6">
+            <div className="text-sm text-muted-foreground">إجمالي الإيرادات</div>
+            <div className="text-2xl font-bold text-green-600 mt-1">{totalRevenues.toLocaleString()} ج.م</div>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي المصروفات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalExpenses.toLocaleString()} ج.م</div>
+          <CardContent className="p-6">
+            <div className="text-sm text-muted-foreground">إجمالي المصروفات</div>
+            <div className="text-2xl font-bold text-red-600 mt-1">{totalExpenses.toLocaleString()} ج.م</div>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">صافي الربح</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{profit.toLocaleString()} ج.م</div>
+          <CardContent className="p-6">
+            <div className="text-sm text-muted-foreground">صافي الربح</div>
+            <div className={`text-2xl font-bold ${profit >= 0 ? 'text-blue-600' : 'text-red-600'} mt-1`}>
+              {profit.toLocaleString()} ج.م
+            </div>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">هامش الربح</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{profitMargin}%</div>
+          <CardContent className="p-6">
+            <div className="text-sm text-muted-foreground">هامش الربح</div>
+            <div className={`text-2xl font-bold ${profitMargin >= 0 ? 'text-emerald-600' : 'text-red-600'} mt-1`}>
+              {profitMargin.toFixed(2)}%
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs
-        defaultValue="expenses"
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
-        <TabsList className="mb-4">
-          <TabsTrigger value="expenses">المصروفات</TabsTrigger>
-          <TabsTrigger value="revenues">الإيرادات</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="expenses" className="flex-1">المصروفات</TabsTrigger>
+          <TabsTrigger value="revenues" className="flex-1">الإيرادات</TabsTrigger>
         </TabsList>
-
+        
         <TabsContent value="expenses">
           <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle>سجل المصروفات</CardTitle>
-                <div className="flex space-x-2 space-x-reverse">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportToExcel(expenses || sampleExpenses, "expenses")
-                    }
-                  >
-                    <FileSpreadsheet className="ml-2 h-4 w-4" />
-                    Excel
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportToPdf(
-                        expenses || sampleExpenses,
-                        [
-                          { key: "category", header: "النوع" },
-                          { key: "amount", header: "المبلغ" },
-                          { key: "date", header: "التاريخ" },
-                          { key: "brand", header: "البراند" },
-                          { key: "description", header: "الوصف" },
-                        ],
-                        "expenses"
-                      )
-                    }
-                  >
-                    <FilePdf className="ml-2 h-4 w-4" />
-                    PDF
-                  </Button>
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>المصروفات</CardTitle>
+              <Link to="/finance/expenses/add">
+                <Button>
+                  <Plus className="h-4 w-4 ml-2" /> إضافة مصروف
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>النوع</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>البراند المرتبط</TableHead>
-                      <TableHead>الوصف</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(expenses || sampleExpenses).map((expense) => (
-                      <TableRow key={expense.id}>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              expense.category === "مرتبات"
-                                ? "default"
-                                : expense.category === "إعلانات"
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
-                            {expense.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{expense.amount.toLocaleString()} ج.م</TableCell>
-                        <TableCell>
-                          {format(new Date(expense.date), "yyyy-MM-dd")}
-                        </TableCell>
-                        <TableCell>
-                          {expense.brand ? expense.brand.name : "—"}
-                        </TableCell>
-                        <TableCell>{expense.description || "—"}</TableCell>
+              {isLoadingExpenses ? (
+                <div className="text-center py-10">جاري تحميل البيانات...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table dir="rtl">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">نوع المصروف</TableHead>
+                        <TableHead className="text-right">التاريخ</TableHead>
+                        <TableHead className="text-right">البراند المرتبط</TableHead>
+                        <TableHead className="text-right">القيمة (ج.م)</TableHead>
+                        <TableHead className="text-right">الموظف المسؤول</TableHead>
+                        <TableHead className="text-right">ملاحظات / وصف العملية</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses && expenses.length > 0 ? (
+                        expenses.map((expense) => (
+                          <TableRow key={expense.id}>
+                            <TableCell>{getCategoryName(expense.category)}</TableCell>
+                            <TableCell>
+                              {expense.date ? format(new Date(expense.date), "dd MMM yyyy", { locale: ar }) : "غير محدد"}
+                            </TableCell>
+                            <TableCell>{expense.brand?.name || "غير محدد"}</TableCell>
+                            <TableCell>{Number(expense.amount).toLocaleString()}</TableCell>
+                            <TableCell>{expense.employee?.user?.full_name || "غير محدد"}</TableCell>
+                            <TableCell className="max-w-xs truncate">{expense.description || "لا يوجد"}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-4">
+                            لا توجد مصروفات مسجلة
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-
+        
         <TabsContent value="revenues">
           <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle>سجل الإيرادات</CardTitle>
-                <div className="flex space-x-2 space-x-reverse">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportToExcel(revenues || sampleRevenues, "revenues")
-                    }
-                  >
-                    <FileSpreadsheet className="ml-2 h-4 w-4" />
-                    Excel
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      exportToPdf(
-                        revenues || sampleRevenues,
-                        [
-                          { key: "date", header: "التاريخ" },
-                          { key: "brand", header: "البراند" },
-                          { key: "quantity_sold", header: "الكمية" },
-                          { key: "price_per_unit", header: "سعر القطعة" },
-                          { key: "total_amount", header: "الإجمالي" },
-                          { key: "notes", header: "ملاحظات" },
-                        ],
-                        "revenues"
-                      )
-                    }
-                  >
-                    <FilePdf className="ml-2 h-4 w-4" />
-                    PDF
-                  </Button>
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>الإيرادات</CardTitle>
+              <Link to="/revenues/add">
+                <Button>
+                  <Plus className="h-4 w-4 ml-2" /> إضافة إيراد
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>البراند</TableHead>
-                      <TableHead>عدد القطع</TableHead>
-                      <TableHead>سعر القطعة</TableHead>
-                      <TableHead>الإجمالي</TableHead>
-                      <TableHead>ملاحظات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(revenues || sampleRevenues).map((revenue) => (
-                      <TableRow key={revenue.id}>
-                        <TableCell>
-                          {format(new Date(revenue.date), "yyyy-MM-dd")}
-                        </TableCell>
-                        <TableCell>{revenue.brand.name}</TableCell>
-                        <TableCell>{revenue.quantity_sold}</TableCell>
-                        <TableCell>{revenue.price_per_unit} ج.م</TableCell>
-                        <TableCell>{revenue.total_amount.toLocaleString()} ج.م</TableCell>
-                        <TableCell>{revenue.notes || "—"}</TableCell>
+              {isLoadingRevenues ? (
+                <div className="text-center py-10">جاري تحميل البيانات...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table dir="rtl">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">التاريخ</TableHead>
+                        <TableHead className="text-right">البراند</TableHead>
+                        <TableHead className="text-right">عدد القطع المباعة</TableHead>
+                        <TableHead className="text-right">سعر القطعة (ج.م)</TableHead>
+                        <TableHead className="text-right">إجمالي الإيراد (ج.م)</TableHead>
+                        <TableHead className="text-right">المصدر</TableHead>
+                        <TableHead className="text-right">ملاحظات</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {revenues && revenues.length > 0 ? (
+                        revenues.map((revenue) => (
+                          <TableRow key={revenue.id}>
+                            <TableCell>
+                              {revenue.date ? format(new Date(revenue.date), "dd MMM yyyy", { locale: ar }) : "غير محدد"}
+                            </TableCell>
+                            <TableCell>{revenue.brand?.name || "غير محدد"}</TableCell>
+                            <TableCell>{revenue.quantity || "غير محدد"}</TableCell>
+                            <TableCell>
+                              {revenue.price_per_item ? Number(revenue.price_per_item).toLocaleString() : "غير محدد"}
+                            </TableCell>
+                            <TableCell>{Number(revenue.amount).toLocaleString()}</TableCell>
+                            <TableCell>{revenue.source || "غير محدد"}</TableCell>
+                            <TableCell className="max-w-xs truncate">{revenue.notes || "لا يوجد"}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-4">
+                            لا توجد إيرادات مسجلة
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
