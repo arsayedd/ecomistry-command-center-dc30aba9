@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +17,8 @@ interface EmployeeSearchFiltersProps {
   setFilterDepartment: (value: string) => void;
   filterStatus: string;
   setFilterStatus: (value: string) => void;
+  filterContractType: string;
+  setFilterContractType: (value: string) => void;
 }
 
 export default function EmployeeSearchFilters({
@@ -27,6 +28,8 @@ export default function EmployeeSearchFilters({
   setFilterDepartment,
   filterStatus,
   setFilterStatus,
+  filterContractType,
+  setFilterContractType,
 }: EmployeeSearchFiltersProps) {
   return (
     <Card className="mb-6">
@@ -34,11 +37,11 @@ export default function EmployeeSearchFilters({
         <CardTitle className="text-lg">البحث والتصفية</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="بحث..."
+              placeholder="بحث بالاسم أو البريد الإلكتروني..."
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -68,6 +71,19 @@ export default function EmployeeSearchFilters({
               <SelectItem value="active">نشط</SelectItem>
               <SelectItem value="inactive">غير نشط</SelectItem>
               <SelectItem value="pending">معلق</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterContractType} onValueChange={setFilterContractType}>
+            <SelectTrigger>
+              <SelectValue placeholder="نوع التعاقد" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">جميع أنواع التعاقد</SelectItem>
+              <SelectItem value="full-time">دوام كامل</SelectItem>
+              <SelectItem value="part-time">دوام جزئي</SelectItem>
+              <SelectItem value="freelancer">فريلانسر</SelectItem>
+              <SelectItem value="per-task">بالقطعة</SelectItem>
             </SelectContent>
           </Select>
         </div>

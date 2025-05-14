@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import EmployeeSearchFilters from "@/components/employees/EmployeeSearchFilters";
 import EmployeesTable from "@/components/employees/EmployeesTable";
+import { exportToPDF, exportToExcel } from "@/utils/exportUtils";
 
 // Define proper interface for employee update operation
 interface UpdateEmployeeStatusParams {
@@ -25,15 +27,17 @@ interface Employee {
   commission_value: number | null;
   status: string;
   created_at: string;
+  contract_type?: string;
   user?: {
     full_name: string;
     email: string;
     department: string;
     role: string;
+    permission_level: string;
   };
 }
 
-// Sample employee data
+// Sample employee data with more fields
 const sampleEmployees: Employee[] = [
   {
     id: "1",
@@ -43,11 +47,13 @@ const sampleEmployees: Employee[] = [
     commission_value: 5,
     status: "active",
     created_at: "2025-01-15",
+    contract_type: "full-time",
     user: {
       full_name: "أحمد محمد",
       email: "ahmed@example.com",
       department: "call-center",
-      role: "مشرف"
+      role: "مشرف",
+      permission_level: "admin"
     }
   },
   {
@@ -58,11 +64,13 @@ const sampleEmployees: Employee[] = [
     commission_value: 500,
     status: "active",
     created_at: "2025-02-01",
+    contract_type: "part-time",
     user: {
       full_name: "سارة علي",
       email: "sara@example.com",
       department: "media-buying",
-      role: "مسؤول ميديا"
+      role: "مسؤول ميديا",
+      permission_level: "edit"
     }
   },
   {
@@ -73,11 +81,13 @@ const sampleEmployees: Employee[] = [
     commission_value: null,
     status: "inactive",
     created_at: "2025-01-10",
+    contract_type: "freelancer",
     user: {
       full_name: "محمود حسن",
       email: "mahmoud@example.com",
       department: "content",
-      role: "كاتب محتوى"
+      role: "كاتب محتوى",
+      permission_level: "view"
     }
   },
   {
@@ -88,11 +98,13 @@ const sampleEmployees: Employee[] = [
     commission_value: 3,
     status: "pending",
     created_at: "2025-03-05",
+    contract_type: "full-time",
     user: {
       full_name: "نورا أحمد",
       email: "nora@example.com",
       department: "design",
-      role: "مصمم"
+      role: "مصمم",
+      permission_level: "add"
     }
   },
   {
@@ -103,11 +115,64 @@ const sampleEmployees: Employee[] = [
     commission_value: 700,
     status: "active",
     created_at: "2025-02-20",
+    contract_type: "per-task",
     user: {
       full_name: "خالد عمر",
       email: "khaled@example.com",
       department: "moderation",
-      role: "مشرف تعليقات"
+      role: "مشرف تعليقات",
+      permission_level: "edit"
+    }
+  },
+  {
+    id: "6",
+    user_id: "106",
+    salary: 6000,
+    commission_type: "percentage",
+    commission_value: 7,
+    status: "active",
+    created_at: "2025-03-10",
+    contract_type: "full-time",
+    user: {
+      full_name: "ليلى سعيد",
+      email: "laila@example.com",
+      department: "call-center",
+      role: "مشرف",
+      permission_level: "admin"
+    }
+  },
+  {
+    id: "7",
+    user_id: "107",
+    salary: 4500,
+    commission_type: "fixed",
+    commission_value: 300,
+    status: "active",
+    created_at: "2025-02-05",
+    contract_type: "part-time",
+    user: {
+      full_name: "عمر خالد",
+      email: "omar@example.com",
+      department: "media-buying",
+      role: "مدير حسابات",
+      permission_level: "edit"
+    }
+  },
+  {
+    id: "8",
+    user_id: "108",
+    salary: 3800,
+    commission_type: null,
+    commission_value: null,
+    status: "inactive",
+    created_at: "2025-01-25",
+    contract_type: "freelancer",
+    user: {
+      full_name: "هدى محمود",
+      email: "hoda@example.com",
+      department: "content",
+      role: "كاتب محتوى",
+      permission_level: "view"
     }
   }
 ];
@@ -118,6 +183,7 @@ export default function EmployeesPage() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [filterDepartment, setFilterDepartment] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterContractType, setFilterContractType] = useState("");
   const [localEmployees, setLocalEmployees] = useState<Employee[]>(sampleEmployees);
   
   const { toast } = useToast();
@@ -132,7 +198,7 @@ export default function EmployeesPage() {
           .from("employees")
           .select(`
             *,
-            user:users!inner(id, full_name, email, department, role)
+            user:users!inner(id, full_name, email, department, role, permission_level)
           `)
           .order("created_at", { ascending: false });
 
@@ -241,7 +307,7 @@ export default function EmployeesPage() {
   };
 
   // Sort employees based on sortColumn and sortDirection
-  const sortedEmployees = localEmployees.sort((a, b) => {
+  const sortedEmployees = [...localEmployees].sort((a, b) => {
     if (sortColumn === "full_name") {
       const nameA = a.user?.full_name || "";
       const nameB = b.user?.full_name || "";
@@ -266,7 +332,7 @@ export default function EmployeesPage() {
     return 0;
   });
 
-  // Filter employees based on search query, department, and status
+  // Filter employees based on search query, department, contract type, and status
   const filteredEmployees = sortedEmployees.filter((employee) => {
     const matchesSearch = 
       !searchQuery || 
@@ -275,9 +341,38 @@ export default function EmployeesPage() {
     
     const matchesDepartment = !filterDepartment || employee.user?.department === filterDepartment;
     const matchesStatus = !filterStatus || employee.status === filterStatus;
+    const matchesContractType = !filterContractType || employee.contract_type === filterContractType;
     
-    return matchesSearch && matchesDepartment && matchesStatus;
+    return matchesSearch && matchesDepartment && matchesStatus && matchesContractType;
   });
+
+  // Handle exporting data
+  const handleExport = (type: 'pdf' | 'excel') => {
+    // Define columns for export
+    const columns = [
+      { header: "الاسم", dataKey: "user.full_name" },
+      { header: "البريد الإلكتروني", dataKey: "user.email" },
+      { header: "القسم", dataKey: "user.department" },
+      { header: "الوظيفة", dataKey: "user.role" },
+      { header: "نوع التعاقد", dataKey: "contract_type" },
+      { header: "المرتب", dataKey: "salary" },
+      { header: "نوع العمولة", dataKey: "commission_type" },
+      { header: "قيمة العمولة", dataKey: "commission_value" },
+      { header: "الحالة", dataKey: "status" },
+      { header: "صلاحيات", dataKey: "user.permission_level" },
+    ];
+
+    if (type === 'pdf') {
+      exportToPDF(filteredEmployees, "قائمة_الموظفين", columns);
+    } else {
+      exportToExcel(filteredEmployees, "قائمة_الموظفين", columns);
+    }
+
+    toast({
+      title: `تم تصدير البيانات بصيغة ${type === 'pdf' ? 'PDF' : 'Excel'}`,
+      description: "تم تصدير بيانات الموظفين بنجاح",
+    });
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -297,6 +392,8 @@ export default function EmployeesPage() {
         setFilterDepartment={setFilterDepartment}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
+        filterContractType={filterContractType}
+        setFilterContractType={setFilterContractType}
       />
 
       <Card>
@@ -309,6 +406,7 @@ export default function EmployeesPage() {
             handleSort={handleSort}
             updateEmployeeStatus={(params) => updateEmployeeStatus.mutate(params)}
             deleteEmployee={(id) => deleteEmployee.mutate(id)}
+            exportData={handleExport}
           />
         </CardContent>
       </Card>
