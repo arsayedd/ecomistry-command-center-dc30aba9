@@ -2,14 +2,16 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{
+    success: boolean;
+    error: string | null;
+  }>;
   signUp: (email: string, password: string, fullName: string, role: string, department?: string) => Promise<void>;
   signOut: () => Promise<void>;
   sendEmailConfirmation: (email: string) => Promise<void>;
@@ -19,291 +21,205 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    console.log('Setting up Auth Provider...');
-    
-    // أولاً: قم بإعداد مستمع لتغييرات حالة المصادقة
+    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        console.log('Auth state changed:', event, currentSession?.user?.email);
+        console.log('Auth state changed:', event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        setLoading(false);
+
+        // Only log sensitive actions
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+          console.log('Auth event:', event, 'User:', currentSession?.user?.email);
+        }
+        
+        if (event === 'SIGNED_IN') {
+          toast({
+            title: "تم تسجيل الدخول بنجاح",
+            description: `مرحباً بك ${currentSession?.user?.email}`,
+          });
+        } else if (event === 'SIGNED_OUT') {
+          toast({
+            title: "تم تسجيل الخروج",
+            description: "نتمنى عودتك قريباً",
+          });
+        }
       }
     );
 
-    // ثانياً: تحقق من وجود جلسة حالية
+    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log('Current session:', currentSession?.user?.email);
+      console.log('Initial session check:', currentSession ? 'Session found' : 'No session found');
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Attempting to sign in:', email);
-      if (!email || !password) {
-        toast({ 
-          title: "بيانات غير كاملة", 
-          description: "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
-          variant: "destructive" 
-        });
-        throw new Error("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
-      }
-
-      const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('Signing in user:', email);
+      setLoading(true);
       
-      if (error) {
-        console.error('Sign in error details:', error);
-        // معالجة خطأ البريد الإلكتروني غير المؤكد بشكل خاص
-        if (error.message.includes('Email not confirmed') || error.message.includes('email not confirmed')) {
-          toast({ 
-            title: "البريد الإلكتروني غير مؤكد", 
-            description: "يرجى التحقق من بريدك الإلكتروني وتأكيد الحساب أو إعادة إرسال رسالة التأكيد",
-            variant: "destructive" 
-          });
-          throw new Error("البريد الإلكتروني غير مؤكد");
-        } else if (error.message.includes('Email logins are disabled')) {
-          toast({ 
-            title: "تسجيل الدخول بالبريد الإلكتروني معطل", 
-            description: "تسجيل الدخول بالبريد الإلكتروني معطل حاليًا. يرجى الاتصال بالمسؤول لتفعيله.",
-            variant: "destructive" 
-          });
-          throw new Error("تسجيل الدخول بالبريد الإلكتروني معطل");
-        } else if (error.message.includes('Invalid login credentials')) {
-          toast({ 
-            title: "بيانات الدخول غير صحيحة", 
-            description: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-            variant: "destructive" 
-          });
-          throw new Error("بيانات الدخول غير صحيحة");
-        } else {
-          toast({ 
-            title: "فشل تسجيل الدخول", 
-            description: error.message || "حدث خطأ أثناء تسجيل الدخول",
-            variant: "destructive" 
-          });
-          throw error;
-        }
-      }
-      
-      console.log('Login successful, navigating to /dashboard');
-      toast({ title: "تم تسجيل الدخول بنجاح", description: "مرحبًا بك في نظام Ecomistry" });
-
-      // تأخير قليل للسماح بتحديث حالة المصادقة قبل التوجيه
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1000);
-    } catch (error: any) {
-      console.error("Login error:", error);
-      throw error; // إعادة رمي الخطأ للتعامل معه في مكون تسجيل الدخول
-    }
-  };
-
-  const sendEmailConfirmation = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
+        password,
       });
-      
+
       if (error) {
-        if (error.message.includes('For security purposes')) {
-          toast({ 
-            title: "تم تقييد عملية إعادة الإرسال", 
-            description: "لأسباب أمنية، لا يمكنك طلب إعادة إرسال رسالة التأكيد الآن. يرجى المحاولة بعد دقيقة.",
-            variant: "destructive" 
-          });
-        } else {
-          toast({ 
-            title: "فشل إعادة إرسال رسالة التأكيد", 
-            description: error.message || "حدث خطأ أثناء إعادة إرسال رسالة التأكيد",
-            variant: "destructive" 
-          });
-        }
-        throw error;
+        console.error('Sign in error:', error);
+        toast({
+          title: "خطأ في تسجيل الدخول",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { 
+          success: false, 
+          error: error.message 
+        };
       }
-      
-      toast({ 
-        title: "تم إرسال رسالة التأكيد", 
-        description: "يرجى التحقق من بريدك الإلكتروني" 
-      });
+
+      return { success: true, error: null };
     } catch (error: any) {
-      console.error("Email confirmation error:", error);
-      // الخطأ تم التعامل معه في المحاولة/الخطأ السابق
+      console.error('Unexpected sign in error:', error);
+      toast({
+        title: "خطأ غير متوقع",
+        description: error.message || "حدث خطأ أثناء محاولة تسجيل الدخول",
+        variant: "destructive",
+      });
+      return { 
+        success: false, 
+        error: error.message || "حدث خطأ غير متوقع" 
+      };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: string, department?: string) => {
+  const signUp = async (
+    email: string, 
+    password: string, 
+    fullName: string, 
+    role: string, 
+    department?: string
+  ) => {
     try {
-      console.log('Attempting to sign up:', email);
-      // التحقق من صحة البريد الإلكتروني
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        toast({ 
-          title: "البريد الإلكتروني غير صحيح", 
-          description: "يرجى إدخال بريد إلكتروني صالح",
-          variant: "destructive" 
-        });
-        throw new Error("البريد الإلكتروني غير صحيح");
-      }
-
-      // التحقق من كلمة المرور
-      if (password.length < 6) {
-        toast({ 
-          title: "كلمة المرور قصيرة جدًا", 
-          description: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
-          variant: "destructive" 
-        });
-        throw new Error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-      }
-
-      // إنشاء حساب المستخدم
-      console.log('Creating auth account with user data:', { email, fullName, role });
-      const { error: authError, data } = await supabase.auth.signUp({ 
-        email, 
+      setLoading(true);
+      
+      // Register the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           data: {
             full_name: fullName,
-            role: role
-          }
-        }
+            role,
+            department
+          },
+        },
       });
-      
+
       if (authError) {
-        console.error('Sign up auth error details:', authError);
-        
-        if (authError.message.includes('Email signups are disabled')) {
-          toast({ 
-            title: "تسجيل الحسابات معطل", 
-            description: "تسجيل الحسابات بالبريد الإلكتروني معطل. يرجى الاتصال بالمسؤول لتفعيله.",
-            variant: "destructive" 
-          });
-          throw new Error("تسجيل الحسابات بالبريد الإلكتروني معطل. يرجى الاتصال بالمسؤول لتفعيله.");
-        }
-        
-        toast({ 
-          title: "فشل إنشاء الحساب", 
-          description: authError.message || "حدث خطأ أثناء إنشاء الحساب",
-          variant: "destructive" 
-        });
         throw authError;
       }
-      
-      console.log('User auth created:', data.user?.id);
-      
-      // إنشاء سجل ملف المستخدم إذا تم إنشاء المستخدم
-      if (data.user) {
-        try {
-          console.log('Creating user profile with data:', { 
-            id: data.user.id, 
-            email, 
-            fullName, 
-            role, 
-            department 
-          });
-          
-          // إدراج في جدول المستخدمين بعملية إدراج واحدة
-          const { error: profileError } = await supabase.from('users').insert({
-            id: data.user.id,
+
+      // If auth signup was successful, create a user record in the public.users table
+      if (authData.user) {
+        // Create entry in users table
+        const { error: dbError } = await supabase.from('users').insert([
+          {
+            id: authData.user.id,
             email,
             full_name: fullName,
             role,
-            department: department || null,
-            permission_level: role === 'admin' ? 'full' : 'read'
-          });
-          
-          if (profileError) {
-            console.error("خطأ إنشاء الملف:", profileError);
-            console.error("Profile error details:", JSON.stringify(profileError));
-            
-            // معالجة أخطاء محددة
-            let errorMessage = "فشل إنشاء ملف المستخدم";
-            
-            if (profileError.code === '23505') {
-              errorMessage = "البريد الإلكتروني مستخدم بالفعل";
-            } 
+            department,
+            permission_level: 'basic',
+          },
+        ]);
 
-            toast({ 
-              title: "تنبيه", 
-              description: "تم إنشاء الحساب ولكن هناك مشكلة في إنشاء الملف الشخصي. سيتم حل هذه المشكلة قريبًا.",
-              variant: "default" 
-            });
-            
-            // تسجيل الخطأ ولكن لا نوقف العملية
-            console.warn("تم إنشاء الحساب ولكن هناك مشكلة في إنشاء الملف الشخصي:", errorMessage);
-          }
-        } catch (profileError: any) {
-          console.error("استثناء إنشاء الملف:", profileError);
-          
-          // تسجيل الخطأ ولكن السماح للمستخدم بالاستمرار
-          toast({ 
-            title: "تنبيه", 
-            description: "تم إنشاء الحساب ولكن هناك مشكلة في إنشاء الملف الشخصي. سيتم حل هذه المشكلة قريبًا.",
-            variant: "default" 
-          });
+        if (dbError) {
+          console.error('Error creating user record:', dbError);
+          throw new Error('تم إنشاء الحساب ولكن فشل إنشاء بيانات المستخدم');
         }
-      }
-      
-      // عرض رسالة مناسبة بناءً على ما إذا كان التأكيد عبر البريد الإلكتروني مطلوبًا
-      if (data?.user && !data?.session) {
-        toast({ 
-          title: "تم إنشاء الحساب بنجاح", 
-          description: "تم إرسال رسالة تأكيد إلى بريدك الإلكتروني. يرجى التحقق من بريدك وتأكيد حسابك" 
-        });
-      } else {
-        toast({ 
-          title: "تم إنشاء الحساب بنجاح", 
-          description: "يمكنك الآن تسجيل الدخول" 
+
+        toast({
+          title: "تم إنشاء الحساب بنجاح",
+          description: "تم إنشاء حسابك بنجاح، يمكنك الآن تسجيل الدخول",
         });
       }
-      
-      navigate('/auth/login');
     } catch (error: any) {
-      console.error("خطأ التسجيل:", error);
-      
-      // رسائل خطأ أكثر تفصيلاً
-      let errorMessage = error.message || "حدث خطأ أثناء إنشاء الحساب";
-      
-      // التعامل مع رموز خطأ Supabase المحددة
-      if (error.code === '23505') {
-        errorMessage = "البريد الإلكتروني مستخدم بالفعل";
-      } else if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "البريد الإلكتروني مستخدم بالفعل";
-      } else if (error.message && error.message.includes('email')) {
-        errorMessage = "البريد الإلكتروني غير صحيح أو مستخدم بالفعل";
-      }
-      
-      toast({ 
-        title: "فشل إنشاء الحساب", 
-        description: errorMessage,
-        variant: "destructive" 
+      console.error('Sign up error:', error);
+      toast({
+        title: "خطأ في إنشاء الحساب",
+        description: error.message,
+        variant: "destructive",
       });
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      console.log('Signing out');
-      await supabase.auth.signOut();
-      navigate('/auth/login');
-      toast({ title: "تم تسجيل الخروج بنجاح" });
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Clear local state
+      setUser(null);
+      setSession(null);
+      
     } catch (error: any) {
-      toast({ 
-        title: "فشل تسجيل الخروج", 
-        description: error.message || "حدث خطأ أثناء تسجيل الخروج",
-        variant: "destructive" 
+      console.error('Sign out error:', error);
+      toast({
+        title: "خطأ في تسجيل الخروج",
+        description: error.message,
+        variant: "destructive",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendEmailConfirmation = async (email: string) => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/auth/reset-password',
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "تم إرسال رابط إعادة تعيين كلمة المرور",
+        description: "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني",
+      });
+    } catch (error: any) {
+      console.error('Email confirmation error:', error);
+      toast({
+        title: "خطأ في إرسال رابط إعادة تعيين كلمة المرور",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -316,8 +232,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
   return context;
 };

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,47 +8,40 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'يجب أن يكون بريد إلكتروني صالح' }),
-  password: z.string().min(6, { message: 'يجب أن تكون كلمة المرور على الأقل 6 أحرف' }),
 });
 
-export default function Login() {
+export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { user, setUser, signIn } = useAuth();
+  const { sendEmailConfirmation } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
-      password: '',
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      setAuthError(null);
-      const result = await signIn(values.email, values.password);
+      setError(null);
+      setSuccess(false);
       
-      if (!result.success) {
-        setAuthError(result.error || 'فشل تسجيل الدخول');
-      } else {
-        navigate('/');
-      }
+      await sendEmailConfirmation(values.email);
+      setSuccess(true);
+      
+      // Reset the form
+      form.reset();
     } catch (error: any) {
-      setAuthError(error.message || 'حدث خطأ أثناء محاولة تسجيل الدخول');
+      setError(error.message || 'حدث خطأ أثناء محاولة إرسال رابط إعادة تعيين كلمة المرور');
     } finally {
       setLoading(false);
     }
@@ -59,13 +52,18 @@ export default function Login() {
       <div className="w-full max-w-md p-4">
         <Card className="w-full">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">تسجيل الدخول</CardTitle>
-            <CardDescription>أدخل بياناتك لتسجيل الدخول إلى حسابك</CardDescription>
+            <CardTitle className="text-2xl font-bold">نسيت كلمة المرور</CardTitle>
+            <CardDescription>أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور</CardDescription>
           </CardHeader>
           <CardContent>
-            {authError && (
+            {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                {authError}
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+                تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من البريد الوارد.
               </div>
             )}
             <Form {...form}>
@@ -83,38 +81,22 @@ export default function Login() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>كلمة المرور</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="أدخل كلمة المرور" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? (
                     <div className="flex items-center">
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      جاري تسجيل الدخول...
+                      جاري إرسال الرابط...
                     </div>
                   ) : (
-                    'تسجيل الدخول'
+                    'إرسال رابط إعادة تعيين كلمة المرور'
                   )}
                 </Button>
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="link" onClick={() => navigate('/auth/register')}>
-              إنشاء حساب جديد
-            </Button>
-            <Button variant="link" onClick={() => navigate('/auth/forgot-password')}>
-              نسيت كلمة المرور؟
+          <CardFooter>
+            <Button variant="link" className="w-full" onClick={() => navigate('/auth/login')}>
+              العودة إلى صفحة تسجيل الدخول
             </Button>
           </CardFooter>
         </Card>

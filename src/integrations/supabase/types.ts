@@ -36,6 +36,13 @@ export type Database = {
             referencedRelation: "brands"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "brand_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       brands: {
@@ -340,6 +347,13 @@ export type Database = {
             referencedRelation: "brands"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "media_buying_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       moderation: {
@@ -429,6 +443,13 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
