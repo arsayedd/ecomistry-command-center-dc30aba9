@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Fixed import
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ // Fixed method name
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -116,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log("AuthContext: Sign in successful");
+      navigate('/dashboard');
     } catch (error) {
       console.error("AuthContext: Sign in error:", error);
       throw error;

@@ -45,7 +45,7 @@ export default function Login() {
     try {
       await signIn(values.email, values.password);
       toast.success('تم تسجيل الدخول بنجاح');
-      console.log("Login successful, should redirect via useEffect");
+      console.log("Login successful, navigating to dashboard");
     } catch (error) {
       console.error('Login error:', error);
       let errorMessage = 'فشل تسجيل الدخول';
