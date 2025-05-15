@@ -1,14 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useContentMediaBuyingData } from "@/hooks/useContentMediaBuyingData";
 import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { ContentMediaBuyingFilters } from "@/components/content/media-buying/ContentMediaBuyingFilters";
 import { ContentMediaBuyingTable } from "@/components/content/media-buying/ContentMediaBuyingTable";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
@@ -16,26 +15,37 @@ export default function ContentMediaBuyingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { mediaBuying, loading, brands, employees, filters, handleFilterChange } = useContentMediaBuyingData();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log("Checking authentication status...");
         const { data, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error("Auth error:", error);
           throw error;
         }
-        setIsAuthenticated(!!data.session);
+        
+        if (!data.session) {
+          console.log("User is not authenticated, redirecting to login");
+          toast({
+            description: "يرجى تسجيل الدخول للوصول إلى هذه الصفحة",
+          });
+        }
+        
+        console.log("Auth check complete");
       } catch (error) {
         console.error("Auth check failed:", error);
         toast.error("فشل التحقق من حالة تسجيل الدخول");
-        setIsAuthenticated(false);
+      } finally {
+        setIsAuthChecking(false);
       }
     };
     
     checkAuth();
-  }, []);
+  }, [navigate]);
 
   // Filter media buying data based on search query
   const filteredData = mediaBuying.filter(item => 
@@ -85,7 +95,7 @@ export default function ContentMediaBuyingPage() {
   };
 
   // Loading state while checking authentication
-  if (isAuthenticated === null) {
+  if (isAuthChecking) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin mr-2" />

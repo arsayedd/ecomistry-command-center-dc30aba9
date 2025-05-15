@@ -65,8 +65,8 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
     } catch (error) {
       console.error("Error fetching brands in form:", error);
       toast({
-        title: "خطأ في جلب البيانات",
         description: "حدث خطأ أثناء محاولة جلب البراندات",
+        variant: "destructive",
       });
     }
   };
@@ -87,8 +87,8 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
     } catch (error) {
       console.error("Error fetching employees in form:", error);
       toast({
-        title: "خطأ في جلب البيانات",
         description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
+        variant: "destructive",
       });
     }
   };

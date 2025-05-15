@@ -35,6 +35,8 @@ export const useContentMediaBuyingData = () => {
   const fetchMediaBuyingData = async () => {
     setLoading(true);
     try {
+      console.log("Fetching media buying data with filters:", filters);
+      
       let query = supabase
         .from("media_buying")
         .select(`
@@ -87,6 +89,8 @@ export const useContentMediaBuyingData = () => {
         throw error;
       }
 
+      console.log("Fetched media buying records:", data?.length);
+      
       // Map the data to include brand name and employee full_name
       const mappedData = data?.map((item: any) => ({
         id: item.id,
@@ -131,6 +135,7 @@ export const useContentMediaBuyingData = () => {
         throw error;
       }
 
+      console.log("Fetched brands:", data?.length);
       setBrands(data || []);
     } catch (error) {
       console.error("Error fetching brands:", error);
@@ -154,6 +159,7 @@ export const useContentMediaBuyingData = () => {
         throw error;
       }
 
+      console.log("Fetched employees for content:", data?.length);
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees in content:", error);
@@ -166,6 +172,7 @@ export const useContentMediaBuyingData = () => {
   };
 
   const handleFilterChange = (filterName: string, value: string | null) => {
+    console.log(`Setting filter ${filterName} to`, value);
     setFilters(prevFilters => ({
       ...prevFilters,
       [filterName]: value,
@@ -174,6 +181,7 @@ export const useContentMediaBuyingData = () => {
 
   const handleDateChange = (filterName: string, date: Date | undefined) => {
     const value = date ? date.toISOString().split('T')[0] : null;
+    console.log(`Setting date filter ${filterName} to`, value);
     setFilters(prevFilters => ({
       ...prevFilters,
       [filterName]: value,

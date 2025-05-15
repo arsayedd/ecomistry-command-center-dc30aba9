@@ -62,13 +62,13 @@ export function ContentMediaBuyingTable({ loading, data }: ContentMediaBuyingTab
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length > 0 ? (
+        {data && data.length > 0 ? (
           data.map((item) => (
             <TableRow key={item.id}>
               <TableCell>
                 <Badge className="bg-primary">{getPlatformDisplay(item.platform)}</Badge>
               </TableCell>
-              <TableCell>{new Date(item.date).toLocaleDateString('ar-EG')}</TableCell>
+              <TableCell>{item.date ? new Date(item.date).toLocaleDateString('ar-EG') : "-"}</TableCell>
               <TableCell>{item.brand?.name || "-"}</TableCell>
               <TableCell>{item.spend}</TableCell>
               <TableCell>{item.orders_count}</TableCell>

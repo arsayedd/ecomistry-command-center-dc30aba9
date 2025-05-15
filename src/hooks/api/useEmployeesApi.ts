@@ -24,7 +24,7 @@ export const useEmployeesApi = (department?: string) => {
           query = query.eq("department", department);
         }
         
-        const { data: employeesData, error: employeesError } = await query;
+        const { data: employeesData, error: employeesError } = await query.order("full_name", { ascending: true });
 
         if (employeesError) {
           console.error("Employees fetch error:", employeesError);
@@ -32,6 +32,8 @@ export const useEmployeesApi = (department?: string) => {
         }
         
         if (employeesData) {
+          console.log("Fetched employees:", employeesData.length);
+          
           // Cast the data to match User type
           const typedEmployees: User[] = employeesData.map(emp => ({
             id: emp.id || '',
