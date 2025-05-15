@@ -1,51 +1,70 @@
-// إضافة وظيفة تصدير بصيغة PDF
-export const exportToPDF = (data: any[], fileName: string) => {
+
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+export const exportToPDF = (
+  fileName: string,
+  title: string,
+  data: any[]
+) => {
   try {
-    // استخدام مكتبة jspdf و jspdf-autotable
-    const { jsPDF } = require("jspdf");
-    const autoTable = require("jspdf-autotable").default;
-    
     const doc = new jsPDF();
     
-    // تحديد العنوان
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(fileName, 14, 15);
+    // Add title
+    doc.setFontSize(18);
+    doc.text(title, doc.internal.pageSize.width / 2, 15, { align: "center" });
     
-    // إعداد البيانات للجدول
-    const headers = Object.keys(data[0]);
-    const rows = data.map(item => Object.values(item));
+    // Generate table from data
+    if (data && data.length > 0) {
+      const headers = Object.keys(data[0]);
+      const rows = data.map((item) => Object.values(item));
+      
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 25,
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+        alternateRowStyles: {
+          fillColor: [240, 240, 240],
+        },
+      });
+    }
     
-    // إنشاء الجدول
-    autoTable(doc, {
-      head: [headers],
-      body: rows,
-      startY: 20
-    });
-    
-    // حفظ الملف
+    // Save document
     doc.save(`${fileName}.pdf`);
-    
   } catch (error) {
-    console.error('Error exporting to PDF:', error);
-    alert('حدث خطأ أثناء تصدير البيانات إلى PDF');
+    console.error("Error exporting to PDF:", error);
   }
 };
 
-export const exportToCSV = (data: any[], fileName: string) => {
+export const exportToCSV = (
+  data: any[],
+  fileName: string
+) => {
   try {
-    const { utils, writeFile } = require("xlsx");
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
     
-    // تحويل البيانات إلى جدول بيانات
-    const worksheet = utils.json_to_sheet(data);
-    const workbook = utils.book_new();
-    utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    // Generate buffer
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
     
-    // حفظ الملف
-    writeFile(workbook, `${fileName}.csv`);
+    // Create blob and save
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
     
+    saveAs(blob, `${fileName}.xlsx`);
   } catch (error) {
-    console.error('Error exporting to CSV:', error);
-    alert('حدث خطأ أثناء تصدير البيانات إلى CSV');
+    console.error("Error exporting to CSV:", error);
   }
 };

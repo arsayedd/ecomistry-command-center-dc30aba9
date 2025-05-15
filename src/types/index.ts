@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   full_name: string;
@@ -80,10 +79,12 @@ export interface MediaBuying {
   ad_spend: number;
   orders_count: number;
   cpp?: number;
+  order_cost?: number;
   roas?: number;
   campaign_link?: string;
   notes?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface Order {

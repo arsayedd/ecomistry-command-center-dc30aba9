@@ -213,7 +213,7 @@ export default function MediaBuyingPage() {
       'التاريخ': item.date,
       'المنصة': item.platform,
       'البراند': item.brand?.name || '',
-      'الموظف': item.employee?.full_name || '',
+      'الموظف': item.employee && typeof item.employee === 'object' && 'full_name' in item.employee ? item.employee.full_name : '',
       'الإنفاق': item.spend,
       'عدد الطلبات': item.orders_count,
       'تكلفة الطلب': item.order_cost,
@@ -231,13 +231,13 @@ export default function MediaBuyingPage() {
       'التاريخ': item.date,
       'المنصة': item.platform,
       'البراند': item.brand?.name || '',
-      'الموظف': item.employee?.full_name || '',
+      'الموظف': item.employee && typeof item.employee === 'object' && 'full_name' in item.employee ? item.employee.full_name : '',
       'الإنفاق': item.spend,
       'عدد الطلبات': item.orders_count,
       'تكلفة الطلب': item.order_cost
     }));
     
-    exportToPDF(exportData, 'media_buying_report');
+    exportToPDF('media_buying_report', 'تقرير ميديا بايينج', exportData);
   };
 
   return (
@@ -411,7 +411,11 @@ export default function MediaBuyingPage() {
                 <TableRow key={item.id}>
                   <TableCell>{item.brand?.name}</TableCell>
                   <TableCell>{item.platform}</TableCell>
-                  <TableCell>{item.employee?.full_name}</TableCell>
+                  <TableCell>
+                    {item.employee && typeof item.employee === 'object' && 'full_name' in item.employee 
+                      ? item.employee.full_name 
+                      : "غير معروف"}
+                  </TableCell>
                   <TableCell>{item.date}</TableCell>
                   <TableCell>{item.spend}</TableCell>
                   <TableCell>{item.orders_count}</TableCell>
