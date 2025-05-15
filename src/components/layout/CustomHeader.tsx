@@ -22,7 +22,7 @@ export const CustomHeader = () => {
         {user && (
           <>
             <div className="text-sm font-medium ml-4">
-              مرحباً, {user.full_name || user.email}
+              مرحباً, {user.user_metadata?.full_name || user.email}
             </div>
             <Button variant="outline" size="sm" onClick={signOut} className="flex items-center gap-2 hover:bg-primary/10">
               <LogOut size={16} />

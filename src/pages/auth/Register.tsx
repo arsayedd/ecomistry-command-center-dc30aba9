@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -59,14 +60,13 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      console.log("Attempting to register with:", { email, fullName });
-      // Update the signUp call to use only the required parameters
-      await signUp(email, password, fullName);
+      console.log("Attempting to register with:", { email, fullName, role });
+      await signUp(email, password, fullName, role, department);
       console.log("Registration successful");
       setSuccess(true);
     } catch (error: any) {
       console.error("Registration error:", error);
-      // The error is handled in AuthContext
+      // التعامل مع الخطأ يتم في AuthContext
       setError(error.message || 'حدث خطأ أثناء إنشاء الحساب');
     } finally {
       setIsLoading(false);

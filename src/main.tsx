@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/toaster"
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="light">
-      <div>
+      <div dir="rtl">
         <App />
         <Toaster />
       </div>

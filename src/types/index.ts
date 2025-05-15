@@ -1,18 +1,18 @@
-
 export interface Brand {
   id: string;
   name: string;
-  product_type?: string;
-  description?: string;
-  status?: string;
+  status: "active" | "inactive" | "pending";
+  product_type: string;
   logo_url?: string;
+  description?: string;
   notes?: string;
-  social_links?: {
-    facebook?: string;
+  social_links: {
     instagram?: string;
+    facebook?: string;
     tiktok?: string;
+    youtube?: string;
+    linkedin?: string;
     website?: string;
-    [key: string]: string | undefined;
   };
   created_at: string;
   updated_at: string;
@@ -20,118 +20,95 @@ export interface Brand {
 
 export interface User {
   id: string;
-  full_name: string;
   email: string;
+  full_name: string;
   department: string;
   role: string;
   permission_level: string;
-  job_title?: string;
-  status?: string;
-  employment_type?: string; // Changed from union type to string
-  salary_type?: string; // Changed from union type to string
-  salary_amount?: number;
-  commission_type?: string;
-  commission_value?: number;
-  access_rights?: string;
-  user_metadata?: {
-    full_name?: string;
-    [key: string]: any;
-  };
+  employment_type: "full_time" | "part_time" | "contract";
+  salary_type: "monthly" | "hourly" | "commission";
+  status: "active" | "inactive" | "pending";
+  access_rights: "admin" | "edit" | "view";
+  commission_type: "percentage" | "fixed";
+  commission_value: number;
+  job_title: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface CallCenterOrder {
+export interface PartialUser {
   id: string;
-  order_date: string;
-  customer_name: string;
-  phone_number: string;
-  address: string;
-  brand_id: string;
-  employee_id: string;
-  order_status: string;
-  notes: string;
-  created_at: string;
-  updated_at: string;
+  full_name: string;
+  email?: string;
+  role?: string;
+  department?: string;
+  permission_level?: string;
 }
 
-// Media Buying Types
-export interface MediaBuying {
-  id?: string;
-  platform: string;
-  campaign_date: string | Date;
-  brand_id: string;
-  employee_id: string;
-  ad_spend: number;
-  orders_count: number;
-  cpp: number;
-  roas?: number;
-  campaign_link?: string;
-  notes?: string;
+export interface PartialBrand {
+  id: string;
+  name: string;
+  status?: string;
+  product_type?: string;
+  social_links?: {
+    facebook?: string;
+    instagram?: string;
+    tiktok?: string;
+    youtube?: string;
+    linkedin?: string;
+    website?: string;
+  } | null;
   created_at?: string;
   updated_at?: string;
 }
 
-export interface MediaBuyingRecord {
-  id: string;
-  platform: string;
-  date: string;
-  spend: number;
-  orders_count: number;
-  order_cost: number;
-  roas: number;
-  notes?: string; // Made notes optional to match with MediaBuyingItem
-  campaign_link?: string;
-  created_at: string;
-  updated_at: string;
+export interface MediaBuying {
+  id?: string;
   brand_id: string;
   employee_id: string;
+  platform: string;
+  campaign_date: Date | string;
+  ad_spend: number;
+  spend?: number;
+  orders_count: number;
+  cpp: number;
+  order_cost?: number;
+  roas?: number;
+  campaign_link?: string;
+  notes?: string;
   brand?: Brand;
-  employee?: User;
+  employee?: User | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface MediaBuyingItem {
   id: string;
   platform: string;
   date: string;
-  spend: number;
-  orders_count: number;
-  order_cost: number;
-  roas: number;
-  notes: string; // This field is required in MediaBuyingItem
-  campaign_link: string;
-  created_at: string;
-  updated_at: string;
   brand_id: string;
   employee_id: string;
-  brand?: {
-    id: string;
-    name: string;
-    created_at: string;
-    updated_at: string;
-  };
-  employee?: {
-    id: string;
-    full_name: string;
-    email: string;
-    department: string;
-    role: string;
-    permission_level: number;
-    created_at: string;
-    updated_at: string;
-  };
+  spend: number;
+  orders_count: number;
+  order_cost: number | null;
+  roas?: number;
+  campaign_link?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  brand?: PartialBrand;
+  employee?: PartialUser | null;
 }
 
-// Added missing types that were referenced in the code
 export interface Commission {
   id?: string;
   employee_id: string;
   commission_type: string;
   value_type: string;
   value_amount: number;
+  due_date: string | Date;
   orders_count: number;
   total_commission: number;
-  due_date: string | Date;
   created_at?: string;
 }
 
@@ -157,4 +134,22 @@ export interface Moderation {
   performance_rating: number;
   supervisor_notes?: string;
   created_at?: string;
+}
+
+export interface MediaBuyingRecord {
+  id: string;
+  brand_id: string;
+  employee_id: string;
+  platform: string;
+  date: string;
+  spend: number;
+  orders_count: number;
+  order_cost: number;
+  roas?: number;
+  campaign_link?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  brand?: Brand;
+  employee?: User;
 }
