@@ -1,76 +1,69 @@
-
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
+import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
-import { MediaBuying, Brand, User } from "@/types";
+import { MediaBuying, Brand } from "@/types";
 
 export default function EditMediaBuyingPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [mediaBuying, setMediaBuying] = useState<MediaBuying | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [mediaBuying, setMediaBuying] = useState<MediaBuying | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMediaBuying = async () => {
       if (!id) return;
       
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from("media_buying")
           .select("*, brand:brand_id(*), employee:employee_id(*)")
           .eq("id", id)
           .single();
-        
+
         if (error) throw error;
-        
+
         if (data) {
-          // Get employee data safely, ensuring type safety
-          const employeeData = data.employee ? (typeof data.employee === 'object' ? data.employee : null) : null;
+          // Safe type checking for employee
+          let employeeData = null;
           
-          // Create properly typed MediaBuying object
-          const formattedData: MediaBuying = {
+          if (data.employee && typeof data.employee === 'object') {
+            employeeData = {
+              id: data.employee.id || "",
+              full_name: data.employee.full_name || "",
+              // Only include fields that we need and are confirmed to exist
+              // Others are handled with default values or omitted
+            };
+          }
+
+          setMediaBuying({
             id: data.id,
-            brand_id: data.brand_id || "",
-            employee_id: data.employee_id || "",
+            brand_id: data.brand_id,
+            employee_id: data.employee_id,
             platform: data.platform,
             campaign_date: data.date,
             ad_spend: data.spend,
             orders_count: data.orders_count,
             cpp: data.order_cost || 0,
-            roas: (data as any).roas,
-            campaign_link: (data as any).campaign_link,
-            notes: (data as any).notes,
+            roas: (data as any).roas || 0,
+            campaign_link: (data as any).campaign_link || "",
+            notes: (data as any).notes || "",
             brand: data.brand as Brand,
-            employee: employeeData ? {
-              id: employeeData?.id || '',
-              email: employeeData?.email || '',
-              full_name: employeeData?.full_name || '',
-              department: employeeData?.department || '',
-              role: employeeData?.role || '',
-              permission_level: employeeData?.permission_level || '',
-              employment_type: (employeeData?.employment_type || 'full_time') as User['employment_type'],
-              salary_type: (employeeData?.salary_type || 'monthly') as User['salary_type'],
-              status: (employeeData?.status || 'active') as User['status'],
-              access_rights: (employeeData?.access_rights || 'view') as User['access_rights'],
-              commission_type: (employeeData?.commission_type || 'percentage') as User['commission_type'],
-              commission_value: employeeData?.commission_value || 0,
-              job_title: employeeData?.job_title || '',
-              created_at: employeeData?.created_at || '',
-              updated_at: employeeData?.updated_at || '',
-            } : null,
+            employee: employeeData,
             created_at: data.created_at,
             updated_at: data.updated_at,
-          };
-          
-          setMediaBuying(formattedData);
+          });
         }
       } catch (error: any) {
+        console.error("Error fetching media buying:", error);
         toast({
-          title: "خطأ في جلب البيانات",
-          description: `فشل في جلب بيانات الحملة الإعلانية: ${error.message}`,
+          title: "خطأ",
+          description: "فشل في جلب بيانات الحملة الإعلانية",
           variant: "destructive",
         });
       } finally {
@@ -81,35 +74,35 @@ export default function EditMediaBuyingPage() {
     fetchMediaBuying();
   }, [id, toast]);
 
-  const handleSubmitSuccess = () => {
+  const handleSave = (data: MediaBuying) => {
     navigate("/media-buying");
   };
 
   if (loading) {
-    return <div className="p-8 text-center">جاري التحميل...</div>;
-  }
-
-  if (!mediaBuying) {
     return (
-      <div className="p-8 text-center">
-        لم يتم العثور على بيانات لهذه الحملة الإعلانية
+      <div className="p-6">
+        <div className="flex justify-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div dir="rtl" className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">تعديل الحملة الإعلانية</h1>
-        <p className="text-gray-500">
-          قم بتحديث بيانات الحملة الإعلانية
-        </p>
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/media-buying")}
+          className="mb-2"
+        >
+          <ChevronRight className="ml-2 h-4 w-4" />
+          العودة إلى الحملات الإعلانية
+        </Button>
+        <h1 className="text-3xl font-bold">تعديل حملة إعلانية</h1>
       </div>
 
-      <MediaBuyingForm 
-        initialData={mediaBuying} 
-        onSubmit={handleSubmitSuccess} 
-      />
+      {mediaBuying && <MediaBuyingForm initialData={mediaBuying} onSubmit={handleSave} />}
     </div>
   );
 }

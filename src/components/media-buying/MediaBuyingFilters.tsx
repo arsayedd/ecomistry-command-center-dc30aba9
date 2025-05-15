@@ -4,6 +4,7 @@ import { FilterBar } from "@/components/shared/FilterBar";
 import { PlatformSelect } from "./filters/PlatformSelect";
 import { DatePicker } from "./filters/DatePicker";
 import { EntitySelect } from "./filters/EntitySelect";
+import { ExportActions } from "./filters/ExportActions";
 import { Brand, User } from "@/types";
 
 interface MediaBuyingFiltersProps {
@@ -18,6 +19,8 @@ interface MediaBuyingFiltersProps {
   employeeId: string;
   onEmployeeChange: (value: string) => void;
   onExport: () => void;
+  onExportCSV?: () => void;
+  onExportPDF?: () => void;
   brands: Brand[];
   employees: User[];
 }
@@ -34,6 +37,8 @@ export function MediaBuyingFilters({
   employeeId,
   onEmployeeChange,
   onExport,
+  onExportCSV,
+  onExportPDF,
   brands,
   employees,
 }: MediaBuyingFiltersProps) {
@@ -67,6 +72,9 @@ export function MediaBuyingFilters({
         placeholder="الموظف"
         emptyLabel="كل الموظفين"
       />
+
+      {/* Export Actions */}
+      <ExportActions onExportCSV={onExportCSV} onExportPDF={onExportPDF} />
     </FilterBar>
   );
 }

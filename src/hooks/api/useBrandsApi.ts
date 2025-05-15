@@ -9,58 +9,33 @@ export const useBrandsApi = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch brands data
   useEffect(() => {
     const fetchBrands = async () => {
       setLoading(true);
       try {
-        // Fetch brands
-        const { data: brandsData, error: brandsError } = await supabase
-          .from("brands")
-          .select("*")
-          .eq("status", "active");
-
-        if (brandsError) throw brandsError;
+        const { data, error } = await supabase.from("brands").select("*");
+        if (error) throw error;
         
-        if (brandsData) {
-          // Cast the data to match the Brand type
-          const typedBrands: Brand[] = brandsData.map(brand => {
-            let socialLinks: Brand["social_links"] = {};
-            
-            // Type-safely handle social_links if it exists and is an object
-            if (brand.social_links && typeof brand.social_links === 'object') {
-              const links = brand.social_links as Record<string, unknown>;
-              socialLinks = {
-                instagram: typeof links.instagram === 'string' ? links.instagram : '',
-                facebook: typeof links.facebook === 'string' ? links.facebook : '',
-                tiktok: typeof links.tiktok === 'string' ? links.tiktok : '',
-                youtube: typeof links.youtube === 'string' ? links.youtube : '',
-                linkedin: typeof links.linkedin === 'string' ? links.linkedin : '',
-                website: typeof links.website === 'string' ? links.website : '',
-              };
-            }
-            
-            return {
-              id: brand.id,
-              name: brand.name,
-              status: (brand.status || "active") as Brand['status'],
-              product_type: brand.product_type || "",
-              logo_url: brand.logo_url || "",
-              description: brand.description || "",
-              notes: brand.notes || "",
-              social_links: socialLinks,
-              created_at: brand.created_at || '',
-              updated_at: brand.updated_at || ''
-            };
-          });
-          
-          setBrands(typedBrands);
+        if (data) {
+          // Transform the data to match the Brand type
+          const transformedBrands: Brand[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            status: item.status as "active" | "inactive" | "pending",
+            product_type: item.product_type || "",
+            logo_url: (item as any).logo_url || undefined,
+            description: (item as any).description || undefined,
+            notes: (item as any).notes || undefined,
+            social_links: item.social_links as Brand["social_links"],
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          }));
+          setBrands(transformedBrands);
         }
-      } catch (error) {
-        console.error("Error fetching brands:", error);
+      } catch (error: any) {
         toast({
-          title: "خطأ في جلب البيانات",
-          description: "حدث خطأ أثناء محاولة جلب البراندات.",
+          title: "خطأ",
+          description: `فشل في جلب بيانات البراندات: ${error.message}`,
           variant: "destructive",
         });
       } finally {

@@ -1,133 +1,77 @@
 
-import { MediaBuying, MediaBuyingItem } from "@/types";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
-import { format } from "date-fns";
+import { MediaBuyingItem } from "@/types";
 
-// Helper for CSV export
-export const mediaBuyingToCSV = (data: MediaBuyingItem[]) => {
-  if (!data || data.length === 0) return "";
-  
-  // Define headers
-  const headers = [
-    "البراند",
-    "المنصة",
-    "الموظف",
-    "التاريخ",
-    "الإنفاق",
-    "عدد الطلبات",
-    "تكلفة الطلب",
-    "العائد"
-  ].join(",");
-  
-  // Create rows
-  const rows = data.map((item) => {
-    return [
-      item.brand?.name || "غير محدد",
-      item.platform,
-      item.employee?.full_name || "غير محدد",
-      item.date,
-      item.spend,
-      item.orders_count,
-      item.order_cost,
-      item.roas || "غير محدد"
-    ].join(",");
-  });
-  
-  // Join headers and rows
-  return [headers, ...rows].join("\n");
-};
+interface MediaBuyingMetrics {
+  totalSpend: number;
+  totalOrders: number;
+  averageCPP: number;
+  averageROAS: number;
+}
 
-// Helper for PDF export
-export const mediaBuyingToPDF = (data: MediaBuyingItem[]) => {
-  const doc = new jsPDF("p", "mm", "a4", true);
+export const calculateMediaBuyingMetrics = (data: MediaBuyingItem[]): MediaBuyingMetrics => {
+  // Calculate total spend and orders
+  const totalSpend = data.reduce((sum, item) => sum + (item.spend || 0), 0);
+  const totalOrders = data.reduce((sum, item) => sum + (item.orders_count || 0), 0);
   
-  // Set RTL mode
-  (doc as any).setR2L(true);
-  
-  // Add title
-  doc.setFontSize(18);
-  doc.text("تقرير الميديا بايينج", 100, 20, { align: "center" });
-  
-  // Add subtitle with date
-  doc.setFontSize(12);
-  const today = format(new Date(), "yyyy-MM-dd");
-  doc.text(`تاريخ التقرير: ${today}`, 100, 30, { align: "center" });
-  
-  // Create table data
-  const tableColumn = [
-    "العائد",
-    "تكلفة الطلب",
-    "عدد الطلبات",
-    "الإنفاق",
-    "التاريخ",
-    "الموظف",
-    "المنصة",
-    "البراند",
-  ];
-  
-  const tableRows = data.map((item) => [
-    item.roas || "غير محدد",
-    item.order_cost,
-    item.orders_count,
-    item.spend,
-    item.date,
-    item.employee?.full_name || "غير محدد",
-    item.platform,
-    item.brand?.name || "غير محدد",
-  ]);
-  
-  // Generate table
-  (doc as any).autoTable({
-    head: [tableColumn],
-    body: tableRows,
-    startY: 40,
-    styles: {
-      font: "courier",
-      fontSize: 10,
-      overflow: "linebreak",
-      cellPadding: 4,
-    },
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [240, 240, 240],
-    },
-  });
-  
-  return doc;
-};
-
-// Calculate metrics for media buying data
-export const calculateMediaBuyingMetrics = (data: MediaBuyingItem[]) => {
-  if (!data || data.length === 0) {
-    return {
-      totalSpend: 0,
-      totalOrders: 0,
-      averageCPP: 0,
-      averageROAS: 0,
-    };
-  }
-  
-  const totalSpend = data.reduce((sum, item) => sum + item.spend, 0);
-  const totalOrders = data.reduce((sum, item) => sum + item.orders_count, 0);
-  
-  // Calculate average CPP
+  // Calculate averages
   const averageCPP = totalOrders > 0 ? totalSpend / totalOrders : 0;
   
-  // Calculate average ROAS (only for items with ROAS value)
-  const itemsWithRoas = data.filter((item) => item.roas !== undefined);
-  const averageROAS = itemsWithRoas.length > 0
-    ? itemsWithRoas.reduce((sum, item) => sum + (item.roas || 0), 0) / itemsWithRoas.length
-    : 0;
+  // Calculate average ROAS (Return on Ad Spend)
+  // Assuming an average order value of 300 for example purposes
+  const averageOrderValue = 300;
+  const totalRevenue = totalOrders * averageOrderValue;
+  const averageROAS = totalSpend > 0 ? totalRevenue / totalSpend : 0;
   
   return {
     totalSpend,
     totalOrders,
     averageCPP,
-    averageROAS,
+    averageROAS
   };
+};
+
+// Export data to CSV format
+export const exportToCSV = (data: MediaBuyingItem[]) => {
+  // Headers for the CSV file
+  const headers = [
+    "المنصة",
+    "البراند",
+    "الموظف",
+    "التاريخ",
+    "الإنفاق",
+    "عدد الطلبات",
+    "تكلفة الطلب الواحد",
+    "العائد على الإنفاق"
+  ];
+
+  // Map data to rows
+  const rows = data.map(item => [
+    item.platform,
+    item.brand?.name || "",
+    item.employee?.full_name || "",
+    item.date,
+    item.spend.toString(),
+    item.orders_count.toString(),
+    item.order_cost?.toString() || "0",
+    item.roas?.toString() || "0"
+  ]);
+
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => row.join(","))
+  ].join("\n");
+
+  // Create a Blob containing the CSV data
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  
+  // Create a link to download the CSV
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `media_buying_export_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

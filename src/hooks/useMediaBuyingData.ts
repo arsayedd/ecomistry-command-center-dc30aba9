@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -114,7 +113,7 @@ export const useMediaBuyingData = () => {
               updated_at: item.updated_at,
               brand: item.brand,
               employee: employee ? {
-                id: employee?.id,
+                id: employee?.id || "",
                 full_name: employee?.full_name || "غير معروف"
               } : null
             };
