@@ -8,6 +8,8 @@ import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -18,7 +20,8 @@ const Dashboard = () => {
     handleDateRangeChange,
     metrics,
     charts,
-    isLoading
+    isLoading,
+    hasErrors
   } = useDashboardData();
   
   // Check if user is authenticated
@@ -28,17 +31,14 @@ const Dashboard = () => {
   
   // Display toast error if any of the queries had an error
   useEffect(() => {
-    if (!isLoading && 
-        (metrics.totalRevenue === 0 && 
-         metrics.totalExpenses === 0 && 
-         metrics.totalOrders === 0)) {
+    if (hasErrors) {
       toast({
         title: "خطأ في تحميل البيانات",
         description: "حدث خطأ أثناء تحميل بيانات لوحة المعلومات. الرجاء المحاولة مرة أخرى.",
         variant: "destructive",
       });
     }
-  }, [isLoading, metrics, toast]);
+  }, [hasErrors, toast]);
 
   return (
     <div dir="rtl" className="p-6">
@@ -49,6 +49,17 @@ const Dashboard = () => {
         dateRange={dateRange} 
         onDateRangeChange={handleDateRangeChange} 
       />
+      
+      {/* Error Alert */}
+      {hasErrors && !isLoading && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>خطأ!</AlertTitle>
+          <AlertDescription>
+            حدث خطأ أثناء تحميل البيانات. يرجى التأكد من وجود الجداول المطلوبة في قاعدة البيانات أو حاول تحديث الصفحة.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {/* Loading state */}
       {isLoading ? (
