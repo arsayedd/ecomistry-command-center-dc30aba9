@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, FileEdit, Search, Filter, Download } from "lucide-react";
+import { Plus, FileEdit, Search, Filter, Download, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,11 +117,18 @@ export default function ContentPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">كتابة المحتوى</h1>
-        <Link to="/content/add">
-          <Button>
-            <Plus className="h-4 w-4 ml-2" /> إضافة مهمة جديدة
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/content/media-buying">
+            <Button variant="outline">
+              <TrendingUp className="h-4 w-4 ml-2" /> ميديا باينج المحتوى
+            </Button>
+          </Link>
+          <Link to="/content/add">
+            <Button>
+              <Plus className="h-4 w-4 ml-2" /> إضافة مهمة جديدة
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card className="mb-6">

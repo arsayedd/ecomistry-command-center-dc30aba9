@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,10 +23,6 @@ import EmployeesPage from "./pages/employees/index";
 import AddEmployeePage from "./pages/employees/add";
 import EditEmployeePage from "./pages/employees/[id]/edit";
 
-// Media Buying pages
-import MediaBuyingPage from "./pages/media-buying/index";
-import AddMediaBuyingPage from "./pages/media-buying/add";
-
 // Call Center pages
 import CallCenterPage from "./pages/call-center/index";
 import AddOrderPage from "./pages/call-center/orders/add";
@@ -37,6 +34,9 @@ import AddModerationPage from "./pages/moderation/add";
 // Content Writing pages
 import ContentPage from "./pages/content/index";
 import AddContentTaskPage from "./pages/content/add";
+import ContentMediaBuyingPage from "./pages/content/media-buying/index";
+import AddContentMediaBuyingPage from "./pages/content/media-buying/add";
+import EditContentMediaBuyingPage from "./pages/content/media-buying/edit/[id]";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
@@ -88,10 +88,6 @@ const App = () => (
                 <Route path="employees/add" element={<AddEmployeePage />} />
                 <Route path="employees/:id/edit" element={<EditEmployeePage />} />
                 
-                {/* Media Buying Routes */}
-                <Route path="media-buying" element={<MediaBuyingPage />} />
-                <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
-                
                 {/* Call Center Routes */}
                 <Route path="call-center" element={<CallCenterPage />} />
                 <Route path="call-center/orders/add" element={<AddOrderPage />} />
@@ -103,6 +99,9 @@ const App = () => (
                 {/* Content Routes */}
                 <Route path="content" element={<ContentPage />} />
                 <Route path="content/add" element={<AddContentTaskPage />} />
+                <Route path="content/media-buying" element={<ContentMediaBuyingPage />} />
+                <Route path="content/media-buying/add" element={<AddContentMediaBuyingPage />} />
+                <Route path="content/media-buying/edit/:id" element={<EditContentMediaBuyingPage />} />
                 
                 {/* Finance Routes */}
                 <Route path="finance" element={<FinancePage />} />

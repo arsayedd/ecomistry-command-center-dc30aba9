@@ -178,11 +178,15 @@ export type Database = {
       content_tasks: {
         Row: {
           brand_id: string
+          campaign_budget: number | null
+          campaign_performance_metric: string | null
           created_at: string | null
           delivery_link: string | null
           employee_id: string
           expected_delivery_date: string
           id: string
+          media_campaign_id: string | null
+          media_platform: string | null
           notes: string | null
           status: string
           task_type: string
@@ -190,11 +194,15 @@ export type Database = {
         }
         Insert: {
           brand_id: string
+          campaign_budget?: number | null
+          campaign_performance_metric?: string | null
           created_at?: string | null
           delivery_link?: string | null
           employee_id: string
           expected_delivery_date: string
           id?: string
+          media_campaign_id?: string | null
+          media_platform?: string | null
           notes?: string | null
           status: string
           task_type: string
@@ -202,11 +210,15 @@ export type Database = {
         }
         Update: {
           brand_id?: string
+          campaign_budget?: number | null
+          campaign_performance_metric?: string | null
           created_at?: string | null
           delivery_link?: string | null
           employee_id?: string
           expected_delivery_date?: string
           id?: string
+          media_campaign_id?: string | null
+          media_platform?: string | null
           notes?: string | null
           status?: string
           task_type?: string
@@ -225,6 +237,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_tasks_media_campaign_id_fkey"
+            columns: ["media_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "media_buying"
             referencedColumns: ["id"]
           },
         ]
