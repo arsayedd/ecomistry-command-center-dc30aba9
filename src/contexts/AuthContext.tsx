@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -12,6 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, role: string, department?: string) => Promise<void>;
   signOut: () => Promise<void>;
   sendEmailConfirmation: (email: string) => Promise<void>;
+  setUser: (user: User | null) => void; // Add the setUser method to the interface
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -306,7 +308,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, sendEmailConfirmation }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, sendEmailConfirmation, setUser }}>
       {children}
     </AuthContext.Provider>
   );

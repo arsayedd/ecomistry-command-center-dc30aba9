@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +24,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user, setUser, signIn } = useAuth();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
