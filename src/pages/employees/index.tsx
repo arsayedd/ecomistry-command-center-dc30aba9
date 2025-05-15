@@ -1,139 +1,109 @@
-
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { Plus } from "lucide-react";
 import { EmployeesList } from "@/components/employees/EmployeesList";
 import { EmployeesFilters } from "@/components/employees/EmployeesFilters";
 import { DeleteEmployeeDialog } from "@/components/employees/DeleteEmployeeDialog";
-import { exportToCSV } from "@/utils/exportUtils";
+import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
+import { useEmployeesData } from "@/hooks/useEmployeesData";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FileDown } from "lucide-react";
 
 export default function EmployeesPage() {
-  // States
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteEmployeeId, setDeleteEmployeeId] = useState<string | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const navigate = useNavigate();
+  const { employees, loading, filters, handleFilterChange } = useEmployeesData();
+  const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Fetch employees on component mount
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  const handleAddEmployee = () => {
+    navigate("/employees/new");
+  };
 
-  const fetchEmployees = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const handleEditEmployee = (id: string) => {
+    navigate(`/employees/${id}/edit`);
+  };
 
-      if (error) throw error;
-      setEmployees(data || []);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
-      toast.error("حدث خطأ أثناء تحميل بيانات الموظفين");
-    } finally {
-      setLoading(false);
+  const handleDeleteClick = (id: string) => {
+    setEmployeeToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    // Delete logic would go here
+    setIsDeleteDialogOpen(false);
+    setEmployeeToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setEmployeeToDelete(null);
+  };
+
+  // Function to handle exporting data
+  const handleExport = (format: string) => {
+    if (format === 'csv') {
+      exportToCSV(employees, 'employees-data');
+    } else if (format === 'excel') {
+      exportToExcel(employees, 'employees-data');
     }
   };
-
-  // Handle exports
-  const handleExportExcel = () => {
-    const filteredData = filterEmployees();
-    exportToCSV(
-      filteredData,
-      "employees_report"
-    );
-  };
-
-  // Handle delete
-  const confirmDelete = (id: string) => {
-    setDeleteEmployeeId(id);
-    setShowDeleteDialog(true);
-  };
-
-  const handleDelete = async () => {
-    if (!deleteEmployeeId) return;
-
-    try {
-      const { error } = await supabase
-        .from("users")
-        .delete()
-        .eq("id", deleteEmployeeId);
-
-      if (error) throw error;
-
-      setEmployees(employees.filter(emp => emp.id !== deleteEmployeeId));
-      toast.success("تم حذف بيانات الموظف بنجاح");
-    } catch (error) {
-      console.error("Error deleting employee:", error);
-      toast.error("حدث خطأ أثناء حذف بيانات الموظف");
-    } finally {
-      setShowDeleteDialog(false);
-      setDeleteEmployeeId(null);
-    }
-  };
-
-  // Filter employees based on search and filters
-  const filterEmployees = () => {
-    return employees.filter(employee => {
-      const matchesSearch = 
-        employee.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.email?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === "all" || employee.status === statusFilter;
-      const matchesDepartment = departmentFilter === "all" || employee.department === departmentFilter;
-      
-      return matchesSearch && matchesStatus && matchesDepartment;
-    });
-  };
-
-  const filteredEmployees = filterEmployees();
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">إدارة الموظفين</h1>
-        <Link to="/employees/add">
-          <Button>
-            <Plus className="h-4 w-4 ml-2" /> إضافة موظف جديد
+        <h1 className="text-2xl font-bold">الموظفين</h1>
+        <div className="flex space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-2">
+                <FileDown className="h-4 w-4 mr-2" />
+                تصدير
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleExport('csv')}>
+                تصدير CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('excel')}>
+                تصدير Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button onClick={handleAddEmployee}>
+            <Plus className="h-4 w-4 mr-2" />
+            إضافة موظف
           </Button>
-        </Link>
+        </div>
       </div>
 
       <EmployeesFilters 
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        departmentFilter={departmentFilter}
-        setDepartmentFilter={setDepartmentFilter}
-        onExport={handleExportExcel}
+        filters={filters} 
+        onFilterChange={handleFilterChange} 
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>قائمة الموظفين</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EmployeesList 
-            employees={filteredEmployees} 
-            loading={loading} 
-            onDeleteClick={confirmDelete} 
-          />
-        </CardContent>
-      </Card>
+      {loading ? (
+        <Card className="mt-6">
+          <CardContent className="flex justify-center items-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="mr-2">جاري تحميل البيانات...</span>
+          </CardContent>
+        </Card>
+      ) : (
+        <EmployeesList 
+          employees={employees} 
+          onEdit={handleEditEmployee}
+          onDelete={handleDeleteClick}
+        />
+      )}
 
       <DeleteEmployeeDialog 
-        open={showDeleteDialog} 
-        onOpenChange={setShowDeleteDialog} 
-        onConfirm={handleDelete} 
+        isOpen={isDeleteDialogOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   );
