@@ -3,7 +3,7 @@ export interface Brand {
   name: string;
   status: "active" | "inactive" | "pending";
   product_type: string;
-  logo_url?: string;
+  logo_url: string; // Keep in the type definition for future use
   description?: string;
   notes?: string;
   social_links: {

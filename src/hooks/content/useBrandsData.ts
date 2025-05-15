@@ -28,7 +28,7 @@ export const useBrandsData = () => {
         name: brand.name || "",
         status: (brand.status || "active") as "active" | "inactive" | "pending",
         product_type: brand.product_type || "",
-        logo_url: brand.logo_url || "",
+        logo_url: "", // Fix: Set to empty string as it doesn't exist in the database
         description: brand.description || "",
         notes: brand.notes || "",
         social_links: typeof brand.social_links === 'object' ? 
