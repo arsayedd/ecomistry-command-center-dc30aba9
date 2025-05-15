@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,8 @@ import { ChevronRight } from "lucide-react";
 import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuying, Brand } from "@/types";
+import { MediaBuying, PartialBrand } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditMediaBuyingPage() {
   const { id } = useParams();
@@ -53,7 +55,7 @@ export default function EditMediaBuyingPage() {
             roas: (data as any).roas || 0,
             campaign_link: (data as any).campaign_link || "",
             notes: (data as any).notes || "",
-            brand: data.brand as Brand,
+            brand: data.brand as PartialBrand,
             employee: employeeData,
             created_at: data.created_at,
             updated_at: data.updated_at,
@@ -75,14 +77,22 @@ export default function EditMediaBuyingPage() {
   }, [id, toast]);
 
   const handleSave = (data: MediaBuying) => {
+    toast({
+      title: "تم التحديث بنجاح",
+      description: "تم تحديث بيانات الحملة الإعلانية بنجاح",
+    });
     navigate("/media-buying");
   };
 
   if (loading) {
     return (
       <div className="p-6">
-        <div className="flex justify-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="mb-6">
+          <Skeleton className="h-8 w-80 mb-2" />
+          <Skeleton className="h-10 w-64" />
+        </div>
+        <div className="space-y-6">
+          <Skeleton className="h-[500px] w-full rounded-lg" />
         </div>
       </div>
     );

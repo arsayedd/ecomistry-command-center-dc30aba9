@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuyingItem, Brand, User } from "@/types";
+import { MediaBuyingItem, PartialBrand, PartialUser } from "@/types";
 import { format } from "date-fns";
 
 interface MediaBuyingFilters {
@@ -15,8 +16,8 @@ interface MediaBuyingFilters {
 export const useMediaBuyingData = () => {
   const [mediaBuying, setMediaBuying] = useState<MediaBuyingItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
-  const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
+  const [brands, setBrands] = useState<PartialBrand[]>([]);
+  const [employees, setEmployees] = useState<PartialUser[]>([]);
   const [filters, setFilters] = useState<MediaBuyingFilters>({
     brand_id: "",
     platform: "",
@@ -31,7 +32,7 @@ export const useMediaBuyingData = () => {
       try {
         const { data, error } = await supabase.from("brands").select("id, name");
         if (error) throw error;
-        if (data) setBrands(data);
+        if (data) setBrands(data as PartialBrand[]);
       } catch (error: any) {
         toast({
           title: "خطأ",
@@ -48,7 +49,7 @@ export const useMediaBuyingData = () => {
           .select("id, full_name")
           .eq("role", "employee");
         if (error) throw error;
-        if (data) setEmployees(data);
+        if (data) setEmployees(data as PartialUser[]);
       } catch (error: any) {
         toast({
           title: "خطأ",
@@ -95,7 +96,14 @@ export const useMediaBuyingData = () => {
           // Process data to ensure proper structure with safe type handling
           const processedData: MediaBuyingItem[] = data.map(item => {
             // Type check for employee
-            const employee = item.employee ? (typeof item.employee === 'object' ? item.employee : null) : null;
+            let employeeData: PartialUser | null = null;
+            
+            if (item.employee && typeof item.employee === 'object') {
+              employeeData = {
+                id: item.employee.id || "",
+                full_name: item.employee.full_name || "غير معروف"
+              };
+            }
             
             return {
               id: item.id,
@@ -111,11 +119,8 @@ export const useMediaBuyingData = () => {
               notes: (item as any).notes,
               created_at: item.created_at,
               updated_at: item.updated_at,
-              brand: item.brand,
-              employee: employee ? {
-                id: employee?.id || "",
-                full_name: employee?.full_name || "غير معروف"
-              } : null
+              brand: item.brand as PartialBrand,
+              employee: employeeData
             };
           });
           

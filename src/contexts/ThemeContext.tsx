@@ -15,7 +15,7 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-  theme: "system",
+  theme: "light",  // جعل الوضع الفاتح هو الافتراضي
   setTheme: () => null,
 };
 
@@ -23,7 +23,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "light",  // تغيير الوضع الافتراضي إلى الفاتح
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {

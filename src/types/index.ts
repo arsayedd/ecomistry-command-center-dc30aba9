@@ -1,4 +1,3 @@
-
 export interface Brand {
   id: string;
   name: string;
@@ -37,6 +36,32 @@ export interface User {
   updated_at: string;
 }
 
+export interface PartialUser {
+  id: string;
+  full_name: string;
+  email?: string;
+  role?: string;
+  department?: string;
+  permission_level?: string;
+}
+
+export interface PartialBrand {
+  id: string;
+  name: string;
+  status?: string;
+  product_type?: string;
+  social_links?: {
+    facebook?: string;
+    instagram?: string;
+    tiktok?: string;
+    youtube?: string;
+    linkedin?: string;
+    website?: string;
+  } | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface MediaBuying {
   id?: string;
   brand_id: string;
@@ -59,26 +84,20 @@ export interface MediaBuying {
 
 export interface MediaBuyingItem {
   id: string;
-  brand_id: string;
-  employee_id: string;
   platform: string;
   date: string;
+  brand_id: string;
+  employee_id: string;
   spend: number;
   orders_count: number;
-  order_cost: number;
+  order_cost: number | null;
   roas?: number;
   campaign_link?: string;
   notes?: string;
-  created_at: string;
-  updated_at: string;
-  brand?: {
-    id: string;
-    name: string;
-  };
-  employee?: {
-    id?: string;
-    full_name?: string;
-  } | null;
+  created_at?: string;
+  updated_at?: string;
+  brand?: PartialBrand;
+  employee?: PartialUser | null;
 }
 
 export interface Commission {

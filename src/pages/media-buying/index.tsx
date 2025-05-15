@@ -22,37 +22,37 @@ export default function MediaBuyingPage() {
     handleDateChange
   } = useMediaBuyingData();
 
-  // Filter media buying data based on search value
+  // تصفية بيانات الميديا بناءً على قيمة البحث
   const filteredData = mediaBuying.filter(item => 
     item.platform.toLowerCase().includes(searchValue.toLowerCase()) ||
-    item.brand?.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+    (item.brand?.name && item.brand.name.toLowerCase().includes(searchValue.toLowerCase())) ||
     (item.employee?.full_name && item.employee.full_name.toLowerCase().includes(searchValue.toLowerCase()))
   );
 
-  // Handle export to CSV
+  // التعامل مع التصدير إلى CSV
   const handleExportCSV = () => {
     exportToCSV(filteredData);
   };
 
-  // Handle export to PDF
+  // التعامل مع التصدير إلى PDF
   const handleExportPDF = () => {
     // PDF export implementation would be added here
     console.log("Export to PDF", filteredData);
   };
 
-  // Handle adding a new media buying record
+  // التعامل مع إضافة سجل ميديا باينج جديد
   const handleAdd = () => {
     navigate("/media-buying/add");
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6" dir="rtl">
       <MediaBuyingPageHeader mediaBuying={filteredData} onAdd={handleAdd} />
       
-      {/* Dashboard metrics */}
+      {/* لوحة المعلومات والإحصائيات */}
       <MediaBuyingDashboard data={filteredData} />
       
-      {/* Filters */}
+      {/* عناصر التصفية */}
       <MediaBuyingFilters
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -71,7 +71,7 @@ export default function MediaBuyingPage() {
         employees={employees}
       />
 
-      <Card>
+      <Card className="mt-6 shadow-sm">
         <MediaBuyingDataTable loading={loading} mediaBuying={filteredData} />
       </Card>
     </div>
