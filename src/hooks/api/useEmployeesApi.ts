@@ -26,12 +26,15 @@ export const useEmployeesApi = (department?: string) => {
         
         const { data: employeesData, error: employeesError } = await query;
 
-        if (employeesError) throw employeesError;
+        if (employeesError) {
+          console.error("Employees fetch error:", employeesError);
+          throw employeesError;
+        }
         
         if (employeesData) {
           // Cast the data to match User type
           const typedEmployees: User[] = employeesData.map(emp => ({
-            id: emp.id,
+            id: emp.id || '',
             email: emp.email || '',
             full_name: emp.full_name || '',
             department: emp.department || '',

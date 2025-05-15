@@ -13,9 +13,12 @@ export default function ContentMediaBuyingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { mediaBuying, loading, brands, employees, filters, handleFilterChange } = useContentMediaBuyingData();
 
+  console.log("Media buying data in page:", mediaBuying);
+  console.log("Content media buying filters:", filters);
+
   // Filter media buying data based on search query
   const filteredData = mediaBuying.filter(item => 
-    item.platform.includes(searchQuery) ||
+    (item.platform && item.platform.includes(searchQuery)) ||
     (item.brand?.name && item.brand.name.includes(searchQuery)) ||
     (item.employee?.full_name && item.employee.full_name.includes(searchQuery)) ||
     (item.notes && item.notes.includes(searchQuery))
@@ -56,7 +59,7 @@ export default function ContentMediaBuyingPage() {
       case "tiktok": return "تيكتوك";
       case "snapchat": return "سناب شات";
       case "google": return "جوجل";
-      default: return platform;
+      default: return platform || '';
     }
   };
 
@@ -76,9 +79,9 @@ export default function ContentMediaBuyingPage() {
           <ContentMediaBuyingFilters
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
-            platform={filters.platform}
+            platform={filters.platform || ''}
             onPlatformChange={(value) => handleFilterChange("platform", value)}
-            brandId={filters.brand_id}
+            brandId={filters.brand_id || ''}
             onBrandChange={(value) => handleFilterChange("brand_id", value)}
             onExportCSV={handleExportCSV}
             onExportExcel={handleExportExcel}

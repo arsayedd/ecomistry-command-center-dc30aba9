@@ -57,12 +57,13 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
         .order("name", { ascending: true });
 
       if (error) {
+        console.error("Error fetching brands in form:", error);
         throw error;
       }
 
       setBrands(data || []);
     } catch (error) {
-      console.error("Error fetching brands:", error);
+      console.error("Error fetching brands in form:", error);
     }
   };
 
@@ -74,12 +75,13 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
         .order("full_name", { ascending: true });
 
       if (error) {
+        console.error("Error fetching employees in form:", error);
         throw error;
       }
 
       setEmployees(data || []);
     } catch (error) {
-      console.error("Error fetching employees:", error);
+      console.error("Error fetching employees in form:", error);
     }
   };
 
@@ -127,6 +129,8 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
   const onSubmit = async (values: ContentMediaBuyingFormValues) => {
     setLoading(true);
     try {
+      console.log("Submitting form with values:", values);
+      
       // First save the media buying data
       const mediaBuyingData = {
         platform: values.platform,
@@ -142,6 +146,8 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
         campaign_link: values.campaign_link,
       };
       
+      console.log("Media buying data to save:", mediaBuyingData);
+      
       let mediaBuyingId = initialData?.id;
       
       if (initialData?.id) {
@@ -151,7 +157,12 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
           .update(mediaBuyingData)
           .eq("id", initialData.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating media buying:", error);
+          throw error;
+        }
+        
+        console.log("Updated media buying record with ID:", initialData.id);
       } else {
         // Create new media buying record
         const { data, error } = await supabase
@@ -159,9 +170,13 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
           .insert([mediaBuyingData])
           .select("id");
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating media buying:", error);
+          throw error;
+        }
         
         mediaBuyingId = data[0].id;
+        console.log("Created new media buying record with ID:", mediaBuyingId);
       }
       
       // Now create or update the content task linking to the media buying record
@@ -178,6 +193,8 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
         notes: values.notes,
       };
       
+      console.log("Content task data to save:", contentTaskData);
+      
       if (initialData?.content_task_id) {
         // Update existing content task
         const { error } = await supabase
@@ -185,8 +202,12 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
           .update(contentTaskData)
           .eq("id", initialData.content_task_id);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating content task:", error);
+          throw error;
+        }
         
+        console.log("Updated content task with ID:", initialData.content_task_id);
         toast.success("تم تحديث حملة الميديا والمحتوى بنجاح");
       } else {
         // Create new content task
@@ -194,8 +215,12 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
           .from("content_tasks")
           .insert([contentTaskData]);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating content task:", error);
+          throw error;
+        }
         
+        console.log("Created new content task");
         toast.success("تم إضافة حملة الميديا والمحتوى بنجاح");
       }
       

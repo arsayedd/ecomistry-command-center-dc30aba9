@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface ContentMediaBuyingFiltersProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
-  platform: string | null;
+  platform: string;
   onPlatformChange: (value: string | null) => void;
-  brandId: string | null;
+  brandId: string;
   onBrandChange: (value: string | null) => void;
   onExportCSV: () => void;
   onExportExcel: () => void;

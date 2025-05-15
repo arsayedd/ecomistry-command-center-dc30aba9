@@ -27,7 +27,7 @@ export function ContentMediaBuyingTable({ loading, data }: ContentMediaBuyingTab
       case "google":
         return "جوجل";
       default:
-        return platform;
+        return platform || '';
     }
   };
 

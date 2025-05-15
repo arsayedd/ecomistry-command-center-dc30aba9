@@ -47,11 +47,11 @@ export const useContentMediaBuyingData = () => {
           campaign_link,
           created_at,
           updated_at,
-          brand (
+          brand:brand_id (
             id,
             name
           ),
-          employee (
+          employee:employee_id (
             id,
             full_name,
             email,
@@ -79,6 +79,7 @@ export const useContentMediaBuyingData = () => {
       const { data, error } = await query;
 
       if (error) {
+        console.error("Media buying fetch error:", error);
         throw error;
       }
 
@@ -96,14 +97,7 @@ export const useContentMediaBuyingData = () => {
         created_at: item.created_at,
         updated_at: item.updated_at,
         brand: item.brand,
-        employee: {
-          id: item.employee?.id || "",
-          full_name: item.employee?.full_name || "",
-          email: item.employee?.email || "",
-          department: item.employee?.department || "",
-          role: item.employee?.role || "",
-          permission_level: item.employee?.permission_level || "",
-        },
+        employee: item.employee,
       })) as MediaBuyingRecord[];
 
       setMediaBuying(mappedData || []);
@@ -122,6 +116,7 @@ export const useContentMediaBuyingData = () => {
         .order("name", { ascending: true });
 
       if (error) {
+        console.error("Brands fetch error:", error);
         throw error;
       }
 
@@ -139,12 +134,13 @@ export const useContentMediaBuyingData = () => {
         .order("full_name", { ascending: true });
 
       if (error) {
+        console.error("Employees fetch error in content:", error);
         throw error;
       }
 
       setEmployees(data || []);
     } catch (error) {
-      console.error("Error fetching employees:", error);
+      console.error("Error fetching employees in content:", error);
     }
   };
 
