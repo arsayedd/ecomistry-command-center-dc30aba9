@@ -8,6 +8,7 @@ import { ContentMediaBuyingBasicFields } from "@/components/content/ContentMedia
 import { ContentMediaBuyingMetricsFields } from "@/components/content/ContentMediaBuyingMetricsFields";
 import { ContentMediaBuyingAdditionalFields } from "@/components/content/ContentMediaBuyingAdditionalFields";
 import { useContentMediaBuyingForm } from "@/hooks/useContentMediaBuyingForm";
+import { ContentMediaBuyingFormActions } from "@/components/content/media-buying/ContentMediaBuyingFormActions";
 
 export { contentMediaBuyingFormSchema, type ContentMediaBuyingFormValues } from "@/hooks/useContentMediaBuyingForm";
 
@@ -26,15 +27,7 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
             <ContentMediaBuyingBasicFields form={form} brands={brands} employees={employees} />
             <ContentMediaBuyingMetricsFields form={form} />
             <ContentMediaBuyingAdditionalFields form={form} />
-
-            <div className="flex justify-end gap-4">
-              <Button variant="outline" type="button" onClick={() => navigate("/content/media-buying")}>
-                إلغاء
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "جاري الحفظ..." : "حفظ"}
-              </Button>
-            </div>
+            <ContentMediaBuyingFormActions loading={loading} navigate={navigate} />
           </form>
         </Form>
       </CardContent>
