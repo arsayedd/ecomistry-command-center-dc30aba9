@@ -1,33 +1,32 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { User } from "@/types";
+import { toast } from "sonner";
 
 export const useEmployeesData = () => {
-  const [employees, setEmployees] = useState<any[]>([]);
-  const { toast } = useToast();
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchEmployees = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from("users")
-        .select("id, full_name")
+        .select("id, full_name, email, department, role")
         .order("full_name", { ascending: true });
 
       if (error) {
-        console.error("Employees fetch error in content:", error);
         throw error;
       }
 
-      console.log("Fetched employees for content:", data?.length);
       setEmployees(data || []);
-    } catch (error) {
-      console.error("Error fetching employees in content:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error("Error fetching employees:", error);
+      toast.error("فشل في تحميل بيانات الموظفين");
+      setEmployees([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,5 +34,5 @@ export const useEmployeesData = () => {
     fetchEmployees();
   }, []);
 
-  return { employees };
+  return { employees, loading, fetchEmployees };
 };

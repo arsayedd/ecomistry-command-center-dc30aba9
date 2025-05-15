@@ -1,51 +1,32 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import type { Brand } from "@/types";
+import { Brand } from "@/types";
+import { toast } from "sonner";
 
 export const useBrandsData = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
-  const { toast } = useToast();
-
+  const [loading, setLoading] = useState(true);
+  
   const fetchBrands = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from("brands")
-        .select("*")
+        .select("id, name, logo_url")
         .order("name", { ascending: true });
 
       if (error) {
-        console.error("Brands fetch error:", error);
         throw error;
       }
 
-      console.log("Fetched brands:", data?.length);
-      
-      // Convert data to match the Brand type
-      const typedBrands: Brand[] = (data || []).map(brand => ({
-        id: brand.id || "",
-        name: brand.name || "",
-        status: (brand.status || "active") as "active" | "inactive" | "pending",
-        product_type: brand.product_type || "",
-        logo_url: "", // Fix: Set to empty string as it doesn't exist in the database
-        description: brand.description || "",
-        notes: brand.notes || "",
-        social_links: typeof brand.social_links === 'object' ? 
-          (brand.social_links as any || {}) : 
-          { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
-        created_at: brand.created_at || "",
-        updated_at: brand.updated_at || "",
-      }));
-      
-      setBrands(typedBrands);
-    } catch (error) {
+      setBrands(data || []);
+    } catch (error: any) {
       console.error("Error fetching brands:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب البراندات",
-        variant: "destructive",
-      });
+      toast.error("فشل في تحميل بيانات البراندات");
+      setBrands([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,5 +34,5 @@ export const useBrandsData = () => {
     fetchBrands();
   }, []);
 
-  return { brands, fetchBrands };
+  return { brands, loading, fetchBrands };
 };

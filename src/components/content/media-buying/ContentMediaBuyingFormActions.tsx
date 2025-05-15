@@ -1,25 +1,39 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { NavigateFunction } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
-interface ContentMediaBuyingFormActionsProps {
-  loading: boolean;
-  navigate: NavigateFunction;
+export interface ContentMediaBuyingFormActionsProps {
+  isSubmitting: boolean;
+  onCancel: () => void;
 }
 
-export function ContentMediaBuyingFormActions({ loading, navigate }: ContentMediaBuyingFormActionsProps) {
+export function ContentMediaBuyingFormActions({ 
+  isSubmitting, 
+  onCancel 
+}: ContentMediaBuyingFormActionsProps) {
   return (
-    <div className="flex justify-end gap-4">
+    <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-end">
       <Button 
-        variant="outline" 
         type="button" 
-        onClick={() => navigate("/media-buying/content")}
+        variant="outline" 
+        onClick={onCancel}
+        disabled={isSubmitting}
       >
         إلغاء
       </Button>
-      <Button type="submit" disabled={loading}>
-        {loading ? "جاري الحفظ..." : "حفظ"}
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            جاري الحفظ...
+          </>
+        ) : (
+          'حفظ'
+        )}
       </Button>
     </div>
   );

@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ContentMediaBuyingBasicFields } from "@/components/content/ContentMediaBuyingBasicFields";
 import { ContentMediaBuyingMetricsFields } from "@/components/content/ContentMediaBuyingMetricsFields";
@@ -15,11 +14,13 @@ import { toast } from "sonner";
 const ContentMediaBuyingFormWrapper = ({ initialData }: { initialData?: any }) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { form, brands, employees, loading, handleSubmit } = useContentMediaBuyingForm(
-    initialData,
-    (data) => {
-      // Handle successful submission
-      setIsSubmitting(false);
+  const { form, brands, employees, loading, handleSubmit } = useContentMediaBuyingForm(initialData);
+
+  // Handle form submission
+  const onSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    try {
+      await handleSubmit(values);
       
       // Show success message
       toast.success(initialData ? "تم تحديث الحملة بنجاح" : "تم إضافة الحملة بنجاح");
@@ -28,14 +29,6 @@ const ContentMediaBuyingFormWrapper = ({ initialData }: { initialData?: any }) =
       setTimeout(() => {
         navigate("/content/media-buying");
       }, 500);
-    }
-  );
-
-  // Handle form submission
-  const onSubmit = async (values: any) => {
-    setIsSubmitting(true);
-    try {
-      await handleSubmit(values);
     } catch (error) {
       console.error("Form submission error:", error);
       setIsSubmitting(false);
