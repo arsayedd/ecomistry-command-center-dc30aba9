@@ -1,16 +1,21 @@
 
-import { Search, Filter, Download } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
 import { Input } from "@/components/ui/input";
+import { Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ReactNode } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FilterBarProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
   onExport?: () => void;
-  children?: ReactNode;
+  children?: React.ReactNode;
 }
 
 export function FilterBar({
@@ -18,34 +23,46 @@ export function FilterBar({
   onSearchChange,
   searchPlaceholder = "بحث...",
   onExport,
-  children
+  children,
 }: FilterBarProps) {
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder={searchPlaceholder}
-                value={searchValue}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          </div>
-          
+    <div className="bg-card border border-border rounded-lg p-4 mb-4 shadow-sm">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+        <div className="w-full md:w-64 relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={searchPlaceholder}
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9 bg-background border-border"
+          />
+        </div>
+        
+        <div className="flex items-center flex-wrap gap-2">
           {children}
-          
+        </div>
+        
+        <div className="flex items-center justify-end ml-auto">
           {onExport && (
-            <Button variant="outline" className="w-full md:w-auto" onClick={onExport}>
-              <Download className="h-4 w-4 ml-2" />
-              تصدير
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-border bg-background">
+                  <Download className="w-4 h-4 ml-2" />
+                  تصدير
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onExport} className="cursor-pointer">
+                  تصدير CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onExport} className="cursor-pointer">
+                  تصدير PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -34,12 +34,14 @@ export const useMediaBuyingData = () => {
         if (error) throw error;
         if (data) {
           // Convert the data to match the Brand type
-          const typedBrands = data.map(brand => ({
+          const typedBrands: Brand[] = data.map(brand => ({
             id: brand.id,
             name: brand.name,
             status: (brand.status || "active") as "active" | "inactive" | "pending",
             product_type: brand.product_type || "",
-            social_links: brand.social_links || {},
+            social_links: typeof brand.social_links === 'object' ? 
+              (brand.social_links as any || {}) : 
+              { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
             description: "",
             notes: "",
             logo_url: "",
@@ -164,7 +166,9 @@ export const useMediaBuyingData = () => {
                 logo_url: "",
                 description: "",
                 notes: "",
-                social_links: item.brand.social_links || {},
+                social_links: typeof item.brand.social_links === 'object' ? 
+                  (item.brand.social_links as any || {}) : 
+                  { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
                 created_at: item.brand.created_at || "",
                 updated_at: item.brand.updated_at || ""
               };

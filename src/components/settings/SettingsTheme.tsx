@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { CircleCheck } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SettingsThemeProps {
   onSave: () => void;
@@ -13,6 +14,7 @@ interface SettingsThemeProps {
 
 export function SettingsTheme({ onSave }: SettingsThemeProps) {
   const [selectedColor, setSelectedColor] = useState("primary");
+  const { theme } = useTheme();
   
   const colors = [
     { name: "primary", bg: "bg-primary" },
@@ -23,7 +25,7 @@ export function SettingsTheme({ onSave }: SettingsThemeProps) {
   ];
 
   return (
-    <Card className="shadow-sm">
+    <Card className="shadow-sm border-border">
       <CardHeader className="pb-3">
         <CardTitle>إعدادات المظهر</CardTitle>
       </CardHeader>
@@ -32,7 +34,7 @@ export function SettingsTheme({ onSave }: SettingsThemeProps) {
           <Label>وضع العرض</Label>
           <div className="flex items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center">
+              <div className="w-20 h-20 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center dark:border-gray-700">
                 <span className="text-4xl">☀️</span>
               </div>
               <span>الوضع الفاتح</span>
@@ -63,7 +65,7 @@ export function SettingsTheme({ onSave }: SettingsThemeProps) {
                   selectedColor === color.name
                     ? "ring-2 ring-offset-2"
                     : "hover:ring-2 hover:ring-offset-2"
-                } ${selectedColor === color.name ? `ring-${color.name === "primary" ? "primary" : color.name + "-500"}` : ""}`}
+                } ${selectedColor === color.name ? `ring-${color.name === "primary" ? "primary" : color.name + "-500"}` : ""} dark:ring-offset-card`}
                 onClick={() => setSelectedColor(color.name)}
               />
             ))}
@@ -71,7 +73,7 @@ export function SettingsTheme({ onSave }: SettingsThemeProps) {
         </div>
         
         <div className="pt-4 flex justify-end">
-          <Button onClick={onSave} className="bg-primary hover:bg-primary/90">
+          <Button onClick={onSave} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <CircleCheck className="ml-2 h-4 w-4" />
             حفظ إعدادات المظهر
           </Button>

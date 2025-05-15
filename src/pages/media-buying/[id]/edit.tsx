@@ -66,7 +66,9 @@ export default function EditMediaBuyingPage() {
               logo_url: "",
               description: "",
               notes: "",
-              social_links: data.brand.social_links || {},
+              social_links: typeof data.brand.social_links === 'object' ? 
+                (data.brand.social_links as any || {}) : 
+                { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
               created_at: data.brand.created_at || "",
               updated_at: data.brand.updated_at || ""
             };

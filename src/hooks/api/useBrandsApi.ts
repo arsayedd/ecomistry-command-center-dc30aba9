@@ -29,7 +29,9 @@ export const useBrandsApi = () => {
           logo_url: "",
           description: "",
           notes: "",
-          social_links: brand.social_links || {},
+          social_links: typeof brand.social_links === 'object' ? 
+            (brand.social_links as any || {}) : 
+            { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
           created_at: brand.created_at || "",
           updated_at: brand.updated_at || "",
         }));

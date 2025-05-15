@@ -46,13 +46,13 @@
   }
  
   .dark {
-    --background: 222.2 45% 8%;
+    --background: 222.2 47% 11%;
     --foreground: 210 40% 98%;
  
-    --card: 222.2 45% 10%;
+    --card: 222.2 47% 11%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 222.2 45% 8%;
+    --popover: 222.2 47% 11%;
     --popover-foreground: 210 40% 98%;
  
     --primary: 142.1 70.6% 45.5%;
@@ -61,26 +61,26 @@
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
  
-    --muted: 217.2 32.6% 20%;
+    --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
  
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
  
-    --destructive: 0 62.8% 40%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
  
-    --border: 217.2 32.6% 20%;
-    --input: 217.2 32.6% 20%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
     --ring: 142.1 70.6% 45.5%;
 
-    --sidebar-background: 222.2 45% 10%;
+    --sidebar-background: 222.2 47% 11%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 142.1 70.6% 45.5%;
     --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 25%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 20%;
+    --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 142.1 70.6% 45.5%;
   }
 }
@@ -92,6 +92,15 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Fix dropdown backgrounds in dark mode */
+  .dark [data-radix-popper-content-wrapper] {
+    @apply bg-card border-border;
+  }
+  
+  .dark .dropdown-content {
+    @apply bg-card border-border text-foreground;
   }
 }
 
@@ -129,6 +138,11 @@
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
+/* Dark mode specific styles */
+.dark .card-hover-effect:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -151,4 +165,24 @@
 .dark ::-webkit-scrollbar-thumb {
   --scrollbar-thumb: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+}
+
+/* Fix dropdown menu styles in dark mode */
+.dark .SelectContent,
+.dark .DropdownMenuContent {
+  @apply bg-card border-border text-foreground;
+}
+
+/* Fix toast styles in dark mode */
+.dark .Toast {
+  @apply bg-card border-border text-foreground;
+}
+
+/* Table styles for dark mode */
+.dark .TableHeader {
+  @apply bg-muted/50;
+}
+
+.dark .TableRow:hover {
+  @apply bg-muted/30;
 }
