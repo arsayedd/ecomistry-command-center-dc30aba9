@@ -270,37 +270,46 @@ export type Database = {
       media_buying: {
         Row: {
           brand_id: string | null
+          campaign_link: string | null
           created_at: string | null
           date: string
           employee_id: string | null
           id: string
+          notes: string | null
           order_cost: number | null
           orders_count: number
           platform: string
+          roas: number | null
           spend: number
           updated_at: string | null
         }
         Insert: {
           brand_id?: string | null
+          campaign_link?: string | null
           created_at?: string | null
           date: string
           employee_id?: string | null
           id?: string
+          notes?: string | null
           order_cost?: number | null
           orders_count: number
           platform: string
+          roas?: number | null
           spend: number
           updated_at?: string | null
         }
         Update: {
           brand_id?: string | null
+          campaign_link?: string | null
           created_at?: string | null
           date?: string
           employee_id?: string | null
           id?: string
+          notes?: string | null
           order_cost?: number | null
           orders_count?: number
           platform?: string
+          roas?: number | null
           spend?: number
           updated_at?: string | null
         }
