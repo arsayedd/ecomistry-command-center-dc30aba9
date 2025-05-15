@@ -88,6 +88,7 @@ export function useRevenueForm(initialData?: Revenue) {
               name: brand.name,
               status: (brand.status || "active") as Brand['status'],
               product_type: brand.product_type || "",
+              logo_url: brand.logo_url || "", // Add the logo_url field
               social_links: socialLinks,
               created_at: brand.created_at || '',
               updated_at: brand.updated_at || ''

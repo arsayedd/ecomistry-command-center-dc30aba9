@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_employees: {
         Row: {
           brand_id: string | null
@@ -43,6 +84,20 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_brand_employees_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_brand_employees_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       brands: {
@@ -50,6 +105,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          logo_url: string | null
           name: string
           notes: string | null
           product_type: string | null
@@ -61,6 +117,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           notes?: string | null
           product_type?: string | null
@@ -72,6 +129,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           notes?: string | null
           product_type?: string | null
@@ -83,14 +141,14 @@ export type Database = {
       }
       call_center_orders: {
         Row: {
-          brand_id: string | null
+          brand_id: string
           commission_type: string | null
           commission_value: number | null
           confirmed_orders: number
           created_at: string | null
           date: string
           delivered_orders: number
-          employee_id: string | null
+          employee_id: string
           entered_orders: number
           id: string
           notes: string | null
@@ -98,14 +156,14 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          brand_id?: string | null
+          brand_id: string
           commission_type?: string | null
           commission_value?: number | null
           confirmed_orders?: number
           created_at?: string | null
           date: string
           delivered_orders?: number
-          employee_id?: string | null
+          employee_id: string
           entered_orders?: number
           id?: string
           notes?: string | null
@@ -113,14 +171,14 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          brand_id?: string | null
+          brand_id?: string
           commission_type?: string | null
           commission_value?: number | null
           confirmed_orders?: number
           created_at?: string | null
           date?: string
           delivered_orders?: number
-          employee_id?: string | null
+          employee_id?: string
           entered_orders?: number
           id?: string
           notes?: string | null
@@ -137,6 +195,20 @@ export type Database = {
           },
           {
             foreignKeyName: "call_center_orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_call_center_orders_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_call_center_orders_employee"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -181,6 +253,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "commissions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_commissions_employee"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -259,12 +338,33 @@ export type Database = {
             referencedRelation: "media_buying"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_content_tasks_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_content_tasks_campaign"
+            columns: ["media_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "media_buying"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_content_tasks_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       expenses: {
         Row: {
           amount: number
-          brand_id: string | null
+          brand_id: string
           category: string
           created_at: string | null
           date: string
@@ -273,7 +373,7 @@ export type Database = {
         }
         Insert: {
           amount: number
-          brand_id?: string | null
+          brand_id: string
           category: string
           created_at?: string | null
           date: string
@@ -282,7 +382,7 @@ export type Database = {
         }
         Update: {
           amount?: number
-          brand_id?: string | null
+          brand_id?: string
           category?: string
           created_at?: string | null
           date?: string
@@ -297,15 +397,22 @@ export type Database = {
             referencedRelation: "brands"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_expenses_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
         ]
       }
       media_buying: {
         Row: {
-          brand_id: string | null
+          brand_id: string
           campaign_link: string | null
           created_at: string | null
           date: string
-          employee_id: string | null
+          employee_id: string
           id: string
           notes: string | null
           order_cost: number | null
@@ -316,11 +423,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          brand_id?: string | null
+          brand_id: string
           campaign_link?: string | null
           created_at?: string | null
           date: string
-          employee_id?: string | null
+          employee_id: string
           id?: string
           notes?: string | null
           order_cost?: number | null
@@ -331,11 +438,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          brand_id?: string | null
+          brand_id?: string
           campaign_link?: string | null
           created_at?: string | null
           date?: string
-          employee_id?: string | null
+          employee_id?: string
           id?: string
           notes?: string | null
           order_cost?: number | null
@@ -346,6 +453,20 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_media_buying_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_media_buying_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "media_buying_brand_id_fkey"
             columns: ["brand_id"]
@@ -401,6 +522,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_moderation_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "moderation_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
@@ -412,38 +540,52 @@ export type Database = {
       orders: {
         Row: {
           amount: number
-          brand_id: string | null
+          brand_id: string
           commission: number | null
           created_at: string | null
           date: string
-          employee_id: string | null
+          employee_id: string
           id: string
           status: string | null
           updated_at: string | null
         }
         Insert: {
           amount: number
-          brand_id?: string | null
+          brand_id: string
           commission?: number | null
           created_at?: string | null
           date: string
-          employee_id?: string | null
+          employee_id: string
           id?: string
           status?: string | null
           updated_at?: string | null
         }
         Update: {
           amount?: number
-          brand_id?: string | null
+          brand_id?: string
           commission?: number | null
           created_at?: string | null
           date?: string
-          employee_id?: string | null
+          employee_id?: string
           id?: string
           status?: string | null
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_orders_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_orders_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_brand_id_fkey"
             columns: ["brand_id"]
@@ -492,6 +634,13 @@ export type Database = {
           total_revenue?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_revenues_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "revenues_brand_id_fkey"
             columns: ["brand_id"]
@@ -600,7 +749,21 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      access_level: "admin" | "manager" | "user"
+      brand_status: "active" | "inactive" | "pending"
+      commission_type: "percentage" | "fixed"
+      employment_type: "full_time" | "part_time" | "contract"
+      order_status: "pending" | "confirmed" | "delivered" | "cancelled"
+      platform_type:
+        | "facebook"
+        | "instagram"
+        | "tiktok"
+        | "snapchat"
+        | "google"
+        | "other"
+      salary_type: "monthly" | "hourly" | "commission"
+      task_status: "pending" | "in_progress" | "completed" | "cancelled"
+      user_status: "active" | "inactive" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -715,6 +878,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      access_level: ["admin", "manager", "user"],
+      brand_status: ["active", "inactive", "pending"],
+      commission_type: ["percentage", "fixed"],
+      employment_type: ["full_time", "part_time", "contract"],
+      order_status: ["pending", "confirmed", "delivered", "cancelled"],
+      platform_type: [
+        "facebook",
+        "instagram",
+        "tiktok",
+        "snapchat",
+        "google",
+        "other",
+      ],
+      salary_type: ["monthly", "hourly", "commission"],
+      task_status: ["pending", "in_progress", "completed", "cancelled"],
+      user_status: ["active", "inactive", "pending"],
+    },
   },
 } as const
