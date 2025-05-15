@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MediaBuyingForm } from "@/components/media-buying/MediaBuyingForm";
+import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
 import { Loader2 } from "lucide-react";
 import { MediaBuying, Brand, User } from "@/types";
 
@@ -31,7 +32,24 @@ export default function EditMediaBuyingPage() {
           throw mediaBuyingError;
         }
 
-        setMediaBuying(mediaBuyingData);
+        // Transform data to match MediaBuying type
+        const transformedData: MediaBuying = {
+          id: mediaBuyingData.id,
+          brand_id: mediaBuyingData.brand_id,
+          employee_id: mediaBuyingData.employee_id,
+          platform: mediaBuyingData.platform,
+          campaign_date: mediaBuyingData.date,
+          ad_spend: mediaBuyingData.spend,
+          orders_count: mediaBuyingData.orders_count,
+          cpp: mediaBuyingData.order_cost || 0,
+          roas: mediaBuyingData.roas || 0,
+          campaign_link: mediaBuyingData.campaign_link || '',
+          notes: mediaBuyingData.notes || '',
+          created_at: mediaBuyingData.created_at,
+          updated_at: mediaBuyingData.updated_at
+        };
+
+        setMediaBuying(transformedData);
 
         // Fetch brands
         const { data: brandsData, error: brandsError } = await supabase
@@ -42,7 +60,21 @@ export default function EditMediaBuyingPage() {
           throw brandsError;
         }
 
-        setBrands(brandsData);
+        // Transform brands to match Brand type
+        const typedBrands: Brand[] = brandsData.map((brand: any) => ({
+          id: brand.id,
+          name: brand.name,
+          status: (brand.status || "active") as "active" | "inactive" | "pending",
+          product_type: brand.product_type || "",
+          logo_url: brand.logo_url || "",
+          description: brand.description || "",
+          notes: brand.notes || "",
+          social_links: brand.social_links || {},
+          created_at: brand.created_at,
+          updated_at: brand.updated_at
+        }));
+
+        setBrands(typedBrands);
 
         // Fetch employees
         const { data: employeesData, error: employeesError } = await supabase
@@ -53,7 +85,26 @@ export default function EditMediaBuyingPage() {
           throw employeesError;
         }
 
-        setEmployees(employeesData);
+        // Transform employees to match User type
+        const typedEmployees: User[] = employeesData.map((employee: any) => ({
+          id: employee.id,
+          email: employee.email,
+          full_name: employee.full_name,
+          department: employee.department || "",
+          role: employee.role,
+          permission_level: employee.permission_level,
+          employment_type: (employee.employment_type || "full_time") as "full_time" | "part_time" | "contract",
+          salary_type: (employee.salary_type || "monthly") as "monthly" | "hourly" | "commission",
+          status: (employee.status || "active") as "active" | "inactive" | "pending",
+          access_rights: (employee.access_rights || "view") as "admin" | "edit" | "view",
+          commission_type: (employee.commission_type || "percentage") as "percentage" | "fixed",
+          commission_value: employee.commission_value || 0,
+          job_title: employee.job_title || "",
+          created_at: employee.created_at,
+          updated_at: employee.updated_at
+        }));
+
+        setEmployees(typedEmployees);
       } catch (error: any) {
         console.error("Error fetching data:", error);
         toast({
@@ -74,9 +125,26 @@ export default function EditMediaBuyingPage() {
   const handleUpdateMediaBuying = async (mediaBuyingData: MediaBuying) => {
     try {
       setIsLoading(true);
+      
+      // Transform MediaBuying type to database schema
+      const dbData = {
+        platform: mediaBuyingData.platform,
+        date: typeof mediaBuyingData.campaign_date === 'string' 
+          ? mediaBuyingData.campaign_date 
+          : mediaBuyingData.campaign_date.toISOString().split('T')[0],
+        brand_id: mediaBuyingData.brand_id,
+        employee_id: mediaBuyingData.employee_id,
+        spend: mediaBuyingData.ad_spend,
+        orders_count: mediaBuyingData.orders_count,
+        order_cost: mediaBuyingData.cpp,
+        roas: mediaBuyingData.roas,
+        campaign_link: mediaBuyingData.campaign_link,
+        notes: mediaBuyingData.notes
+      };
+
       const { error } = await supabase
         .from("media_buying")
-        .update(mediaBuyingData)
+        .update(dbData)
         .eq("id", id);
 
       if (error) throw error;
@@ -113,8 +181,6 @@ export default function EditMediaBuyingPage() {
       ) : mediaBuying ? (
         <MediaBuyingForm
           initialData={mediaBuying}
-          brands={brands}
-          employees={employees}
           onSubmit={handleUpdateMediaBuying}
         />
       ) : (

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -8,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmployeesList } from "@/components/employees/EmployeesList";
 import { EmployeesFilters } from "@/components/employees/EmployeesFilters";
 import { DeleteEmployeeDialog } from "@/components/employees/DeleteEmployeeDialog";
-import { exportToPDF } from "@/utils/exportUtils";
+import { exportToCSV } from "@/utils/exportUtils";
 
 export default function EmployeesPage() {
   // States
@@ -43,12 +44,11 @@ export default function EmployeesPage() {
   };
 
   // Handle exports
-  const handleExportPDF = () => {
+  const handleExportExcel = () => {
     const filteredData = filterEmployees();
-    exportToPDF(
-      "employees_report",
-      "تقرير الموظفين",
-      filteredData
+    exportToCSV(
+      filteredData,
+      "employees_report"
     );
   };
 
@@ -114,7 +114,7 @@ export default function EmployeesPage() {
         setStatusFilter={setStatusFilter}
         departmentFilter={departmentFilter}
         setDepartmentFilter={setDepartmentFilter}
-        onExport={handleExportPDF}
+        onExport={handleExportExcel}
       />
 
       <Card>
