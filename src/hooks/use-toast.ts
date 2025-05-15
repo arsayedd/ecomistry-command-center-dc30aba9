@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -93,8 +94,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -158,6 +157,7 @@ function toast(props: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
+      id,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
