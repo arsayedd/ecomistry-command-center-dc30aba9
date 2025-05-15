@@ -1,25 +1,24 @@
 
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { MediaBuying } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditMediaBuyingPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
   const [mediaBuying, setMediaBuying] = useState<MediaBuying | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchMediaBuying = async () => {
+    const fetchData = async () => {
+      if (!id) return;
+      
       try {
-        if (!id) return;
-        
         const { data, error } = await supabase
           .from("media_buying")
           .select("*")
@@ -27,7 +26,6 @@ export default function EditMediaBuyingPage() {
           .single();
           
         if (error) {
-          console.error("Error fetching media buying:", error);
           throw error;
         }
         
@@ -54,25 +52,26 @@ export default function EditMediaBuyingPage() {
       } catch (error) {
         console.error("Error loading media buying data:", error);
         toast({
-          title: "خطأ في جلب البيانات",
-          description: "حدث خطأ أثناء محاولة جلب بيانات الحملة",
-          variant: "destructive",
+          title: "خطأ",
+          description: "فشل في تحميل بيانات الحملة",
+          variant: "destructive"
         });
+        navigate("/media-buying");
       } finally {
         setLoading(false);
       }
     };
     
-    fetchMediaBuying();
-  }, [id, toast]);
-
-  const handleSave = async (data: MediaBuying) => {
+    fetchData();
+  }, [id, navigate, toast]);
+  
+  const handleUpdate = async (data: MediaBuying) => {
     try {
       const { error } = await supabase
         .from("media_buying")
         .update({
           platform: data.platform,
-          date: data.campaign_date instanceof Date ? data.campaign_date.toISOString().split('T')[0] : data.campaign_date,
+          date: typeof data.campaign_date === 'string' ? data.campaign_date : data.campaign_date.toISOString().split('T')[0],
           brand_id: data.brand_id,
           employee_id: data.employee_id,
           spend: data.ad_spend,
@@ -80,55 +79,48 @@ export default function EditMediaBuyingPage() {
           order_cost: data.cpp,
           campaign_link: data.campaign_link,
           notes: data.notes,
-          roas: data.roas
+          roas: data.roas,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", id);
-
+        
       if (error) throw error;
-
+      
       toast({
-        title: "تم تعديل الحملة الإعلانية بنجاح",
-        variant: "default",
+        title: "تم التحديث",
+        description: "تم تحديث بيانات الحملة بنجاح",
       });
-
+      
       navigate("/media-buying");
     } catch (error) {
-      console.error("Error updating media buying record:", error);
+      console.error("Error updating media buying:", error);
       toast({
-        title: "خطأ في تعديل الحملة الإعلانية",
-        description: "حدث خطأ أثناء محاولة تعديل بيانات الحملة الإعلانية",
-        variant: "destructive",
+        title: "خطأ",
+        description: "فشل في تحديث بيانات الحملة",
+        variant: "destructive"
       });
     }
   };
 
-  return (
-    <div dir="rtl" className="p-6">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/media-buying")}
-          className="mb-2"
-        >
-          <ChevronRight className="ml-2 h-4 w-4" />
-          العودة إلى الحملات الإعلانية
-        </Button>
-        <h1 className="text-3xl font-bold">تعديل الحملة الإعلانية</h1>
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <Skeleton className="h-[600px] w-full" />
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <p>جاري التحميل...</p>
-        </div>
-      ) : mediaBuying ? (
-        <MediaBuyingForm initialData={mediaBuying} onSubmit={handleSave} />
-      ) : (
-        <div className="text-center p-8">
-          <p className="text-xl mb-4">لم يتم العثور على الحملة الإعلانية</p>
-          <Button onClick={() => navigate("/media-buying")}>
-            العودة إلى قائمة الحملات
-          </Button>
-        </div>
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">تعديل حملة ميديا باينج</h1>
+      </div>
+      
+      {mediaBuying && (
+        <MediaBuyingForm initialData={mediaBuying} onSubmit={handleUpdate} />
       )}
     </div>
   );

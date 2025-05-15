@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaBuyingRecord } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 
 interface Filters {
   platform: string | null;
@@ -22,17 +22,26 @@ export const useMediaBuyingData = () => {
     brand_id: null,
     employee_id: null,
   });
-  const { toast } = useToast();
 
   useEffect(() => {
-    fetchMediaBuyingData();
-    fetchBrands();
-    fetchEmployees();
+    // Check authentication first
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        fetchMediaBuyingData();
+        fetchBrands();
+        fetchEmployees();
+      }
+    };
+    
+    checkSession();
   }, [filters]);
 
   const fetchMediaBuyingData = async () => {
-    setLoading(true);
     try {
+      console.log("Fetching media buying data with filters:", filters);
+      setLoading(true);
+      
       let query = supabase
         .from("media_buying")
         .select(
@@ -87,6 +96,8 @@ export const useMediaBuyingData = () => {
         throw error;
       }
 
+      console.log("Media buying data fetched:", data);
+
       // Map the data to include brand name and employee full_name
       const mappedData = data?.map((item: any) => ({
         id: item.id,
@@ -109,11 +120,7 @@ export const useMediaBuyingData = () => {
       setMediaBuying(mappedData || []);
     } catch (error) {
       console.error("Error fetching media buying data:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب بيانات الميديا باينج",
-        variant: "destructive",
-      });
+      toast.error("حدث خطأ أثناء محاولة جلب بيانات الميديا باينج");
     } finally {
       setLoading(false);
     }
@@ -131,14 +138,11 @@ export const useMediaBuyingData = () => {
         throw error;
       }
 
+      console.log("Brands data fetched:", data);
       setBrands(data || []);
     } catch (error) {
       console.error("Error fetching brands:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب البراندات",
-        variant: "destructive",
-      });
+      toast.error("حدث خطأ أثناء محاولة جلب البراندات");
     }
   };
 
@@ -154,18 +158,16 @@ export const useMediaBuyingData = () => {
         throw error;
       }
 
+      console.log("Employees data fetched:", data);
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
-        variant: "destructive",
-      });
+      toast.error("حدث خطأ أثناء محاولة جلب بيانات الموظفين");
     }
   };
 
   const handleFilterChange = (filterName: string, value: string | null) => {
+    console.log(`Changing filter ${filterName} to:`, value);
     setFilters(prevFilters => ({
       ...prevFilters,
       [filterName]: value,
@@ -174,6 +176,7 @@ export const useMediaBuyingData = () => {
 
   const handleDateChange = (filterName: string, date: Date | undefined) => {
     const value = date ? date.toISOString().split('T')[0] : null;
+    console.log(`Changing date filter ${filterName} to:`, value);
     setFilters(prevFilters => ({
       ...prevFilters,
       [filterName]: value,

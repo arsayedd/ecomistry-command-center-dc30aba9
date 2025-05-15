@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -13,31 +14,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({
-    message: 'البريد الإلكتروني غير صالح',
-  }),
-  password: z.string().min(6, {
-    message: 'كلمة المرور يجب أن تكون على الأقل 6 أحرف',
-  }),
+  email: z.string().email({ message: 'يجب إدخال بريد إلكتروني صحيح' }),
+  password: z.string().min(6, { message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' }),
 });
+
+type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        navigate('/dashboard');
-      }
-    };
-    checkAuth();
-  }, [navigate]);
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
@@ -45,45 +39,47 @@ export default function Login() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      console.log("Attempting login with:", values.email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (error) {
-        console.error("Login error:", error);
+        console.error('Login error:', error);
+        let errorMessage = 'فشل تسجيل الدخول';
+        
+        // Provide more specific error messages
         if (error.message.includes('Invalid login credentials')) {
-          toast.error('بيانات تسجيل الدخول غير صحيحة');
-        } else {
-          toast.error(error.message || 'حدث خطأ في تسجيل الدخول');
+          errorMessage = 'بريد إلكتروني أو كلمة مرور غير صحيحة';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'البريد الإلكتروني غير مؤكد، يرجى التحقق من بريدك';
         }
+        
+        toast.error(errorMessage);
         return;
       }
 
-      console.log("Login successful:", data);
-      setUser(data.user);
-      toast.success('تم تسجيل الدخول بنجاح');
-      navigate('/dashboard');
+      if (data.session) {
+        toast.success('تم تسجيل الدخول بنجاح');
+        navigate('/dashboard');
+      }
     } catch (error) {
-      console.error("Unexpected error during login:", error);
+      console.error('Unknown login error:', error);
       toast.error('حدث خطأ غير متوقع أثناء تسجيل الدخول');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-muted/40">
-      <Card className="w-[400px] shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
-          <CardDescription>
-            أدخل بيانات حسابك للوصول إلى لوحة التحكم
-          </CardDescription>
+    <div className="flex items-center justify-center min-h-screen">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">تسجيل الدخول</CardTitle>
+          <CardDescription className="text-center">أدخل بيانات الدخول للوصول إلى لوحة التحكم</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -95,7 +91,7 @@ export default function Login() {
                   <FormItem>
                     <FormLabel>البريد الإلكتروني</FormLabel>
                     <FormControl>
-                      <Input placeholder="example@company.com" {...field} />
+                      <Input placeholder="أدخل البريد الإلكتروني" type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -108,29 +104,26 @@ export default function Login() {
                   <FormItem>
                     <FormLabel>كلمة المرور</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="●●●●●●" {...field} />
+                      <Input placeholder="أدخل كلمة المرور" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    جاري تسجيل الدخول...
-                  </>
-                ) : (
-                  "تسجيل الدخول"
-                )}
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                تسجيل الدخول
               </Button>
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button variant="link" onClick={() => navigate('/auth/register')}>
-            إنشاء حساب جديد
-          </Button>
+        <CardFooter>
+          <p className="text-center w-full text-sm">
+            ليس لديك حساب؟{' '}
+            <Link to="/auth/register" className="text-primary font-medium hover:underline">
+              تسجيل جديد
+            </Link>
+          </p>
         </CardFooter>
       </Card>
     </div>
