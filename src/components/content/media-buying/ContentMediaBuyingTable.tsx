@@ -13,6 +13,8 @@ interface ContentMediaBuyingTableProps {
 }
 
 export function ContentMediaBuyingTable({ loading, data }: ContentMediaBuyingTableProps) {
+  console.log("Content media buying table data:", data);
+  
   // Map platform to Arabic
   const getPlatformDisplay = (platform: string) => {
     switch (platform) {

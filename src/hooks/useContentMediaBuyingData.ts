@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaBuyingRecord } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContentFilters {
   platform: string | null;
@@ -23,6 +24,7 @@ export const useContentMediaBuyingData = () => {
     employee_id: null,
     task_type: null
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchMediaBuyingData();
@@ -47,6 +49,8 @@ export const useContentMediaBuyingData = () => {
           campaign_link,
           created_at,
           updated_at,
+          brand_id,
+          employee_id,
           brand:brand_id (
             id,
             name
@@ -98,11 +102,18 @@ export const useContentMediaBuyingData = () => {
         updated_at: item.updated_at,
         brand: item.brand,
         employee: item.employee,
+        brand_id: item.brand_id,
+        employee_id: item.employee_id
       })) as MediaBuyingRecord[];
 
       setMediaBuying(mappedData || []);
     } catch (error) {
       console.error("Error fetching media buying data:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب بيانات الميديا باينج",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -123,6 +134,11 @@ export const useContentMediaBuyingData = () => {
       setBrands(data || []);
     } catch (error) {
       console.error("Error fetching brands:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب البراندات",
+        variant: "destructive",
+      });
     }
   };
 
@@ -141,6 +157,11 @@ export const useContentMediaBuyingData = () => {
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees in content:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
+        variant: "destructive",
+      });
     }
   };
 

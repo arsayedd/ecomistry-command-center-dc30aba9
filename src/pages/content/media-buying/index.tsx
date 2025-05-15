@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,20 +8,41 @@ import { useContentMediaBuyingData } from "@/hooks/useContentMediaBuyingData";
 import { exportToCSV, exportToExcel } from "@/utils/exportUtils";
 import { ContentMediaBuyingFilters } from "@/components/content/media-buying/ContentMediaBuyingFilters";
 import { ContentMediaBuyingTable } from "@/components/content/media-buying/ContentMediaBuyingTable";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
 
 export default function ContentMediaBuyingPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
   const { mediaBuying, loading, brands, employees, filters, handleFilterChange } = useContentMediaBuyingData();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  console.log("Media buying data in page:", mediaBuying);
-  console.log("Content media buying filters:", filters);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Auth error:", error);
+          throw error;
+        }
+        setIsAuthenticated(!!data.session);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        toast.error("فشل التحقق من حالة تسجيل الدخول");
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   // Filter media buying data based on search query
   const filteredData = mediaBuying.filter(item => 
-    (item.platform && item.platform.includes(searchQuery)) ||
-    (item.brand?.name && item.brand.name.includes(searchQuery)) ||
-    (item.employee?.full_name && item.employee.full_name.includes(searchQuery)) ||
-    (item.notes && item.notes.includes(searchQuery))
+    (item.platform && item.platform.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.brand?.name && item.brand.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.employee?.full_name && item.employee.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Export functions
@@ -62,6 +83,16 @@ export default function ContentMediaBuyingPage() {
       default: return platform || '';
     }
   };
+
+  // Loading state while checking authentication
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <span>جاري التحميل...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

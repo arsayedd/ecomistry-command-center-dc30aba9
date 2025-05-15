@@ -64,6 +64,10 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
       setBrands(data || []);
     } catch (error) {
       console.error("Error fetching brands in form:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب البراندات",
+      });
     }
   };
 
@@ -82,6 +86,10 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees in form:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
+      });
     }
   };
 
@@ -92,10 +100,10 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
       ...initialData,
       campaign_date: initialData.campaign_date ? new Date(initialData.campaign_date) : new Date(),
       expected_delivery_date: initialData.expected_delivery_date ? new Date(initialData.expected_delivery_date) : new Date(),
-      ad_spend: initialData.ad_spend,
-      orders_count: initialData.orders_count,
-      cpp: initialData.cpp,
-      roas: initialData.roas,
+      ad_spend: initialData.ad_spend || initialData.spend || 0,
+      orders_count: initialData.orders_count || 0,
+      cpp: initialData.cpp || initialData.order_cost || 0,
+      roas: initialData.roas || 0,
     } : {
       platform: "",
       campaign_date: new Date(),
@@ -175,7 +183,7 @@ export default function ContentMediaBuyingFormWrapper({ initialData }: { initial
           throw error;
         }
         
-        mediaBuyingId = data[0].id;
+        mediaBuyingId = data?.[0]?.id;
         console.log("Created new media buying record with ID:", mediaBuyingId);
       }
       

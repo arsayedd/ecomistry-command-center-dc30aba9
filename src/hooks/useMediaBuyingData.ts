@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MediaBuyingRecord } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface Filters {
   platform: string | null;
@@ -12,7 +14,7 @@ interface Filters {
 export const useMediaBuyingData = () => {
   const [mediaBuying, setMediaBuying] = useState<MediaBuyingRecord[]>([]);
   const [loading, setLoading] = useState(true);
-    const [brands, setBrands] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [filters, setFilters] = useState<Filters>({
     platform: null,
@@ -20,6 +22,7 @@ export const useMediaBuyingData = () => {
     brand_id: null,
     employee_id: null,
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchMediaBuyingData();
@@ -45,11 +48,13 @@ export const useMediaBuyingData = () => {
           campaign_link,
           created_at,
           updated_at,
-          brand (
+          brand_id,
+          employee_id,
+          brand:brand_id (
             id,
             name
           ),
-          employee (
+          employee:employee_id (
             id,
             full_name,
             email,
@@ -78,6 +83,7 @@ export const useMediaBuyingData = () => {
       const { data, error } = await query;
 
       if (error) {
+        console.error("Media buying fetch error:", error);
         throw error;
       }
 
@@ -94,20 +100,20 @@ export const useMediaBuyingData = () => {
         campaign_link: item.campaign_link,
         created_at: item.created_at,
         updated_at: item.updated_at,
+        brand_id: item.brand_id,
+        employee_id: item.employee_id,
         brand: item.brand,
-        employee: {
-          id: item.employee?.id || "",
-          full_name: item.employee?.full_name || "",
-          email: item.employee?.email || "",
-          department: item.employee?.department || "",
-          role: item.employee?.role || "",
-          permission_level: item.employee?.permission_level || "",
-        },
+        employee: item.employee
       })) as MediaBuyingRecord[];
 
       setMediaBuying(mappedData || []);
     } catch (error) {
       console.error("Error fetching media buying data:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب بيانات الميديا باينج",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -121,16 +127,22 @@ export const useMediaBuyingData = () => {
         .order("name", { ascending: true });
 
       if (error) {
+        console.error("Brands fetch error:", error);
         throw error;
       }
 
       setBrands(data || []);
     } catch (error) {
       console.error("Error fetching brands:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب البراندات",
+        variant: "destructive",
+      });
     }
   };
 
-    const fetchEmployees = async () => {
+  const fetchEmployees = async () => {
     try {
       const { data, error } = await supabase
         .from("users")
@@ -138,12 +150,18 @@ export const useMediaBuyingData = () => {
         .order("full_name", { ascending: true });
 
       if (error) {
+        console.error("Employees fetch error:", error);
         throw error;
       }
 
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
+        variant: "destructive",
+      });
     }
   };
 

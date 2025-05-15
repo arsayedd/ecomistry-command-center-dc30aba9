@@ -25,6 +25,7 @@ export default function EditContentMediaBuyingPage() {
           .single();
 
         if (mediaBuyingError) {
+          console.error("Error fetching media buying data:", mediaBuyingError);
           throw mediaBuyingError;
         }
 
@@ -33,6 +34,8 @@ export default function EditContentMediaBuyingPage() {
           navigate("/content/media-buying");
           return;
         }
+
+        console.log("Media buying data fetched:", mediaBuying);
 
         // Fetch related content task
         const { data: contentTask, error: contentTaskError } = await supabase
@@ -44,6 +47,8 @@ export default function EditContentMediaBuyingPage() {
         if (contentTaskError) {
           console.error("Error fetching content task:", contentTaskError);
         }
+
+        console.log("Content task fetched:", contentTask);
 
         // Format the data for the form
         const formattedData = {
