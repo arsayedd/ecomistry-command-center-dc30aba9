@@ -9,14 +9,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
 interface DeleteEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  isDeleting?: boolean;
 }
 
-export function DeleteEmployeeDialog({ open, onOpenChange, onConfirm }: DeleteEmployeeDialogProps) {
+export function DeleteEmployeeDialog({ 
+  open, 
+  onOpenChange, 
+  onConfirm, 
+  isDeleting = false 
+}: DeleteEmployeeDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -27,9 +34,20 @@ export function DeleteEmployeeDialog({ open, onOpenChange, onConfirm }: DeleteEm
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>إلغاء</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-red-500 hover:bg-red-600">
-            حذف
+          <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={onConfirm} 
+            className="bg-red-500 hover:bg-red-600"
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                جاري الحذف...
+              </>
+            ) : (
+              "حذف"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

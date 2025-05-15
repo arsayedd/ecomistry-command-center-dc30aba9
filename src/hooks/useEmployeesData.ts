@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useEmployeesApi } from "./api/useEmployeesApi";
 
 export const useEmployeesData = () => {
-  const { employees, loading } = useEmployeesApi();
+  const { employees: fetchedEmployees, loading, refetch } = useEmployeesApi();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [filteredEmployees, setFilteredEmployees] = useState(employees);
+  const [filteredEmployees, setFilteredEmployees] = useState(fetchedEmployees);
 
   // Filter employees based on search term and filters
   useEffect(() => {
-    let filtered = [...employees];
+    let filtered = [...fetchedEmployees];
 
     // Apply search filter
     if (searchTerm) {
@@ -34,7 +34,7 @@ export const useEmployeesData = () => {
     }
 
     setFilteredEmployees(filtered);
-  }, [employees, searchTerm, statusFilter, departmentFilter]);
+  }, [fetchedEmployees, searchTerm, statusFilter, departmentFilter]);
 
   const filters = {
     searchTerm,
@@ -58,10 +58,16 @@ export const useEmployeesData = () => {
     }
   };
 
+  // Function to refetch employees
+  const refetchEmployees = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
   return {
     employees: filteredEmployees,
     loading,
     filters,
     handleFilterChange,
+    refetchEmployees,
   };
 };
