@@ -11,7 +11,7 @@ import { Download } from "lucide-react";
 import { MediaBuyingItem } from "@/types";
 import { saveAs } from "file-saver";
 import { utils, write } from "xlsx";
-import { mediaBuyingToCSV, mediaBuyingToPDF } from "@/utils/mediaBuyingUtils";
+import { mediaBuyingToCSV } from "@/utils/mediaBuyingUtils";
 
 interface MediaBuyingExportActionsProps {
   mediaBuying: MediaBuyingItem[];
@@ -47,11 +47,6 @@ export default function MediaBuyingExportActions({ mediaBuying }: MediaBuyingExp
     saveAs(blob, "media-buying-report.csv");
   };
 
-  const handleExportPDF = () => {
-    const doc = mediaBuyingToPDF(mediaBuying);
-    doc.save("media-buying-report.pdf");
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,9 +61,6 @@ export default function MediaBuyingExportActions({ mediaBuying }: MediaBuyingExp
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleExportCSV}>
           تصدير CSV
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleExportPDF}>
-          تصدير PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

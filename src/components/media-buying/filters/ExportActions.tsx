@@ -11,11 +11,10 @@ import {
 
 interface ExportActionsProps {
   onExportCSV?: () => void;
-  onExportPDF?: () => void;
 }
 
-export function ExportActions({ onExportCSV, onExportPDF }: ExportActionsProps) {
-  if (!onExportCSV && !onExportPDF) return null;
+export function ExportActions({ onExportCSV }: ExportActionsProps) {
+  if (!onExportCSV) return null;
   
   return (
     <DropdownMenu>
@@ -29,11 +28,6 @@ export function ExportActions({ onExportCSV, onExportPDF }: ExportActionsProps) 
         {onExportCSV && (
           <DropdownMenuItem onClick={onExportCSV}>
             تصدير CSV
-          </DropdownMenuItem>
-        )}
-        {onExportPDF && (
-          <DropdownMenuItem onClick={onExportPDF}>
-            تصدير PDF
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

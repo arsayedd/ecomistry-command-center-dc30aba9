@@ -44,22 +44,10 @@ export function FilterBar({
         
         <div className="flex items-center justify-end ml-auto">
           {onExport && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="border-border bg-background">
-                  <Download className="w-4 h-4 ml-2" />
-                  تصدير
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onExport} className="cursor-pointer">
-                  تصدير CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onExport} className="cursor-pointer">
-                  تصدير PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="outline" size="sm" className="border-border bg-background" onClick={onExport}>
+              <Download className="w-4 h-4 ml-2" />
+              تصدير CSV
+            </Button>
           )}
         </div>
       </div>

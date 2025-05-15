@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { exportToPDF } from "@/utils/exportUtils";
+import { exportToCSV } from "@/utils/exportUtils";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { StatisticsCards } from "@/components/finance/StatisticsCards";
@@ -78,20 +79,18 @@ export default function FinancePage() {
     return brand ? brand.name : "غير محدد";
   };
 
-  const handleExportPDF = () => {
+  const handleExport = () => {
     if (activeTab === "expenses") {
       const filteredData = filterExpenses();
-      exportToPDF(
-        "expenses_report",
-        "تقرير المصروفات",
-        filteredData
+      exportToCSV(
+        filteredData,
+        "expenses_report"
       );
     } else {
       const filteredData = filterRevenues();
-      exportToPDF(
-        "revenues_report",
-        "تقرير الإيرادات",
-        filteredData
+      exportToCSV(
+        filteredData,
+        "revenues_report"
       );
     }
   };
@@ -173,7 +172,7 @@ export default function FinancePage() {
             categoryFilter={categoryFilter}
             setCategoryFilter={setCategoryFilter}
             brands={brands}
-            onExport={handleExportPDF}
+            onExport={handleExport}
           />
 
           <Card>
@@ -197,7 +196,7 @@ export default function FinancePage() {
             brandFilter={brandFilter}
             setBrandFilter={setBrandFilter}
             brands={brands}
-            onExport={handleExportPDF}
+            onExport={handleExport}
           />
 
           <Card>

@@ -1,8 +1,6 @@
 
 import { saveAs } from "file-saver";
 import { utils, write } from "xlsx";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import { MediaBuyingItem } from "@/types";
 
 // تصدير بيانات الميديا باينج إلى ملف CSV
@@ -23,45 +21,6 @@ export const mediaBuyingToCSV = (data: MediaBuyingItem[]) => {
   });
   
   return header + rows.join("\n");
-};
-
-// تصدير بيانات الميديا باينج إلى ملف PDF
-export const mediaBuyingToPDF = (data: MediaBuyingItem[]) => {
-  const doc = new jsPDF();
-  
-  // إضافة عنوان للتقرير
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("تقرير الحملات الإعلانية", doc.internal.pageSize.width / 2, 20, { align: "center" });
-  
-  // تحضير البيانات للجدول
-  const tableData = data.map((item) => [
-    item.brand?.name || "غير محدد",
-    item.platform,
-    item.employee?.full_name || "غير محدد",
-    item.date,
-    `${item.spend} جنيه`,
-    item.orders_count,
-    `${item.order_cost || 0} جنيه`,
-    item.roas ? `${item.roas}x` : "غير محدد",
-  ]);
-  
-  // إنشاء الجدول
-  autoTable(doc, {
-    head: [["البراند", "المنصة", "الموظف", "التاريخ", "الإنفاق", "عدد الطلبات", "تكلفة الطلب", "العائد"]],
-    body: tableData,
-    headStyles: {
-      fillColor: [67, 176, 42], // لون أخضر للرأس
-      textColor: 255,
-      halign: "center",
-    },
-    bodyStyles: {
-      halign: "center",
-    },
-    startY: 30,
-  });
-  
-  return doc;
 };
 
 // التصدير إلى CSV

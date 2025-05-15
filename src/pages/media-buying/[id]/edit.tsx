@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -98,7 +97,7 @@ export default function EditMediaBuyingPage() {
         console.error("Error fetching media buying:", error);
         toast({
           title: "خطأ",
-          description: "فشل في جلب بيانات الحملة الإعلانية",
+          description: "فشل في جلب بيانا�� الحملة الإعلانية",
           variant: "destructive",
         });
       } finally {

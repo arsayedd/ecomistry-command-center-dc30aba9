@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { exportToPDF } from "@/utils/exportUtils";
+import { exportToCSV } from "@/utils/exportUtils";
 import { CommissionsFilters } from "@/components/commissions/CommissionsFilters";
 import { CommissionsList } from "@/components/commissions/CommissionsList";
 
@@ -76,11 +77,10 @@ export default function CommissionsPage() {
     return matchesSearch && matchesType;
   });
 
-  const handleExportPDF = () => {
-    exportToPDF(
-      "commissions_report",
-      "تقرير العمولات",
-      filteredCommissions
+  const handleExport = () => {
+    exportToCSV(
+      filteredCommissions,
+      "commissions_report"
     );
   };
 
@@ -100,7 +100,7 @@ export default function CommissionsPage() {
         setSearchQuery={setSearchQuery}
         filterType={filterType}
         setFilterType={setFilterType}
-        onExport={handleExportPDF}
+        onExport={handleExport}
       />
 
       <Card>
