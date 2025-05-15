@@ -1,8 +1,12 @@
+
 export interface Brand {
   id: string;
   name: string;
   status: "active" | "inactive" | "pending";
   product_type: string;
+  logo_url?: string;
+  description?: string;
+  notes?: string;
   social_links: {
     instagram?: string;
     facebook?: string;
@@ -75,4 +79,58 @@ export interface MediaBuyingItem {
     id?: string;
     full_name?: string;
   } | null;
+}
+
+export interface Commission {
+  id?: string;
+  employee_id: string;
+  commission_type: string;
+  value_type: string;
+  value_amount: number;
+  due_date: string | Date;
+  orders_count: number;
+  total_commission: number;
+  created_at?: string;
+}
+
+export interface Revenue {
+  id?: string;
+  brand_id: string;
+  date: string | Date;
+  pieces_sold: number;
+  price_per_piece: number;
+  total_revenue: number;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface Moderation {
+  id?: string;
+  employee_id: string;
+  platform: string;
+  date: string | Date;
+  daily_responses: number;
+  open_messages: number;
+  average_response_time: number;
+  performance_rating: number;
+  supervisor_notes?: string;
+  created_at?: string;
+}
+
+export interface MediaBuyingRecord {
+  id: string;
+  brand_id: string;
+  employee_id: string;
+  platform: string;
+  date: string;
+  spend: number;
+  orders_count: number;
+  order_cost: number;
+  roas?: number;
+  campaign_link?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  brand?: Brand;
+  employee?: User;
 }

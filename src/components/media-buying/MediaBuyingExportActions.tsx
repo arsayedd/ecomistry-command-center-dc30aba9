@@ -1,54 +1,76 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from "@/components/ui/dropdown-menu";
+import { Download } from "lucide-react";
 import { MediaBuyingItem } from "@/types";
-import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
+import { saveAs } from "file-saver";
+import { utils, write } from "xlsx";
+import { mediaBuyingToCSV, mediaBuyingToPDF } from "@/utils/mediaBuyingUtils";
 
 interface MediaBuyingExportActionsProps {
   mediaBuying: MediaBuyingItem[];
 }
 
 export default function MediaBuyingExportActions({ mediaBuying }: MediaBuyingExportActionsProps) {
-  const handleExportCSV = () => {
-    if (!mediaBuying.length) return;
+  const handleExportExcel = () => {
+    const worksheet = utils.json_to_sheet(
+      mediaBuying.map((item) => ({
+        "البراند": item.brand?.name || "غير محدد",
+        "المنصة": item.platform,
+        "الموظف": item.employee?.full_name || "غير محدد",
+        "التاريخ": item.date,
+        "الإنفاق": item.spend,
+        "عدد الطلبات": item.orders_count,
+        "تكلفة الطلب": item.order_cost,
+        "العائد": item.roas || "غير محدد",
+      }))
+    );
+
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, "Media Buying");
     
-    const exportData = mediaBuying.map(item => ({
-      'التاريخ': item.date,
-      'المنصة': item.platform,
-      'البراند': item.brand?.name || '',
-      'الموظف': item.employee && typeof item.employee === 'object' && 'full_name' in item.employee ? 
-        item.employee.full_name || 'غير معروف' : 'غير معروف',
-      'الإنفاق': item.spend,
-      'عدد الطلبات': item.orders_count,
-      'تكلفة الطلب': item.order_cost,
-      'ROAS': item.roas || 0,
-      'ملاحظات': item.notes || ''
-    }));
+    const excelBuffer = write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     
-    exportToCSV(exportData, 'media_buying_report');
+    saveAs(blob, "media-buying-report.xlsx");
   };
-  
+
+  const handleExportCSV = () => {
+    const csvContent = mediaBuyingToCSV(mediaBuying);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "media-buying-report.csv");
+  };
+
   const handleExportPDF = () => {
-    if (!mediaBuying.length) return;
-    
-    const exportData = mediaBuying.map(item => ({
-      'التاريخ': item.date,
-      'المنصة': item.platform,
-      'البراند': item.brand?.name || '',
-      'الموظف': item.employee && typeof item.employee === 'object' && 'full_name' in item.employee ? 
-        item.employee.full_name || 'غير معروف' : 'غير معروف',
-      'الإنفاق': item.spend,
-      'عدد الطلبات': item.orders_count,
-      'تكلفة الطلب': item.order_cost
-    }));
-    
-    exportToPDF('media_buying_report', 'تقرير ميديا بايينج', exportData);
+    const doc = mediaBuyingToPDF(mediaBuying);
+    doc.save("media-buying-report.pdf");
   };
 
   return (
-    <div>
-      <Button onClick={handleExportCSV} className="ml-2">تصدير CSV</Button>
-      <Button onClick={handleExportPDF}>تصدير PDF</Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">
+          <Download className="h-4 w-4 ml-2" />
+          تصدير
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem onClick={handleExportExcel}>
+          تصدير Excel
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleExportCSV}>
+          تصدير CSV
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleExportPDF}>
+          تصدير PDF
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

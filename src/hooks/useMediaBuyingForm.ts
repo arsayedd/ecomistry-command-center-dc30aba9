@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MediaBuying, User, Brand } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { MediaBuying } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useMediaBuyingApi } from "./useMediaBuyingFormApi";
 
 // Form schema definition
 export const mediaBuyingFormSchema = z.object({
@@ -27,9 +27,7 @@ export const mediaBuyingFormSchema = z.object({
 export type MediaBuyingFormValues = z.infer<typeof mediaBuyingFormSchema>;
 
 export const useMediaBuyingForm = (initialData?: MediaBuying, onSubmit?: (data: MediaBuying) => void) => {
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [employees, setEmployees] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { brands, employees, loading, saveMediaBuying } = useMediaBuyingApi();
   const { toast } = useToast();
 
   // Initialize form with default values or existing data
@@ -69,150 +67,38 @@ export const useMediaBuyingForm = (initialData?: MediaBuying, onSubmit?: (data: 
     }
   }, [adSpend, ordersCount, form]);
 
-  // Fetch brands and employees data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch brands
-        const { data: brandsData, error: brandsError } = await supabase
-          .from("brands")
-          .select("*")
-          .eq("status", "active");
-
-        if (brandsError) throw brandsError;
-        
-        if (brandsData) {
-          // Cast the data to match the Brand type
-          const typedBrands: Brand[] = brandsData.map(brand => {
-            let socialLinks: Brand["social_links"] = {};
-            
-            // Type-safely handle social_links if it exists and is an object
-            if (brand.social_links && typeof brand.social_links === 'object') {
-              const links = brand.social_links as Record<string, unknown>;
-              socialLinks = {
-                instagram: typeof links.instagram === 'string' ? links.instagram : '',
-                facebook: typeof links.facebook === 'string' ? links.facebook : '',
-                tiktok: typeof links.tiktok === 'string' ? links.tiktok : '',
-                youtube: typeof links.youtube === 'string' ? links.youtube : '',
-                linkedin: typeof links.linkedin === 'string' ? links.linkedin : '',
-                website: typeof links.website === 'string' ? links.website : '',
-              };
-            }
-            
-            return {
-              id: brand.id,
-              name: brand.name,
-              status: (brand.status || "active") as Brand['status'],
-              product_type: brand.product_type || "",
-              social_links: socialLinks,
-              created_at: brand.created_at || '',
-              updated_at: brand.updated_at || ''
-            };
-          });
-          
-          setBrands(typedBrands);
-        }
-
-        // Fetch employees from media_buying department
-        const { data: employeesData, error: employeesError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("department", "media_buying");
-
-        if (employeesError) throw employeesError;
-        
-        if (employeesData) {
-          // Cast the data to match User type
-          const typedEmployees: User[] = employeesData.map(emp => ({
-            id: emp.id,
-            email: emp.email || '',
-            full_name: emp.full_name || '',
-            department: emp.department || '',
-            role: emp.role || '',
-            permission_level: emp.permission_level || '',
-            employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
-            salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
-            status: (emp.status || 'active') as User['status'],
-            access_rights: (emp.access_rights || 'view') as User['access_rights'],
-            commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
-            commission_value: emp.commission_value || 0,
-            job_title: emp.job_title || '',
-            created_at: emp.created_at || '',
-            updated_at: emp.updated_at || ''
-          }));
-          
-          setEmployees(typedEmployees);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+  // Form submission handler
+  const handleSubmit = async (values: MediaBuyingFormValues) => {
+    try {
+      const result = await saveMediaBuying(values as MediaBuying, initialData);
+      
+      if (result.success) {
         toast({
-          title: "خطأ في جلب البيانات",
-          description: "حدث خطأ أثناء محاولة جلب البراندات والموظفين.",
+          title: result.message,
+          variant: "default",
+        });
+        
+        // Call the onSubmit callback with the form data if provided
+        if (onSubmit) {
+          onSubmit({
+            ...values,
+            id: initialData?.id
+          } as MediaBuying);
+        }
+      } else {
+        toast({
+          title: "خطأ في حفظ البيانات",
+          description: result.message,
           variant: "destructive",
         });
       }
-    }
-
-    fetchData();
-  }, [toast]);
-
-  // Form submission handler
-  const handleSubmit = async (values: MediaBuyingFormValues) => {
-    setLoading(true);
-    try {
-      // Format the data for submission
-      const formData = {
-        platform: values.platform,
-        date: values.campaign_date instanceof Date ? 
-          format(values.campaign_date, "yyyy-MM-dd") : values.campaign_date,
-        brand_id: values.brand_id,
-        employee_id: values.employee_id,
-        spend: values.ad_spend,
-        orders_count: values.orders_count,
-        order_cost: values.cpp,
-        roas: values.roas,
-        notes: values.notes,
-        campaign_link: values.campaign_link,
-        created_at: new Date().toISOString(),
-      };
-      
-      // If editing, update the record, otherwise insert
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from("media_buying")
-          .update(formData)
-          .eq("id", initialData.id);
-          
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("media_buying")
-          .insert([formData]);
-          
-        if (error) throw error;
-      }
-      
-      // Call the onSubmit callback with the form data
-      if (onSubmit) {
-        onSubmit({
-          ...values,
-          id: initialData?.id
-        } as MediaBuying);
-      }
-
-      toast({
-        title: initialData ? "تم تحديث الحملة بنجاح" : "تم إضافة الحملة بنجاح",
-        variant: "default",
-      });
     } catch (error) {
-      console.error("Error saving media buying data:", error);
+      console.error("Error in form submission:", error);
       toast({
         title: "خطأ في حفظ البيانات",
-        description: "حدث خطأ أثناء محاولة حفظ بيانات الحملة الإعلانية.",
+        description: "حدث خطأ غير متوقع أثناء محاولة حفظ البيانات.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
