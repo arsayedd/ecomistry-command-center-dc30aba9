@@ -53,6 +53,10 @@ import DatabasePage from "./pages/database/index";
 // Settings page
 import SettingsPage from "./pages/settings/index";
 
+// Media Buying pages
+import MediaBuyingPage from "./pages/media-buying/index";
+import AddMediaBuyingPage from "./pages/media-buying/add";
+
 // Create Home page to redirect users
 import Index from "./pages/Index";
 
@@ -102,6 +106,11 @@ const App = () => (
                 <Route path="content/media-buying" element={<ContentMediaBuyingPage />} />
                 <Route path="content/media-buying/add" element={<AddContentMediaBuyingPage />} />
                 <Route path="content/media-buying/edit/:id" element={<EditContentMediaBuyingPage />} />
+                
+                {/* Media Buying Routes */}
+                <Route path="media-buying" element={<MediaBuyingPage />} />
+                <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
+                <Route path="media-buying/:id/edit" element={<EditMediaBuyingPage />} />
                 
                 {/* Finance Routes */}
                 <Route path="finance" element={<FinancePage />} />

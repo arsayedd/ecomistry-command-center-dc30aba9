@@ -1,152 +1,139 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, MailCheck } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResendingEmail, setIsResendingEmail] = useState(false);
-  const [emailConfirmationNeeded, setEmailConfirmationNeeded] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const { signIn, sendEmailConfirmation } = useAuth();
+const formSchema = z.object({
+  email: z.string().email({
+    message: 'البريد الإلكتروني غير صالح',
+  }),
+  password: z.string().min(6, {
+    message: 'كلمة المرور يجب أن تكون على الأقل 6 أحرف',
+  }),
+});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setEmailConfirmationNeeded(false);
-    setLoginError(null);
-    
-    try {
-      console.log('Submitting login form with email:', email);
-      await signIn(email, password);
-      console.log('Login function completed successfully');
-    } catch (error: any) {
-      console.error('Login error caught in form handler:', error);
-      // تحقق مما إذا كانت رسالة الخطأ تتعلق بالبريد الإلكتروني غير المؤكد
-      if (error.message && (
-          error.message.includes('البريد الإلكتروني غير مؤكد') || 
-          error.message.includes('Email not confirmed')
-        )) {
-        setEmailConfirmationNeeded(true);
-      } else {
-        setLoginError(error.message || 'حدث خطأ أثناء تسجيل الدخول');
+export default function Login() {
+  const navigate = useNavigate();
+  const { user, setUser } = useAuthContext();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/dashboard');
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+    checkAuth();
+  }, [navigate]);
 
-  const handleResendConfirmation = async () => {
-    if (!email) return;
-    
-    setIsResendingEmail(true);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoading(true);
     try {
-      await sendEmailConfirmation(email);
+      console.log("Attempting login with:", values.email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        console.error("Login error:", error);
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('بيانات تسجيل الدخول غير صحيحة');
+        } else {
+          toast.error(error.message || 'حدث خطأ في تسجيل الدخول');
+        }
+        return;
+      }
+
+      console.log("Login successful:", data);
+      setUser(data.user);
+      toast.success('تم تسجيل الدخول بنجاح');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error("Unexpected error during login:", error);
+      toast.error('حدث خطأ غير متوقع أثناء تسجيل الدخول');
     } finally {
-      setIsResendingEmail(false);
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-green-600">Ecomistry</h1>
-          <p className="text-gray-600 mt-2">نظام الإدارة الداخلي</p>
-        </div>
-        
-        <Card className="w-full shadow-lg border-green-100">
-          <CardHeader className="space-y-1 text-center border-b pb-6">
-            <CardTitle className="text-2xl font-bold">تسجيل الدخول</CardTitle>
-            <CardDescription>أدخل بيانات حسابك للوصول إلى النظام</CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4 pt-6">
-              {emailConfirmationNeeded && (
-                <Alert className="bg-amber-50 border-amber-200">
-                  <MailCheck className="h-5 w-5 text-amber-600" />
-                  <AlertTitle className="text-amber-800 mr-2">البريد الإلكتروني غير مؤكد</AlertTitle>
-                  <AlertDescription className="text-amber-700">
-                    يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك
-                    <Button 
-                      variant="link" 
-                      onClick={handleResendConfirmation}
-                      disabled={isResendingEmail}
-                      className="p-0 mr-2 h-auto text-green-600 hover:text-green-700"
-                    >
-                      {isResendingEmail ? 'جاري إرسال رسالة التأكيد...' : 'إعادة إرسال رسالة التأكيد'}
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {loginError && (
-                <Alert className="bg-red-50 border-red-200">
-                  <AlertTitle className="text-red-800 mr-2">فشل تسجيل الدخول</AlertTitle>
-                  <AlertDescription className="text-red-700">
-                    {loginError}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email">البريد الإلكتروني</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="example@ecomistry.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="text-right"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Link to="/auth/reset-password" className="text-sm text-green-600 hover:text-green-700">
-                    نسيت كلمة المرور؟
-                  </Link>
-                  <Label htmlFor="password">كلمة المرور</Label>
-                </div>
-                <Input 
-                  id="password" 
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="text-right"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4 border-t pt-6">
-              <Button 
-                type="submit" 
-                className="w-full bg-green-600 hover:bg-green-700 gap-2" 
-                disabled={isLoading}
-              >
-                {isLoading ? 'جاري التحميل...' : 'تسجيل الدخول'}
-                <LogIn size={18} />
+    <div className="flex justify-center items-center min-h-screen bg-muted/40">
+      <Card className="w-[400px] shadow-lg">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
+          <CardDescription>
+            أدخل بيانات حسابك للوصول إلى لوحة التحكم
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormControl>
+                      <Input placeholder="example@company.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>كلمة المرور</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="●●●●●●" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    جاري تسجيل الدخول...
+                  </>
+                ) : (
+                  "تسجيل الدخول"
+                )}
               </Button>
-              <div className="text-center text-sm">
-                ليس لديك حساب؟{' '}
-                <Link to="/auth/register" className="text-green-600 hover:text-green-700 font-medium">
-                  تواصل مع الإدارة
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
-        </Card>
-      </div>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button variant="link" onClick={() => navigate('/auth/register')}>
+            إنشاء حساب جديد
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
-};
-
-export default Login;
+}

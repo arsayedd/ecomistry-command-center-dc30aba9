@@ -7,4 +7,4 @@ enable_signups = true
 
 [auth]
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+additional_redirect_urls = ["https://localhost:3000", "https://*.lovable.app"]

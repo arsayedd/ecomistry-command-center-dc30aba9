@@ -12,14 +12,29 @@ export const useBrandsApi = () => {
   const fetchBrands = async () => {
     setLoading(true);
     try {
+      console.log("Fetching brands data...");
+      
+      // Check if user is authenticated
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        console.log("No active session found for brands fetch");
+        // Instead of immediately showing an error, we'll set empty data
+        setBrands([]);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from("brands")
         .select("*")
         .order("name");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Brands fetch error:", error);
+        throw error;
+      }
       
       if (data) {
+        console.log("Successfully fetched brands:", data.length);
         // Convert data to match the Brand type
         const typedBrands: Brand[] = data.map(brand => ({
           id: brand.id || "",

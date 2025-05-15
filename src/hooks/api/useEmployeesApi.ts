@@ -14,6 +14,17 @@ export const useEmployeesApi = (department?: string) => {
     const fetchEmployees = async () => {
       setLoading(true);
       try {
+        console.log("Fetching employees data...");
+        
+        // Check if user is authenticated
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session) {
+          console.log("No active session found for employees fetch");
+          // Instead of immediately showing an error, we'll set empty data
+          setEmployees([]);
+          return;
+        }
+        
         // Build query
         let query = supabase
           .from("users")
@@ -32,7 +43,7 @@ export const useEmployeesApi = (department?: string) => {
         }
         
         if (employeesData) {
-          console.log("Fetched employees:", employeesData.length);
+          console.log("Successfully fetched employees:", employeesData.length);
           
           // Cast the data to match User type
           const typedEmployees: User[] = employeesData.map(emp => ({
