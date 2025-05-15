@@ -37,12 +37,12 @@ export default function EditMediaBuyingPage() {
           if (data.employee && typeof data.employee === 'object') {
             const employee = data.employee;
             employeeData = {
-              id: employee.id || "",
-              full_name: employee.full_name || "",
-              email: employee.email || "",
-              department: employee.department || "",
-              role: employee.role || "",
-              permission_level: employee.permission_level || "",
+              id: employee?.id || "",
+              full_name: employee?.full_name || "",
+              email: employee?.email || "",
+              department: employee?.department || "",
+              role: employee?.role || "",
+              permission_level: employee?.permission_level || "",
               employment_type: "full_time",
               salary_type: "monthly",
               status: "active",

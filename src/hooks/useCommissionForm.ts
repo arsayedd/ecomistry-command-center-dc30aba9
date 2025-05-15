@@ -41,7 +41,27 @@ export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Co
           .eq("role", "employee");
           
         if (error) throw error;
-        if (data) setEmployees(data);
+        if (data) {
+          // Convert data to match the User type with proper type casting
+          const typedEmployees: User[] = data.map(emp => ({
+            id: emp.id,
+            email: emp.email || "",
+            full_name: emp.full_name || "",
+            department: emp.department || "",
+            role: emp.role || "",
+            permission_level: emp.permission_level || "",
+            employment_type: (emp.employment_type as "full_time" | "part_time" | "contract") || "full_time",
+            salary_type: (emp.salary_type as "monthly" | "hourly" | "commission") || "monthly",
+            status: (emp.status as "active" | "inactive" | "pending") || "active",
+            access_rights: (emp.access_rights as "admin" | "edit" | "view") || "view",
+            commission_type: (emp.commission_type as "percentage" | "fixed") || "percentage",
+            commission_value: emp.commission_value || 0,
+            job_title: emp.job_title || "",
+            created_at: emp.created_at || "",
+            updated_at: emp.updated_at || ""
+          }));
+          setEmployees(typedEmployees);
+        }
       } catch (error: any) {
         toast({
           title: "خطأ",
