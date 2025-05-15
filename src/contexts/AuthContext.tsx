@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useNavigate } from 'react';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Fixed import
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
@@ -6,15 +8,15 @@ import { useToast } from '@/components/ui/use-toast';
 // Define the AuthContext type
 export type AuthContextType = {
   user: User | null;
-  loading: boolean; // Added loading property
+  loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>; // Fixed parameters
+  signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: false, // Added loading property
+  loading: false,
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
@@ -74,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signIn({
+    const { error } = await supabase.auth.signInWithPassword({ // Fixed method name
       email,
       password,
     });
