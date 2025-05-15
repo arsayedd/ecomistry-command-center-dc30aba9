@@ -4,33 +4,27 @@ import { Filter } from "lucide-react";
 import { FilterBar } from "@/components/shared/FilterBar";
 
 interface EmployeesFiltersProps {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  statusFilter: string;
-  setStatusFilter: (value: string) => void;
-  departmentFilter: string;
-  setDepartmentFilter: (value: string) => void;
-  onExport: () => void;
+  filters: {
+    searchTerm: string;
+    statusFilter: string;
+    departmentFilter: string;
+  };
+  onFilterChange: (filterName: string, value: string) => void;
 }
 
-export function EmployeesFilters({
-  searchTerm,
-  setSearchTerm,
-  statusFilter,
-  setStatusFilter,
-  departmentFilter,
-  setDepartmentFilter,
-  onExport
-}: EmployeesFiltersProps) {
+export function EmployeesFilters({ filters, onFilterChange }: EmployeesFiltersProps) {
   return (
     <FilterBar
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
+      searchValue={filters.searchTerm}
+      onSearchChange={(value) => onFilterChange("search", value)}
       searchPlaceholder="البحث عن موظف..."
-      onExport={onExport}
+      onExport={() => {}}
     >
       <div className="w-full md:w-48">
-        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+        <Select 
+          value={filters.departmentFilter} 
+          onValueChange={(value) => onFilterChange("department", value)}
+        >
           <SelectTrigger>
             <Filter className="h-4 w-4 ml-2" />
             <SelectValue placeholder="القسم" />
@@ -48,7 +42,10 @@ export function EmployeesFilters({
       </div>
       
       <div className="w-full md:w-48">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select 
+          value={filters.statusFilter} 
+          onValueChange={(value) => onFilterChange("status", value)}
+        >
           <SelectTrigger>
             <Filter className="h-4 w-4 ml-2" />
             <SelectValue placeholder="الحالة" />

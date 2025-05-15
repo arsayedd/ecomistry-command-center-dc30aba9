@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { FileEdit, Trash2 } from "lucide-react";
 import { DataTable } from "@/components/shared/DataTable";
+import { User } from "@/types";
 
 interface EmployeesListProps {
-  employees: any[];
+  employees: User[];
   loading: boolean;
-  onDeleteClick: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function EmployeesList({ employees, loading, onDeleteClick }: EmployeesListProps) {
+export function EmployeesList({ employees, loading, onEdit, onDelete }: EmployeesListProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -94,7 +96,7 @@ export function EmployeesList({ employees, loading, onDeleteClick }: EmployeesLi
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => onDeleteClick(employee.id)}
+            onClick={() => onDelete(employee.id)}
           >
             <Trash2 className="h-4 w-4 text-red-500" />
           </Button>

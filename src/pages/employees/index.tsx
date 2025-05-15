@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -95,14 +96,15 @@ export default function EmployeesPage() {
       ) : (
         <EmployeesList 
           employees={employees} 
+          loading={loading}
           onEdit={handleEditEmployee}
           onDelete={handleDeleteClick}
         />
       )}
 
       <DeleteEmployeeDialog 
-        isOpen={isDeleteDialogOpen}
-        onClose={handleDeleteCancel}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
       />
     </div>

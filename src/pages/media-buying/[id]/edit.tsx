@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
+import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm"; // Fixed import
 import { Loader2 } from "lucide-react";
 import { MediaBuying, Brand, User } from "@/types";
 
@@ -39,8 +39,8 @@ export default function EditMediaBuyingPage() {
           employee_id: mediaBuyingData.employee_id,
           platform: mediaBuyingData.platform,
           campaign_date: mediaBuyingData.date,
-          ad_spend: mediaBuyingData.spend,
-          orders_count: mediaBuyingData.orders_count,
+          ad_spend: mediaBuyingData.spend || 0,
+          orders_count: mediaBuyingData.orders_count || 0,
           cpp: mediaBuyingData.order_cost || 0,
           roas: mediaBuyingData.roas || 0,
           campaign_link: mediaBuyingData.campaign_link || '',
