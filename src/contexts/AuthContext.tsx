@@ -116,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log("AuthContext: Sign in successful");
-      navigate('/dashboard');
     } catch (error) {
       console.error("AuthContext: Sign in error:", error);
       throw error;

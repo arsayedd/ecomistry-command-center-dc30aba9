@@ -46,6 +46,7 @@ export default function Login() {
       await signIn(values.email, values.password);
       toast.success('تم تسجيل الدخول بنجاح');
       console.log("Login successful, navigating to dashboard");
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       let errorMessage = 'فشل تسجيل الدخول';
