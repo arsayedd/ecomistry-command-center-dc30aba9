@@ -1,13 +1,11 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, FileEdit, Search, Filter, Download, TrendingUp } from "lucide-react";
+import { Plus, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ContentTaskFilters } from "@/components/content/ContentTaskFilters";
+import { ContentTaskList, ContentTask } from "@/components/content/ContentTaskList";
 
 export default function ContentPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,7 +13,7 @@ export default function ContentPage() {
   const [filterType, setFilterType] = useState("all");
 
   // Dummy content tasks data
-  const contentTasks = [
+  const contentTasks: ContentTask[] = [
     {
       id: "1",
       employeeName: "محمد أحمد",
@@ -81,36 +79,9 @@ export default function ContentPage() {
     return matchesSearch && matchesBrand && matchesType;
   });
 
-  // Map status to Arabic and badge color
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case "inProgress":
-        return <Badge className="bg-blue-500">قيد التنفيذ</Badge>;
-      case "completed":
-        return <Badge className="bg-green-500">تم</Badge>;
-      case "delayed":
-        return <Badge className="bg-red-500">متأخر</Badge>;
-      default:
-        return <Badge>غير معروف</Badge>;
-    }
-  };
-
-  // Map task type to Arabic
-  const getTaskTypeDisplay = (type: string) => {
-    switch (type) {
-      case "post":
-        return "بوست";
-      case "reel":
-        return "رييل";
-      case "ad":
-        return "إعلان";
-      case "landingPage":
-        return "صفحة هبوط";
-      case "product":
-        return "منتج";
-      default:
-        return type;
-    }
+  const handleExport = () => {
+    console.log("Exporting data...");
+    // Implementation will be added later
   };
 
   return (
@@ -133,57 +104,15 @@ export default function ContentPage() {
 
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="البحث عن مهام كتابة المحتوى..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            
-            <div className="w-full md:w-48">
-              <Select value={filterBrand} onValueChange={setFilterBrand}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 ml-2" />
-                  <SelectValue placeholder="تصفية حسب البراند" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع البراندات</SelectItem>
-                  <SelectItem value="براند أ">براند أ</SelectItem>
-                  <SelectItem value="براند ب">براند ب</SelectItem>
-                  <SelectItem value="براند ج">براند ج</SelectItem>
-                  <SelectItem value="براند د">براند د</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="w-full md:w-48">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 ml-2" />
-                  <SelectValue placeholder="تصفية حسب النوع" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع الأنواع</SelectItem>
-                  <SelectItem value="post">بوست</SelectItem>
-                  <SelectItem value="reel">رييل</SelectItem>
-                  <SelectItem value="ad">إعلان</SelectItem>
-                  <SelectItem value="landingPage">صفحة هبوط</SelectItem>
-                  <SelectItem value="product">منتج</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Button variant="outline" className="w-full md:w-auto">
-              <Download className="h-4 w-4 ml-2" />
-              تصدير
-            </Button>
-          </div>
+          <ContentTaskFilters 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filterBrand={filterBrand}
+            onFilterBrandChange={setFilterBrand}
+            filterType={filterType}
+            onFilterTypeChange={setFilterType}
+            onExport={handleExport}
+          />
         </CardContent>
       </Card>
 
@@ -192,56 +121,7 @@ export default function ContentPage() {
           <CardTitle>مهام كتابة المحتوى</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>اسم الموظف</TableHead>
-                <TableHead>البراند</TableHead>
-                <TableHead>نوع المهمة</TableHead>
-                <TableHead>تاريخ التسليم</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>رابط التسليم</TableHead>
-                <TableHead>ملاحظات</TableHead>
-                <TableHead>إجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>{task.id}</TableCell>
-                    <TableCell>{task.employeeName}</TableCell>
-                    <TableCell>{task.brandName}</TableCell>
-                    <TableCell>{getTaskTypeDisplay(task.taskType)}</TableCell>
-                    <TableCell>{new Date(task.dueDate).toLocaleDateString('ar-EG')}</TableCell>
-                    <TableCell>{getStatusDisplay(task.status)}</TableCell>
-                    <TableCell>
-                      {task.deliveryLink ? (
-                        <a href={task.deliveryLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                          عرض
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell>{task.notes || "-"}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon">
-                        <FileEdit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
-                    لا توجد مهام مطابقة للبحث
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <ContentTaskList tasks={filteredTasks} />
         </CardContent>
       </Card>
     </div>
