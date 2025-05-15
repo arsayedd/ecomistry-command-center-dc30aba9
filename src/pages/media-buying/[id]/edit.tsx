@@ -38,7 +38,7 @@ export default function EditMediaBuyingPage() {
           brand_id: mediaBuyingData.brand_id,
           employee_id: mediaBuyingData.employee_id,
           platform: mediaBuyingData.platform,
-          campaign_date: mediaBuyingData.date,
+          campaign_date: mediaBuyingData.date || "",
           ad_spend: mediaBuyingData.spend || 0,
           orders_count: mediaBuyingData.orders_count || 0,
           cpp: mediaBuyingData.order_cost || 0,
