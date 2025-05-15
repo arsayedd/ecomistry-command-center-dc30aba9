@@ -56,6 +56,7 @@ import SettingsPage from "./pages/settings/index";
 // Media Buying pages
 import MediaBuyingPage from "./pages/media-buying/index";
 import AddMediaBuyingPage from "./pages/media-buying/add";
+import EditMediaBuyingPage from "./pages/media-buying/[id]/edit";
 
 // Create Home page to redirect users
 import Index from "./pages/Index";

@@ -31,7 +31,26 @@ export default function EditMediaBuyingPage() {
           throw error;
         }
         
-        setMediaBuying(data as MediaBuying);
+        if (data) {
+          // Transform the data to match MediaBuying type
+          const formattedData: MediaBuying = {
+            id: data.id,
+            brand_id: data.brand_id,
+            employee_id: data.employee_id,
+            platform: data.platform,
+            campaign_date: data.date,
+            ad_spend: data.spend,
+            orders_count: data.orders_count,
+            cpp: data.order_cost || 0,
+            roas: data.roas,
+            campaign_link: data.campaign_link,
+            notes: data.notes,
+            created_at: data.created_at,
+            updated_at: data.updated_at
+          };
+          
+          setMediaBuying(formattedData);
+        }
       } catch (error) {
         console.error("Error loading media buying data:", error);
         toast({
@@ -60,7 +79,8 @@ export default function EditMediaBuyingPage() {
           orders_count: data.orders_count,
           order_cost: data.cpp,
           campaign_link: data.campaign_link,
-          notes: data.notes
+          notes: data.notes,
+          roas: data.roas
         })
         .eq("id", id);
 

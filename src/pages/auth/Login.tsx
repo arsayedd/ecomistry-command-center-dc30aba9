@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -24,7 +23,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, setUser } = useAuthContext();
+  const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
