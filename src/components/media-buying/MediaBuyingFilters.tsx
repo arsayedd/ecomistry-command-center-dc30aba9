@@ -20,7 +20,6 @@ interface MediaBuyingFiltersProps {
   onEmployeeChange: (value: string) => void;
   onExport: () => void;
   onExportCSV?: () => void;
-  onExportPDF?: () => void;
   brands: Brand[];
   employees: User[];
 }
@@ -38,7 +37,6 @@ export function MediaBuyingFilters({
   onEmployeeChange,
   onExport,
   onExportCSV,
-  onExportPDF,
   brands,
   employees,
 }: MediaBuyingFiltersProps) {
@@ -74,7 +72,7 @@ export function MediaBuyingFilters({
       />
 
       {/* Export Actions */}
-      <ExportActions onExportCSV={onExportCSV} onExportPDF={onExportPDF} />
+      <ExportActions onExportCSV={onExportCSV} />
     </FilterBar>
   );
 }

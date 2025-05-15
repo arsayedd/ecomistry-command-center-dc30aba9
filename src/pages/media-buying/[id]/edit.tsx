@@ -1,150 +1,142 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
-import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MediaBuyingForm } from "@/components/media-buying/MediaBuyingForm";
+import { Loader2 } from "lucide-react";
 import { MediaBuying, Brand, User } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditMediaBuyingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mediaBuying, setMediaBuying] = useState<MediaBuying | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMediaBuying = async () => {
-      if (!id) return;
-      
-      setLoading(true);
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch media buying data
+        const { data: mediaBuyingData, error: mediaBuyingError } = await supabase
           .from("media_buying")
-          .select("*, brand:brand_id(*), employee:employee_id(*)")
+          .select("*")
           .eq("id", id)
           .single();
 
-        if (error) throw error;
-
-        if (data) {
-          // Safe type checking for employee
-          let employeeData: User | null = null;
-          
-          if (data.employee && typeof data.employee === 'object') {
-            const employee = data.employee;
-            employeeData = {
-              id: employee?.id || "",
-              full_name: employee?.full_name || "",
-              email: employee?.email || "",
-              department: employee?.department || "",
-              role: employee?.role || "",
-              permission_level: employee?.permission_level || "",
-              employment_type: "full_time",
-              salary_type: "monthly",
-              status: "active",
-              access_rights: "view",
-              commission_type: "percentage",
-              commission_value: 0,
-              job_title: "",
-              created_at: "",
-              updated_at: ""
-            };
-          }
-
-          // Safe type checking for brand
-          let brandData: Brand | null = null;
-          
-          if (data.brand && typeof data.brand === 'object') {
-            const brand = data.brand;
-            brandData = {
-              id: brand.id || "",
-              name: brand.name || "",
-              status: (brand.status || "active") as "active" | "inactive" | "pending",
-              product_type: brand.product_type || "",
-              logo_url: "",
-              description: "",
-              notes: "",
-              social_links: typeof brand.social_links === 'object' ? 
-                (brand.social_links as any || {}) : 
-                { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
-              created_at: brand.created_at || "",
-              updated_at: brand.updated_at || ""
-            };
-          }
-
-          setMediaBuying({
-            id: data.id,
-            brand_id: data.brand_id,
-            employee_id: data.employee_id,
-            platform: data.platform,
-            campaign_date: data.date,
-            ad_spend: data.spend,
-            orders_count: data.orders_count,
-            cpp: data.order_cost || 0,
-            roas: (data as any).roas || 0,
-            campaign_link: (data as any).campaign_link || "",
-            notes: (data as any).notes || "",
-            brand: brandData,
-            employee: employeeData,
-            created_at: data.created_at,
-            updated_at: data.updated_at,
-          });
+        if (mediaBuyingError) {
+          throw mediaBuyingError;
         }
+
+        setMediaBuying(mediaBuyingData);
+
+        // Fetch brands
+        const { data: brandsData, error: brandsError } = await supabase
+          .from("brands")
+          .select("*");
+
+        if (brandsError) {
+          throw brandsError;
+        }
+
+        setBrands(brandsData);
+
+        // Fetch employees
+        const { data: employeesData, error: employeesError } = await supabase
+          .from("users")
+          .select("*");
+
+        if (employeesError) {
+          throw employeesError;
+        }
+
+        setEmployees(employeesData);
       } catch (error: any) {
-        console.error("Error fetching media buying:", error);
+        console.error("Error fetching data:", error);
         toast({
-          title: "خطأ",
-          description: "فشل في جلب بيانا�� الحملة الإعلانية",
+          title: "Error",
+          description: "Failed to load data. Please try again.",
           variant: "destructive",
         });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchMediaBuying();
+    if (id) {
+      fetchData();
+    }
   }, [id, toast]);
 
-  const handleSave = (data: MediaBuying) => {
-    toast({
-      title: "تم التحديث بنجاح",
-      description: "تم تحديث بيانات الحملة الإعلانية بنجاح",
-    });
-    navigate("/media-buying");
+  const handleUpdateMediaBuying = async (mediaBuyingData: MediaBuying) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from("media_buying")
+        .update(mediaBuyingData)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم تحديث بيانات الميديا باينج",
+        description: "تم تحديث البيانات بنجاح.",
+      });
+
+      navigate("/media-buying");
+    } catch (error: any) {
+      console.error("Error updating media buying data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update media buying data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="mb-6">
-          <Skeleton className="h-8 w-80 mb-2" />
-          <Skeleton className="h-10 w-64" />
-        </div>
-        <div className="space-y-6">
-          <Skeleton className="h-[500px] w-full rounded-lg" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div dir="rtl" className="p-6">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/media-buying")}
-          className="mb-2"
-        >
-          <ChevronRight className="ml-2 h-4 w-4" />
-          العودة إلى الحملات الإعلانية
-        </Button>
-        <h1 className="text-3xl font-bold">تعديل حملة إعلانية</h1>
-      </div>
+    <div className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">تعديل بيانات الميديا باينج</h1>
 
-      {mediaBuying && <MediaBuyingForm initialData={mediaBuying} onSubmit={handleSave} />}
+      {isLoading ? (
+        <Card className="text-center p-8">
+          <CardContent className="pt-6">
+            <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4" />
+            <p>جارِ تحميل البيانات...</p>
+          </CardContent>
+        </Card>
+      ) : mediaBuying ? (
+        <MediaBuyingForm
+          initialData={mediaBuying}
+          brands={brands}
+          employees={employees}
+          onSubmit={handleUpdateMediaBuying}
+        />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center text-red-500">
+              لم يتم العثور على بيانات الميديا باينج
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="mb-4">
+              البيانات المطلوبة غير موجودة أو تم حذفها.
+            </p>
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+              onClick={() => navigate("/media-buying")}
+            >
+              العودة إلى قائمة بيانات الميديا باينج
+            </button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

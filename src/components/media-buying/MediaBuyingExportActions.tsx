@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download } from "lucide-react";
 import { MediaBuyingItem } from "@/types";
-import { saveAs } from "file-saver";
 import { utils, write } from "xlsx";
 import { mediaBuyingToCSV } from "@/utils/mediaBuyingUtils";
 
@@ -37,14 +36,35 @@ export default function MediaBuyingExportActions({ mediaBuying }: MediaBuyingExp
     
     const excelBuffer = write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
     
-    saveAs(blob, "media-buying-report.xlsx");
+    // Create temporary download link
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "media-buying-report.xlsx");
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleExportCSV = () => {
     const csvContent = mediaBuyingToCSV(mediaBuying);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, "media-buying-report.csv");
+    const url = URL.createObjectURL(blob);
+    
+    // Create temporary download link
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "media-buying-report.csv");
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

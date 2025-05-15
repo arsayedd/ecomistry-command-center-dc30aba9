@@ -34,12 +34,6 @@ export default function MediaBuyingPage() {
     exportToCSV(filteredData);
   };
 
-  // التعامل مع التصدير إلى PDF
-  const handleExportPDF = () => {
-    // PDF export implementation would be added here
-    console.log("Export to PDF", filteredData);
-  };
-
   // التعامل مع إضافة سجل ميديا باينج جديد
   const handleAdd = () => {
     navigate("/media-buying/add");
@@ -66,7 +60,6 @@ export default function MediaBuyingPage() {
         onEmployeeChange={(value) => handleFilterChange("employee_id", value)}
         onExport={handleExportCSV}
         onExportCSV={handleExportCSV}
-        onExportPDF={handleExportPDF}
         brands={brands}
         employees={employees}
       />

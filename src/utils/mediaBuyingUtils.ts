@@ -1,5 +1,4 @@
 
-import { saveAs } from "file-saver";
 import { utils, write } from "xlsx";
 import { MediaBuyingItem } from "@/types";
 
@@ -27,7 +26,19 @@ export const mediaBuyingToCSV = (data: MediaBuyingItem[]) => {
 export const exportToCSV = (data: MediaBuyingItem[]) => {
   const csvContent = mediaBuyingToCSV(data);
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  saveAs(blob, "media-buying-report.csv");
+  const url = URL.createObjectURL(blob);
+  
+  // Create temporary download link
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "media-buying-report.csv");
+  link.style.visibility = "hidden";
+  
+  // Append to document, trigger download and clean up
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 // حساب متوسط تكلفة الطلب
