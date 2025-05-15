@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Commission } from "@/types";
+import { Commission, User } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,16 +28,16 @@ export type CommissionFormValues = z.infer<typeof commissionFormSchema>;
 
 export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Commission) => void) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const { toast } = useToast();
 
   // Load employees data
-  useState(() => {
+  useEffect(() => {
     const fetchEmployees = async () => {
       try {
         const { data, error } = await supabase
           .from("users")
-          .select("id, full_name")
+          .select("*")
           .eq("role", "employee");
           
         if (error) throw error;
@@ -58,8 +58,13 @@ export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Co
   const form = useForm<CommissionFormValues>({
     resolver: zodResolver(commissionFormSchema),
     defaultValues: initialData ? {
-      ...initialData,
+      employee_id: initialData.employee_id,
+      commission_type: initialData.commission_type as "confirmation" | "delivery",
+      value_type: initialData.value_type as "fixed" | "percentage",
+      value_amount: initialData.value_amount,
+      orders_count: initialData.orders_count,
       due_date: initialData.due_date ? new Date(initialData.due_date) : new Date(),
+      total_commission: initialData.total_commission,
     } : {
       employee_id: "",
       commission_type: "confirmation",
@@ -77,7 +82,7 @@ export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Co
   const ordersCount = form.watch("orders_count");
   
   // Update total commission when relevant values change
-  useState(() => {
+  useEffect(() => {
     let total = 0;
     
     if (valueType === "fixed") {
@@ -96,8 +101,13 @@ export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Co
     setIsSubmitting(true);
     try {
       const commissionData = {
-        ...values,
+        employee_id: values.employee_id,
+        commission_type: values.commission_type,
+        value_type: values.value_type,
+        value_amount: values.value_amount,
+        orders_count: values.orders_count,
         due_date: values.due_date instanceof Date ? values.due_date.toISOString().split('T')[0] : values.due_date,
+        total_commission: values.total_commission || 0,
       };
       
       if (initialData?.id) {
@@ -117,7 +127,7 @@ export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Co
         // Insert new commission
         const { error } = await supabase
           .from("commissions")
-          .insert([commissionData]);
+          .insert(commissionData);
           
         if (error) throw error;
         
@@ -130,7 +140,7 @@ export const useCommissionForm = (initialData?: Commission, onSubmit?: (data: Co
       // Call onSubmit callback if provided
       if (onSubmit) {
         onSubmit({
-          ...values,
+          ...commissionData,
           id: initialData?.id
         } as Commission);
       }

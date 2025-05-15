@@ -35,13 +35,14 @@ export default function EditMediaBuyingPage() {
           let employeeData: User | null = null;
           
           if (data.employee && typeof data.employee === 'object') {
+            const employee = data.employee;
             employeeData = {
-              id: data.employee?.id || "",
-              full_name: data.employee?.full_name || "",
-              email: data.employee?.email || "",
-              department: data.employee?.department || "",
-              role: data.employee?.role || "",
-              permission_level: data.employee?.permission_level || "",
+              id: employee.id || "",
+              full_name: employee.full_name || "",
+              email: employee.email || "",
+              department: employee.department || "",
+              role: employee.role || "",
+              permission_level: employee.permission_level || "",
               employment_type: "full_time",
               salary_type: "monthly",
               status: "active",
@@ -58,19 +59,20 @@ export default function EditMediaBuyingPage() {
           let brandData: Brand | null = null;
           
           if (data.brand && typeof data.brand === 'object') {
+            const brand = data.brand;
             brandData = {
-              id: data.brand.id || "",
-              name: data.brand.name || "",
-              status: (data.brand.status || "active") as "active" | "inactive" | "pending",
-              product_type: data.brand.product_type || "",
+              id: brand.id || "",
+              name: brand.name || "",
+              status: (brand.status || "active") as "active" | "inactive" | "pending",
+              product_type: brand.product_type || "",
               logo_url: "",
               description: "",
               notes: "",
-              social_links: typeof data.brand.social_links === 'object' ? 
-                (data.brand.social_links as any || {}) : 
+              social_links: typeof brand.social_links === 'object' ? 
+                (brand.social_links as any || {}) : 
                 { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
-              created_at: data.brand.created_at || "",
-              updated_at: data.brand.updated_at || ""
+              created_at: brand.created_at || "",
+              updated_at: brand.updated_at || ""
             };
           }
 
