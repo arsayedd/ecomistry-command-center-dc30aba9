@@ -14,6 +14,7 @@ export default function EditBrandPage() {
   const { toast } = useToast();
   const [brand, setBrand] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch brand data
   useEffect(() => {
@@ -50,6 +51,9 @@ export default function EditBrandPage() {
 
   const handleUpdateBrand = async (brandData) => {
     try {
+      setIsSubmitting(true);
+      console.log("Updating brand data:", brandData);
+      
       const { error } = await supabase
         .from("brands")
         .update(brandData)
@@ -70,6 +74,8 @@ export default function EditBrandPage() {
         description: "حدث خطأ أثناء تحديث البراند",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,7 +91,12 @@ export default function EditBrandPage() {
           </CardContent>
         </Card>
       ) : brand ? (
-        <BrandForm initialData={brand} onSubmit={handleUpdateBrand} isEditing={true} />
+        <BrandForm 
+          initialData={brand} 
+          onSubmit={handleUpdateBrand} 
+          isEditing={true}
+          isSubmitting={isSubmitting}
+        />
       ) : (
         <Card>
           <CardHeader>

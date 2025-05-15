@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { Brand } from "@/types";
 
 export const useBrandsData = () => {
-  const [brands, setBrands] = useState<any[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const { toast } = useToast();
 
   const fetchBrands = async () => {
@@ -20,7 +21,24 @@ export const useBrandsData = () => {
       }
 
       console.log("Fetched brands:", data?.length);
-      setBrands(data || []);
+      
+      // Convert data to match the Brand type
+      const typedBrands: Brand[] = (data || []).map(brand => ({
+        id: brand.id || "",
+        name: brand.name || "",
+        status: (brand.status || "active") as "active" | "inactive" | "pending",
+        product_type: brand.product_type || "",
+        logo_url: brand.logo_url || "",
+        description: brand.description || "",
+        notes: brand.notes || "",
+        social_links: typeof brand.social_links === 'object' ? 
+          (brand.social_links as any || {}) : 
+          { instagram: "", facebook: "", tiktok: "", youtube: "", linkedin: "", website: "" },
+        created_at: brand.created_at || "",
+        updated_at: brand.updated_at || "",
+      }));
+      
+      setBrands(typedBrands);
     } catch (error) {
       console.error("Error fetching brands:", error);
       toast({
@@ -35,5 +53,5 @@ export const useBrandsData = () => {
     fetchBrands();
   }, []);
 
-  return { brands };
+  return { brands, fetchBrands };
 };

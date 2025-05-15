@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +28,7 @@ interface BrandFormProps {
   initialData?: Partial<Brand>;
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
-  isEditing?: boolean; // Added isEditing prop to the interface
+  isEditing?: boolean;
 }
 
 const formSchema = z.object({

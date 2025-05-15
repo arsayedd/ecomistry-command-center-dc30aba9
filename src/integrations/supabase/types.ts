@@ -48,8 +48,10 @@ export type Database = {
       brands: {
         Row: {
           created_at: string | null
+          description: string | null
           id: string
           name: string
+          notes: string | null
           product_type: string | null
           social_links: Json | null
           status: string | null
@@ -57,8 +59,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           id?: string
           name: string
+          notes?: string | null
           product_type?: string | null
           social_links?: Json | null
           status?: string | null
@@ -66,8 +70,10 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           id?: string
           name?: string
+          notes?: string | null
           product_type?: string | null
           social_links?: Json | null
           status?: string | null
