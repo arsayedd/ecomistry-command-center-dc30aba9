@@ -14,15 +14,6 @@ export const useBrandsApi = () => {
     try {
       console.log("Fetching brands data...");
       
-      // Check if user is authenticated
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
-        console.log("No active session found for brands fetch");
-        // Instead of immediately showing an error, we'll set empty data
-        setBrands([]);
-        return;
-      }
-      
       const { data, error } = await supabase
         .from("brands")
         .select("*")
@@ -52,6 +43,8 @@ export const useBrandsApi = () => {
         }));
         
         setBrands(typedBrands);
+      } else {
+        setBrands([]);
       }
     } catch (error: any) {
       console.error("Error fetching brands:", error);
@@ -60,6 +53,7 @@ export const useBrandsApi = () => {
         description: "حدث خطأ أثناء محاولة جلب البراندات",
         variant: "destructive",
       });
+      setBrands([]);
     } finally {
       setLoading(false);
     }

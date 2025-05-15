@@ -33,10 +33,10 @@ export const useMediaBuyingData = () => {
   const fetchMediaBuyingData = async () => {
     setLoading(true);
     try {
+      console.log("Fetching media buying data...");
       let query = supabase
         .from("media_buying")
-        .select(
-          `
+        .select(`
           id,
           platform,
           date,
@@ -50,20 +50,16 @@ export const useMediaBuyingData = () => {
           updated_at,
           brand_id,
           employee_id,
-          brand:brand_id (
+          brands:brand_id (
             id,
             name
           ),
-          employee:employee_id (
+          users:employee_id (
             id,
             full_name,
-            email,
-            department,
-            role,
-            permission_level
+            email
           )
-        `
-        )
+        `)
         .order("date", { ascending: false });
 
       // Apply filters
@@ -102,11 +98,12 @@ export const useMediaBuyingData = () => {
         updated_at: item.updated_at,
         brand_id: item.brand_id,
         employee_id: item.employee_id,
-        brand: item.brand,
-        employee: item.employee
+        brand: item.brands,
+        employee: item.users
       })) as MediaBuyingRecord[];
 
       setMediaBuying(mappedData || []);
+      console.log("Media buying data loaded:", mappedData?.length || 0);
     } catch (error) {
       console.error("Error fetching media buying data:", error);
       toast({
@@ -114,6 +111,7 @@ export const useMediaBuyingData = () => {
         description: "حدث خطأ أثناء محاولة جلب بيانات الميديا باينج",
         variant: "destructive",
       });
+      setMediaBuying([]);
     } finally {
       setLoading(false);
     }
@@ -123,7 +121,7 @@ export const useMediaBuyingData = () => {
     try {
       const { data, error } = await supabase
         .from("brands")
-        .select("*")
+        .select("id, name")
         .order("name", { ascending: true });
 
       if (error) {
@@ -134,11 +132,7 @@ export const useMediaBuyingData = () => {
       setBrands(data || []);
     } catch (error) {
       console.error("Error fetching brands:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب البراندات",
-        variant: "destructive",
-      });
+      setBrands([]);
     }
   };
 
@@ -157,11 +151,7 @@ export const useMediaBuyingData = () => {
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "حدث خطأ أثناء محاولة جلب بيانات الموظفين",
-        variant: "destructive",
-      });
+      setEmployees([]);
     }
   };
 

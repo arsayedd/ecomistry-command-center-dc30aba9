@@ -16,15 +16,6 @@ export const useEmployeesApi = (department?: string) => {
       try {
         console.log("Fetching employees data...");
         
-        // Check if user is authenticated
-        const { data: session } = await supabase.auth.getSession();
-        if (!session.session) {
-          console.log("No active session found for employees fetch");
-          // Instead of immediately showing an error, we'll set empty data
-          setEmployees([]);
-          return;
-        }
-        
         // Build query
         let query = supabase
           .from("users")
@@ -65,6 +56,8 @@ export const useEmployeesApi = (department?: string) => {
           }));
           
           setEmployees(typedEmployees);
+        } else {
+          setEmployees([]);
         }
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -73,6 +66,7 @@ export const useEmployeesApi = (department?: string) => {
           description: "حدث خطأ أثناء محاولة جلب الموظفين.",
           variant: "destructive",
         });
+        setEmployees([]);
       } finally {
         setLoading(false);
       }
