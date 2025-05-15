@@ -1,123 +1,160 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { 
-  Table, TableBody, TableCell, TableHead, 
-  TableHeader, TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Edit, Trash2, Facebook, Instagram, Link2 } from "lucide-react";
-import type { Brand } from "@/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Instagram, Facebook, Globe, MoreVertical, Edit, Trash, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Brand } from "@/types";
 
 interface BrandsListProps {
   brands: Brand[];
-  loading?: boolean;
-  onDelete?: (brand: Brand) => void;
 }
 
-export function BrandsList({ brands, loading, onDelete }: BrandsListProps) {
-  if (loading) {
-    return <div className="py-20 text-center">جاري تحميل البيانات...</div>;
-  }
+export function BrandsList({ brands }: BrandsListProps) {
+  const navigate = useNavigate();
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "active":
+        return "success";
+      case "inactive":
+        return "destructive";
+      case "pending":
+        return "warning";
+      default:
+        return "default";
+    }
+  };
 
   return (
-    <Table dir="rtl">
-      <TableHeader>
-        <TableRow>
-          <TableHead className="text-right">اللوجو</TableHead>
-          <TableHead className="text-right">اسم البراند</TableHead>
-          <TableHead className="text-right">الفئة</TableHead>
-          <TableHead className="text-right">وصف مختصر</TableHead>
-          <TableHead className="text-right">الحالة</TableHead>
-          <TableHead className="text-right">السوشيال ميديا</TableHead>
-          <TableHead className="text-right">إجراءات</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {brands.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={7} className="text-center py-10 text-gray-500">
-              لا توجد براندات لعرضها
-            </TableCell>
-          </TableRow>
-        ) : (
-          brands.map((brand) => (
-            <TableRow key={brand.id}>
-              <TableCell>
-                {brand.logo_url ? (
-                  <div className="w-10 h-10 overflow-hidden rounded-md">
-                    <AspectRatio ratio={1/1}>
-                      <img
-                        src={brand.logo_url}
-                        alt={brand.name}
-                        className="object-cover w-full h-full"
-                      />
-                    </AspectRatio>
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md text-xs text-muted-foreground">
-                    بدون لوجو
-                  </div>
-                )}
-              </TableCell>
-              <TableCell className="font-medium">{brand.name}</TableCell>
-              <TableCell>{brand.product_type || "غير محدد"}</TableCell>
-              <TableCell className="max-w-[200px] truncate">
-                {brand.description || "غير متوفر"}
-              </TableCell>
-              <TableCell>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  brand.status === "active" ? "bg-green-100 text-green-800" :
-                  brand.status === "inactive" ? "bg-red-100 text-red-800" :
-                  brand.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                  "bg-gray-100 text-gray-800"
-                }`}>
-                  {brand.status === "active" && "فعال"}
-                  {brand.status === "inactive" && "موقف"}
-                  {brand.status === "pending" && "تحت الإنشاء"}
-                  {!brand.status && "غير محدد"}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {brand.social_links?.facebook && (
-                    <a href={brand.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                      <Facebook size={16} />
-                    </a>
-                  )}
-                  {brand.social_links?.instagram && (
-                    <a href={brand.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-500">
-                      <Instagram size={16} />
-                    </a>
-                  )}
-                  {brand.website || brand.social_links?.website && (
-                    <a href={brand.website || brand.social_links?.website} target="_blank" rel="noopener noreferrer" className="text-gray-500">
-                      <Link2 size={16} />
-                    </a>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Link to={`/brands/${brand.id}`}>
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onDelete && onDelete(brand)}
-                  >
-                    <Trash2 className="h-4 w-4" />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {brands.map((brand) => (
+        <Card key={brand.id} className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <Badge
+                className={
+                  brand.status === "active"
+                    ? "bg-green-500"
+                    : brand.status === "inactive"
+                    ? "bg-red-500"
+                    : "bg-yellow-500"
+                }
+              >
+                {brand.status === "active"
+                  ? "نشط"
+                  : brand.status === "inactive"
+                  ? "غير نشط"
+                  : "معلق"}
+              </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="-mt-2 -mr-2">
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate(`/brands/${brand.id}/edit`)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    تعديل
+                  </DropdownMenuItem>
+                  {brand.social_links?.website && (
+                    <DropdownMenuItem asChild>
+                      <a
+                        href={brand.social_links.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        زيارة الموقع
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem className="text-red-500" onClick={() => console.log("Delete", brand.id)}>
+                    <Trash className="mr-2 h-4 w-4" />
+                    حذف
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-center gap-3">
+              {brand.logo_url && (
+                <div className="w-12 h-12 rounded-md overflow-hidden">
+                  <AspectRatio ratio={1 / 1}>
+                    <img src={brand.logo_url} alt={brand.name} className="object-cover" />
+                  </AspectRatio>
                 </div>
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+              )}
+              <div>
+                <CardTitle className="text-lg">{brand.name}</CardTitle>
+                <CardDescription>{brand.product_type}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          {brand.description && (
+            <CardContent className="text-sm text-gray-500">
+              <p>{brand.description}</p>
+            </CardContent>
+          )}
+          <CardFooter className="flex justify-between pt-3 border-t">
+            <div className="flex space-x-2 rtl:space-x-reverse">
+              {brand.social_links?.instagram && (
+                <a
+                  href={brand.social_links.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-pink-500 hover:text-pink-600"
+                >
+                  <Instagram className="h-5 w-5" />
+                </a>
+              )}
+              {brand.social_links?.facebook && (
+                <a
+                  href={brand.social_links.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  <Facebook className="h-5 w-5" />
+                </a>
+              )}
+              {brand.social_links?.website && (
+                <a
+                  href={brand.social_links.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-500 hover:text-gray-600"
+                >
+                  <Globe className="h-5 w-5" />
+                </a>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/brands/${brand.id}/edit`)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              تعديل
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
   );
 }

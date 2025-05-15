@@ -27,6 +27,9 @@ export default function EditMediaBuyingPage() {
         if (error) throw error;
         
         if (data) {
+          // Get employee data safely, ensuring type safety
+          const employeeData = data.employee ? (typeof data.employee === 'object' ? data.employee : null) : null;
+          
           // Create properly typed MediaBuying object
           const formattedData: MediaBuying = {
             id: data.id,
@@ -41,22 +44,22 @@ export default function EditMediaBuyingPage() {
             campaign_link: (data as any).campaign_link,
             notes: (data as any).notes,
             brand: data.brand as Brand,
-            employee: data.employee ? {
-              id: data.employee && typeof data.employee === 'object' && 'id' in data.employee ? data.employee.id : '',
-              email: data.employee && typeof data.employee === 'object' && 'email' in data.employee ? data.employee.email : '',
-              full_name: data.employee && typeof data.employee === 'object' && 'full_name' in data.employee ? data.employee.full_name : '',
-              department: data.employee && typeof data.employee === 'object' && 'department' in data.employee ? data.employee.department : '',
-              role: data.employee && typeof data.employee === 'object' && 'role' in data.employee ? data.employee.role : '',
-              permission_level: data.employee && typeof data.employee === 'object' && 'permission_level' in data.employee ? data.employee.permission_level : '',
-              employment_type: (data.employee && typeof data.employee === 'object' && 'employment_type' in data.employee ? data.employee.employment_type : 'full_time') as User['employment_type'],
-              salary_type: (data.employee && typeof data.employee === 'object' && 'salary_type' in data.employee ? data.employee.salary_type : 'monthly') as User['salary_type'],
-              status: (data.employee && typeof data.employee === 'object' && 'status' in data.employee ? data.employee.status : 'active') as User['status'],
-              access_rights: (data.employee && typeof data.employee === 'object' && 'access_rights' in data.employee ? data.employee.access_rights : 'view') as User['access_rights'],
-              commission_type: (data.employee && typeof data.employee === 'object' && 'commission_type' in data.employee ? data.employee.commission_type : 'percentage') as User['commission_type'],
-              commission_value: data.employee && typeof data.employee === 'object' && 'commission_value' in data.employee ? data.employee.commission_value : 0,
-              job_title: data.employee && typeof data.employee === 'object' && 'job_title' in data.employee ? data.employee.job_title : '',
-              created_at: data.employee && typeof data.employee === 'object' && 'created_at' in data.employee ? data.employee.created_at : '',
-              updated_at: data.employee && typeof data.employee === 'object' && 'updated_at' in data.employee ? data.employee.updated_at : '',
+            employee: employeeData ? {
+              id: employeeData?.id || '',
+              email: employeeData?.email || '',
+              full_name: employeeData?.full_name || '',
+              department: employeeData?.department || '',
+              role: employeeData?.role || '',
+              permission_level: employeeData?.permission_level || '',
+              employment_type: (employeeData?.employment_type || 'full_time') as User['employment_type'],
+              salary_type: (employeeData?.salary_type || 'monthly') as User['salary_type'],
+              status: (employeeData?.status || 'active') as User['status'],
+              access_rights: (employeeData?.access_rights || 'view') as User['access_rights'],
+              commission_type: (employeeData?.commission_type || 'percentage') as User['commission_type'],
+              commission_value: employeeData?.commission_value || 0,
+              job_title: employeeData?.job_title || '',
+              created_at: employeeData?.created_at || '',
+              updated_at: employeeData?.updated_at || '',
             } : null,
             created_at: data.created_at,
             updated_at: data.updated_at,

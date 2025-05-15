@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuyingItem } from "@/types";
+import { MediaBuyingItem, Brand, User } from "@/types";
 import { format } from "date-fns";
 
 interface MediaBuyingFilters {
@@ -94,27 +94,31 @@ export const useMediaBuyingData = () => {
         
         if (data) {
           // Process data to ensure proper structure with safe type handling
-          const processedData: MediaBuyingItem[] = data.map(item => ({
-            id: item.id,
-            brand_id: item.brand_id,
-            employee_id: item.employee_id,
-            platform: item.platform,
-            date: item.date,
-            spend: item.spend,
-            orders_count: item.orders_count,
-            order_cost: item.order_cost,
-            roas: (item as any).roas,
-            campaign_link: (item as any).campaign_link,
-            notes: (item as any).notes,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            brand: item.brand,
-            employee: item.employee ? {
-              id: typeof item.employee === 'object' && item.employee && 'id' in item.employee ? item.employee.id : undefined,
-              full_name: typeof item.employee === 'object' && item.employee && 'full_name' in item.employee ? 
-                item.employee.full_name : "غير معروف"
-            } : null
-          }));
+          const processedData: MediaBuyingItem[] = data.map(item => {
+            // Type check for employee
+            const employee = item.employee ? (typeof item.employee === 'object' ? item.employee : null) : null;
+            
+            return {
+              id: item.id,
+              brand_id: item.brand_id,
+              employee_id: item.employee_id,
+              platform: item.platform,
+              date: item.date,
+              spend: item.spend,
+              orders_count: item.orders_count,
+              order_cost: item.order_cost,
+              roas: (item as any).roas,
+              campaign_link: (item as any).campaign_link,
+              notes: (item as any).notes,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              brand: item.brand,
+              employee: employee ? {
+                id: employee?.id,
+                full_name: employee?.full_name || "غير معروف"
+              } : null
+            };
+          });
           
           setMediaBuying(processedData);
         }
