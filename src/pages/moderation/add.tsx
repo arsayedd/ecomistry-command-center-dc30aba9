@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ModerationReportForm } from "@/components/moderation/ModerationReportForm";
+import ModerationReportForm from "@/components/moderation/ModerationReportForm";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 

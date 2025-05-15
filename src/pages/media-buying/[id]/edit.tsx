@@ -38,13 +38,14 @@ export default function EditMediaBuyingPage() {
             campaign_date: data.date, // Map date to campaign_date
             ad_spend: data.spend,
             orders_count: data.orders_count,
+            cpp: data.order_cost,
             order_cost: data.order_cost,
-            cpp: data.order_cost, // Use order_cost for cpp
-            roas: data.roas || 0, // Default to 0 if not present
-            campaign_link: data.campaign_link || "", // Default to empty string if not present
-            notes: data.notes || "", // Default to empty string if not present
-            brand: data.brand,
-            employee: data.employee
+            roas: data.roas || 0,
+            campaign_link: data.campaign_link || "",
+            notes: data.notes || "",
+            // Safely include brand and employee data if available
+            brand: data.brand || undefined,
+            employee: data.employee && typeof data.employee === 'object' && !('code' in data.employee) ? data.employee : undefined
           };
 
           setMediaBuying(mediaBuyingData);
@@ -74,7 +75,9 @@ export default function EditMediaBuyingPage() {
         brand_id: formData.brand_id,
         employee_id: formData.employee_id,
         platform: formData.platform,
-        date: typeof formData.campaign_date === 'string' ? formData.campaign_date : formData.campaign_date.toISOString().split('T')[0],
+        date: typeof formData.campaign_date === 'string' 
+          ? formData.campaign_date 
+          : formData.campaign_date.toISOString().split('T')[0],
         spend: formData.ad_spend,
         orders_count: formData.orders_count,
         order_cost: formData.cpp,

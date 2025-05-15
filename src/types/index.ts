@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   full_name: string;
@@ -76,6 +77,8 @@ export interface MediaBuying {
   campaign_date: Date | string;
   brand_id: string;
   employee_id: string;
+  brand?: Brand;
+  employee?: User;
   ad_spend: number;
   orders_count: number;
   cpp?: number;

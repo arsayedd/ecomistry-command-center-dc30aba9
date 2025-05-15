@@ -59,9 +59,9 @@ interface MediaBuyingItem {
     name: string;
   };
   employee?: {
-    id: string;
-    full_name: string;
-  };
+    id?: string;
+    full_name?: string;
+  } | null;
 }
 
 export default function MediaBuyingPage() {
@@ -253,7 +253,7 @@ export default function MediaBuyingPage() {
         <CardHeader>
           <CardTitle>فلترة البيانات</CardTitle>
           <CardDescription>
-            استخدم الفلاتر لتضييق نطاق البيانات المعروضة
+            استخدم الفلاتر لتضييق نطاق البيانا�� المعروضة
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 grid-cols-1 md:grid-cols-3">
