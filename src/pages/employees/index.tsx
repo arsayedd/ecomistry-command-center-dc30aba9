@@ -14,8 +14,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
 
 export default function EmployeesPage() {
   const navigate = useNavigate();
@@ -24,17 +22,6 @@ export default function EmployeesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-  
-  // Check if user has access to this page
-  if (!user || (user.role !== "admin" && user.role !== "manager")) {
-    toast({
-      title: "غير مصرح",
-      description: "ليس لديك صلاحية الوصول إلى هذه الصفحة",
-      variant: "destructive",
-    });
-    return <Navigate to="/" />;
-  }
 
   const handleAddEmployee = () => {
     navigate("/employees/add");

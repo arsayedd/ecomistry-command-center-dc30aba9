@@ -1,24 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmployeeForm } from "@/components/employees/EmployeeForm";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 export default function AddEmployeePage() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Check if user has access to this page
-  if (!user || (user.role !== "admin" && user.role !== "manager")) {
-    toast({
-      title: "غير مصرح",
-      description: "ليس لديك صلاحية الوصول إلى هذه الصفحة",
-      variant: "destructive",
-    });
-    return <Navigate to="/" />;
-  }
-
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">

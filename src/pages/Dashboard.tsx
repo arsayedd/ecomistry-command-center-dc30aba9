@@ -1,6 +1,5 @@
 
 import { useEffect } from "react";
-import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
@@ -23,11 +22,6 @@ const Dashboard = () => {
     isLoading,
     hasErrors
   } = useDashboardData();
-  
-  // Check if user is authenticated
-  if (!user) {
-    return <Navigate to="/auth/login" replace />;
-  }
   
   // Display toast error if any of the queries had an error
   useEffect(() => {
