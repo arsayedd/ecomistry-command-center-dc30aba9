@@ -16,6 +16,8 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 interface RevenueTrendItem {
   name: string;
@@ -45,9 +47,10 @@ interface DashboardChartsProps {
     employeePerformance: EmployeePerformanceItem[];
   };
   isLoading: boolean;
+  onRefresh?: () => void;
 }
 
-export function DashboardCharts({ charts, isLoading }: DashboardChartsProps) {
+export function DashboardCharts({ charts, isLoading, onRefresh }: DashboardChartsProps) {
   const COLORS = ["#16a34a", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899"];
   const MEDIA_COLORS = {"فيسبوك": "#3b5998", "انستجرام": "#e1306c", "تيك توك": "#000000", "جوجل": "#4285F4", "أخرى": "#f48024"};
   
@@ -63,6 +66,19 @@ export function DashboardCharts({ charts, isLoading }: DashboardChartsProps) {
     return `${name}: ${(percent * 100).toFixed(0)}%`;
   };
 
+  // Empty state component
+  const EmptyState = ({ title, onRefreshClick }: { title: string, onRefreshClick?: () => void }) => (
+    <div className="h-[300px] w-full flex flex-col items-center justify-center text-muted-foreground">
+      <p className="mb-4 text-center">{title}</p>
+      {onRefreshClick && (
+        <Button variant="outline" size="sm" onClick={onRefreshClick} className="gap-2">
+          <RefreshCcw className="h-4 w-4" />
+          تحديث البيانات
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -77,9 +93,10 @@ export function DashboardCharts({ charts, isLoading }: DashboardChartsProps) {
                 <Skeleton className="h-[250px] w-[90%]" />
               </div>
             ) : charts.revenueTrend.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                لا توجد بيانات متاحة
-              </div>
+              <EmptyState 
+                title="لا توجد بيانات للإيرادات في هذه الفترة" 
+                onRefreshClick={onRefresh} 
+              />
             ) : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -134,9 +151,10 @@ export function DashboardCharts({ charts, isLoading }: DashboardChartsProps) {
                 <Skeleton className="h-[250px] w-[90%]" />
               </div>
             ) : charts.brandsRevenue.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                لا توجد بيانات متاحة
-              </div>
+              <EmptyState 
+                title="لا توجد بيانات لإيرادات البراندات في هذه الفترة" 
+                onRefreshClick={onRefresh} 
+              />
             ) : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -177,9 +195,10 @@ export function DashboardCharts({ charts, isLoading }: DashboardChartsProps) {
                 <Skeleton className="h-[250px] w-[250px] rounded-full" />
               </div>
             ) : charts.mediaSpending.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                لا توجد بيانات متاحة
-              </div>
+              <EmptyState 
+                title="لا توجد بيانات للإنفاق الإعلاني في هذه الفترة" 
+                onRefreshClick={onRefresh} 
+              />
             ) : (
               <div className="h-[300px] w-full flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
@@ -220,9 +239,10 @@ export function DashboardCharts({ charts, isLoading }: DashboardChartsProps) {
                 <Skeleton className="h-[250px] w-[90%]" />
               </div>
             ) : charts.employeePerformance.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                لا توجد بيانات متاحة
-              </div>
+              <EmptyState 
+                title="لا توجد بيانات لأداء الموظفين في هذه الفترة" 
+                onRefreshClick={onRefresh}
+              />
             ) : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">

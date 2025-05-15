@@ -23,16 +23,10 @@ const Dashboard = () => {
     hasErrors
   } = useDashboardData();
   
-  // Display toast error if any of the queries had an error
-  useEffect(() => {
-    if (hasErrors) {
-      toast({
-        title: "خطأ في تحميل البيانات",
-        description: "حدث خطأ أثناء تحميل بيانات لوحة المعلومات. الرجاء المحاولة مرة أخرى.",
-        variant: "destructive",
-      });
-    }
-  }, [hasErrors, toast]);
+  // Handle refresh button click
+  const handleRefresh = () => {
+    handleDateRangeChange({ ...dateRange });
+  };
 
   return (
     <div dir="rtl" className="p-6">
@@ -78,7 +72,11 @@ const Dashboard = () => {
           <DashboardMetrics metrics={metrics} isLoading={isLoading} />
           
           {/* Charts */}
-          <DashboardCharts charts={charts} isLoading={isLoading} />
+          <DashboardCharts 
+            charts={charts} 
+            isLoading={isLoading} 
+            onRefresh={handleRefresh}
+          />
         </>
       )}
     </div>
