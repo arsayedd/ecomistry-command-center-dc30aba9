@@ -14,7 +14,7 @@ export interface BrandsListProps {
 }
 
 export function BrandsList({ brands, loading, onEdit, onDelete }: BrandsListProps) {
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case "active":
         return <Badge className="bg-green-500">نشط</Badge>;
@@ -23,7 +23,7 @@ export function BrandsList({ brands, loading, onEdit, onDelete }: BrandsListProp
       case "pending":
         return <Badge className="bg-yellow-500">قيد المراجعة</Badge>;
       default:
-        return <Badge className="bg-gray-500">{status}</Badge>;
+        return <Badge className="bg-gray-500">{status || "-"}</Badge>;
     }
   };
 

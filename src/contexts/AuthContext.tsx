@@ -1,24 +1,15 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { User } from '@/types';
 
-// Define the User type
-export type User = {
-  id: string;
-  full_name: string;
-  email: string;
-  department: string;
-  role: string;
-  permission_level: number;
-  created_at?: string;
-  updated_at?: string;
-};
-
-// Create the AuthContext
+// Define the AuthContext type
 export type AuthContextType = {
   user: User | null;
   setUser: (user: User | null) => void;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  signUp?: (email: string, password: string, userData: Partial<User>) => Promise<any>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -48,7 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) {
           console.error('Error fetching user data:', error);
         } else {
-          setUser(userData as User);
+          // Convert the userData to match our User type
+          setUser(userData as unknown as User);
         }
       }
       setIsLoading(false);
@@ -68,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) {
           console.error('Error fetching user data:', error);
         } else {
-          setUser(userData as User);
+          // Convert the userData to match our User type
+          setUser(userData as unknown as User);
         }
       } else {
         setUser(null);
@@ -83,12 +76,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   };
 
+  // Mock signUp for development
+  const signUp = async (email: string, password: string, userData: Partial<User>) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: userData.full_name,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error in signUp:', error);
+      throw error;
+    }
+  };
+
   // Auth state value
   const value = {
     user,
     setUser,
     isLoading,
-    signOut
+    signOut,
+    signUp
   }
 
   return (

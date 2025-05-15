@@ -20,7 +20,6 @@ export const useEmployeesApi = (department?: string) => {
         const { data: session } = await supabase.auth.getSession();
         if (!session.session) {
           console.log("No active session found for employees fetch");
-          // Instead of immediately showing an error, we'll set empty data
           setEmployees([]);
           return;
         }
@@ -53,13 +52,14 @@ export const useEmployeesApi = (department?: string) => {
             department: emp.department || '',
             role: emp.role || '',
             permission_level: emp.permission_level || '',
-            employment_type: (emp.employment_type || 'full_time') as User['employment_type'],
-            salary_type: (emp.salary_type || 'monthly') as User['salary_type'],
-            status: (emp.status || 'active') as User['status'],
-            access_rights: (emp.access_rights || 'view') as User['access_rights'],
-            commission_type: (emp.commission_type || 'percentage') as User['commission_type'],
-            commission_value: emp.commission_value || 0,
             job_title: emp.job_title || '',
+            status: emp.status,
+            employment_type: emp.employment_type,
+            salary_type: emp.salary_type,
+            salary_amount: emp.salary_amount,
+            access_rights: emp.access_rights,
+            commission_type: emp.commission_type,
+            commission_value: emp.commission_value || 0,
             created_at: emp.created_at || '',
             updated_at: emp.updated_at || ''
           }));

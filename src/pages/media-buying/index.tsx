@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { MediaBuyingRecord } from "@/types";
 
 export default function MediaBuyingPage() {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ export default function MediaBuyingPage() {
   }, [navigate]);
 
   // تصفية بيانات الميديا بناءً على قيمة البحث
-  const filteredData = mediaBuying.filter(item => 
+  const filteredData: MediaBuyingRecord[] = mediaBuying.filter((item: MediaBuyingRecord) => 
     item.platform.toLowerCase().includes(searchValue.toLowerCase()) ||
     (item.brand?.name && item.brand.name.toLowerCase().includes(searchValue.toLowerCase())) ||
     (item.employee?.full_name && item.employee.full_name.toLowerCase().includes(searchValue.toLowerCase()))

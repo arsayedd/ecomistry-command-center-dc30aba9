@@ -71,7 +71,7 @@ export default function BrandsPage() {
       const csvData = filteredBrands.map((brand) => [
         brand.name,
         brand.product_type || "-",
-        brand.status
+        brand.status || "-"
       ]);
       
       // Create CSV content
