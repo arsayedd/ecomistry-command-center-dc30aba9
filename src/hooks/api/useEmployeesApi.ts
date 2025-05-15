@@ -9,7 +9,6 @@ export const useEmployeesApi = (department?: string) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch employees data
   useEffect(() => {
     const fetchEmployees = async () => {
       setLoading(true);

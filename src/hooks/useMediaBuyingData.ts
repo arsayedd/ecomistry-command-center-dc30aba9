@@ -24,6 +24,7 @@ export const useMediaBuyingData = () => {
   });
   const { toast } = useToast();
 
+  // Fetch data when filters change
   useEffect(() => {
     fetchMediaBuyingData();
     fetchBrands();
@@ -90,7 +91,7 @@ export const useMediaBuyingData = () => {
         date: item.date,
         spend: item.spend,
         orders_count: item.orders_count,
-        order_cost: item.order_cost,
+        order_cost: item.order_cost || 0,
         roas: item.roas,
         notes: item.notes,
         campaign_link: item.campaign_link,
