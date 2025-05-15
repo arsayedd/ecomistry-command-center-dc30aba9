@@ -18,13 +18,21 @@ export default function AddBrandPage() {
   const handleSubmit = async (data: Partial<Brand>) => {
     try {
       setLoading(true);
-      // In a real implementation, this would save to Supabase
-      // const { data: brandData, error } = await supabase.from('brands').insert([data]).select().single();
       
       console.log("Brand data to save:", data);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save data to Supabase
+      const { data: brandData, error } = await supabase
+        .from('brands')
+        .insert([data])
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log("Successfully saved brand:", brandData);
       
       toast.success("تم إضافة البراند بنجاح");
       navigate("/brands");
