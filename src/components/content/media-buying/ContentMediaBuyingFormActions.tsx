@@ -14,7 +14,7 @@ export function ContentMediaBuyingFormActions({ loading, navigate }: ContentMedi
       <Button 
         variant="outline" 
         type="button" 
-        onClick={() => navigate("/content/media-buying")}
+        onClick={() => navigate("/media-buying/content")}
       >
         إلغاء
       </Button>

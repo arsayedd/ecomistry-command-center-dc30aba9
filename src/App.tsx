@@ -34,9 +34,14 @@ import AddModerationPage from "./pages/moderation/add";
 // Content Writing pages
 import ContentPage from "./pages/content/index";
 import AddContentTaskPage from "./pages/content/add";
-import ContentMediaBuyingPage from "./pages/content/media-buying/index";
-import AddContentMediaBuyingPage from "./pages/content/media-buying/add";
-import EditContentMediaBuyingPage from "./pages/content/media-buying/edit/[id]";
+
+// Media Buying pages
+import MediaBuyingPage from "./pages/media-buying/index";
+import AddMediaBuyingPage from "./pages/media-buying/add";
+import EditMediaBuyingPage from "./pages/media-buying/[id]/edit";
+import ContentMediaBuyingPage from "./pages/media-buying/content/index";
+import AddContentMediaBuyingPage from "./pages/media-buying/content/add";
+import EditContentMediaBuyingPage from "./pages/media-buying/content/edit/[id]";
 
 // Finance pages
 import FinancePage from "./pages/finance/index";
@@ -50,13 +55,9 @@ import AddCommissionPage from "./pages/commissions/add";
 // Database page
 import DatabasePage from "./pages/database/index";
 
-// Settings page
+// Settings pages
 import SettingsPage from "./pages/settings/index";
-
-// Media Buying pages
-import MediaBuyingPage from "./pages/media-buying/index";
-import AddMediaBuyingPage from "./pages/media-buying/add";
-import EditMediaBuyingPage from "./pages/media-buying/[id]/edit";
+import UserSettingsPage from "./pages/settings/user/index";
 
 // Create Home page to redirect users
 import Index from "./pages/Index";
@@ -104,14 +105,21 @@ const App = () => (
                 {/* Content Routes */}
                 <Route path="content" element={<ContentPage />} />
                 <Route path="content/add" element={<AddContentTaskPage />} />
-                <Route path="content/media-buying" element={<ContentMediaBuyingPage />} />
-                <Route path="content/media-buying/add" element={<AddContentMediaBuyingPage />} />
-                <Route path="content/media-buying/edit/:id" element={<EditContentMediaBuyingPage />} />
                 
                 {/* Media Buying Routes */}
                 <Route path="media-buying" element={<MediaBuyingPage />} />
                 <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
                 <Route path="media-buying/:id/edit" element={<EditMediaBuyingPage />} />
+                
+                {/* Content Media Buying Routes (moved from content to media-buying) */}
+                <Route path="media-buying/content" element={<ContentMediaBuyingPage />} />
+                <Route path="media-buying/content/add" element={<AddContentMediaBuyingPage />} />
+                <Route path="media-buying/content/edit/:id" element={<EditContentMediaBuyingPage />} />
+                
+                {/* Redirect old routes to new ones */}
+                <Route path="content/media-buying" element={<Navigate to="/media-buying/content" replace />} />
+                <Route path="content/media-buying/add" element={<Navigate to="/media-buying/content/add" replace />} />
+                <Route path="content/media-buying/edit/:id" element={<Navigate to="/media-buying/content/edit/:id" replace />} />
                 
                 {/* Finance Routes */}
                 <Route path="finance" element={<FinancePage />} />
@@ -127,6 +135,7 @@ const App = () => (
                 
                 {/* Settings Routes */}
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/user" element={<UserSettingsPage />} />
                 
                 <Route index element={<Navigate to="/dashboard" replace />} />
               </Route>
