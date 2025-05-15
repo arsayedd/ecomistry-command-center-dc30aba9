@@ -9,42 +9,48 @@ export const useBrandsApi = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchBrands = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.from("brands").select("*");
-        if (error) throw error;
+  const fetchBrands = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("*")
+        .order("name");
+      
+      if (error) throw error;
+      
+      if (data) {
+        // Convert data to match the Brand type
+        const typedBrands: Brand[] = data.map(brand => ({
+          id: brand.id || "",
+          name: brand.name || "",
+          status: (brand.status || "active") as "active" | "inactive" | "pending",
+          product_type: brand.product_type || "",
+          logo_url: "",
+          description: "",
+          notes: "",
+          social_links: brand.social_links || {},
+          created_at: brand.created_at || "",
+          updated_at: brand.updated_at || "",
+        }));
         
-        if (data) {
-          // Transform the data to match the Brand type
-          const transformedBrands: Brand[] = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            status: item.status as "active" | "inactive" | "pending",
-            product_type: item.product_type || "",
-            logo_url: (item as any).logo_url || undefined,
-            description: (item as any).description || undefined,
-            notes: (item as any).notes || undefined,
-            social_links: item.social_links as Brand["social_links"],
-            created_at: item.created_at,
-            updated_at: item.updated_at
-          }));
-          setBrands(transformedBrands);
-        }
-      } catch (error: any) {
-        toast({
-          title: "خطأ",
-          description: `فشل في جلب بيانات البراندات: ${error.message}`,
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+        setBrands(typedBrands);
       }
-    };
+    } catch (error: any) {
+      console.error("Error fetching brands:", error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: "حدث خطأ أثناء محاولة جلب البراندات",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBrands();
-  }, [toast]);
+  }, []);
 
-  return { brands, loading };
+  return { brands, loading, fetchBrands };
 };

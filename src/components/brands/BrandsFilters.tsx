@@ -1,98 +1,97 @@
 
-import React from "react";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Filter, Plus, Search } from "lucide-react";
 
-interface BrandsFiltersProps {
-  filters: {
-    status: string;
-    productType: string;
-  };
-  onApplyFilters: (filters: any) => void;
-  className?: string;
+export interface BrandsFiltersProps {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  statusFilter?: string;
+  setStatusFilter?: (value: string) => void;
+  categoryFilter?: string;
+  setCategoryFilter?: (value: string) => void;
+  onAddBrand?: () => void;
+  onExport?: () => void;
 }
 
-export function BrandsFilters({ filters, onApplyFilters, className }: BrandsFiltersProps) {
-  const [localFilters, setLocalFilters] = React.useState(filters);
-
-  const handleChange = (key: string, value: string) => {
-    setLocalFilters({
-      ...localFilters,
-      [key]: value
-    });
-  };
-
-  const handleApply = () => {
-    onApplyFilters(localFilters);
-  };
-
-  const handleReset = () => {
-    const resetFilters = {
-      status: "all",
-      productType: "all"
-    };
-    
-    setLocalFilters(resetFilters);
-    onApplyFilters(resetFilters);
-  };
-
+export function BrandsFilters({
+  searchTerm,
+  setSearchTerm,
+  statusFilter = "all",
+  setStatusFilter = () => {},
+  categoryFilter = "all",
+  setCategoryFilter = () => {},
+  onAddBrand,
+  onExport
+}: BrandsFiltersProps) {
+  
   return (
-    <div className={cn("p-4 border rounded-md space-y-4", className)} dir="rtl">
-      <div className="flex flex-wrap gap-4">
-        <div className="w-full md:w-auto">
-          <label className="block text-sm font-medium mb-1">حالة البراند</label>
-          <Select
-            value={localFilters.status}
-            onValueChange={(value) => handleChange("status", value)}
-          >
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="اختر الحالة" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">جميع الحالات</SelectItem>
-              <SelectItem value="active">فعال</SelectItem>
-              <SelectItem value="inactive">موقف</SelectItem>
-              <SelectItem value="pending">تحت الإنشاء</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="bg-card py-4 px-6 rounded-lg shadow-sm mb-6">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+        {/* Search */}
+        <div className="relative w-full md:w-72">
+          <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="البحث عن براند..."
+            className="pr-10 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         
-        <div className="w-full md:w-auto">
-          <label className="block text-sm font-medium mb-1">فئة المنتج</label>
-          <Select
-            value={localFilters.productType}
-            onValueChange={(value) => handleChange("productType", value)}
-          >
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="اختر الفئة" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">جميع الفئات</SelectItem>
-              <SelectItem value="أحذية رياضية">أحذية رياضية</SelectItem>
-              <SelectItem value="ملابس رياضية">ملابس رياضية</SelectItem>
-              <SelectItem value="مستلزمات رياضية">مستلزمات رياضية</SelectItem>
-              <SelectItem value="إلكترونيات">إلكترونيات</SelectItem>
-              <SelectItem value="مستحضرات تجميل">مستحضرات تجميل</SelectItem>
-              <SelectItem value="أخرى">أخرى</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
+          {/* Status Filter */}
+          <div className="w-full md:w-40">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <Filter className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الحالة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع البراندات</SelectItem>
+                <SelectItem value="active">نشط</SelectItem>
+                <SelectItem value="inactive">غير نشط</SelectItem>
+                <SelectItem value="pending">قيد المراجعة</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Category Filter */}
+          <div className="w-full md:w-40">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <Filter className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الفئة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الفئات</SelectItem>
+                <SelectItem value="skincare">العناية بالبشرة</SelectItem>
+                <SelectItem value="haircare">العناية بالشعر</SelectItem>
+                <SelectItem value="makeup">المكياج</SelectItem>
+                <SelectItem value="parfum">العطور</SelectItem>
+                <SelectItem value="accessories">الإكسسوارات</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Actions */}
+          <div className="flex gap-2 mr-auto">
+            {onExport && (
+              <Button variant="outline" onClick={onExport}>
+                تصدير
+              </Button>
+            )}
+            
+            {onAddBrand && (
+              <Button onClick={onAddBrand}>
+                <Plus className="h-4 w-4 ml-2" />
+                إضافة براند
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={handleReset}>
-          إعادة تعيين
-        </Button>
-        <Button onClick={handleApply}>
-          تطبيق الفلتر
-        </Button>
       </div>
     </div>
   );

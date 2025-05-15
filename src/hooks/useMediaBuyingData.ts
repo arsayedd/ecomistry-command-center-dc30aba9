@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuyingItem, PartialBrand, PartialUser } from "@/types";
+import { MediaBuyingItem, Brand, User } from "@/types";
 import { format } from "date-fns";
 
 interface MediaBuyingFilters {
@@ -16,8 +16,8 @@ interface MediaBuyingFilters {
 export const useMediaBuyingData = () => {
   const [mediaBuying, setMediaBuying] = useState<MediaBuyingItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [brands, setBrands] = useState<PartialBrand[]>([]);
-  const [employees, setEmployees] = useState<PartialUser[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const [filters, setFilters] = useState<MediaBuyingFilters>({
     brand_id: "",
     platform: "",
@@ -30,9 +30,24 @@ export const useMediaBuyingData = () => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const { data, error } = await supabase.from("brands").select("id, name");
+        const { data, error } = await supabase.from("brands").select("id, name, status, product_type, social_links");
         if (error) throw error;
-        if (data) setBrands(data as PartialBrand[]);
+        if (data) {
+          // Convert the data to match the Brand type
+          const typedBrands = data.map(brand => ({
+            id: brand.id,
+            name: brand.name,
+            status: (brand.status || "active") as "active" | "inactive" | "pending",
+            product_type: brand.product_type || "",
+            social_links: brand.social_links || {},
+            description: "",
+            notes: "",
+            logo_url: "",
+            created_at: "",
+            updated_at: "",
+          }));
+          setBrands(typedBrands);
+        }
       } catch (error: any) {
         toast({
           title: "خطأ",
@@ -46,10 +61,30 @@ export const useMediaBuyingData = () => {
       try {
         const { data, error } = await supabase
           .from("users")
-          .select("id, full_name")
+          .select("id, full_name, email, role, department, permission_level")
           .eq("role", "employee");
         if (error) throw error;
-        if (data) setEmployees(data as PartialUser[]);
+        if (data) {
+          // Convert data to match the User type
+          const typedEmployees = data.map(emp => ({
+            id: emp.id,
+            email: emp.email || "",
+            full_name: emp.full_name || "",
+            department: emp.department || "",
+            role: emp.role || "",
+            permission_level: emp.permission_level || "",
+            employment_type: "full_time" as "full_time" | "part_time" | "contract",
+            salary_type: "monthly" as "monthly" | "hourly" | "commission",
+            status: "active" as "active" | "inactive" | "pending",
+            access_rights: "view" as "admin" | "edit" | "view",
+            commission_type: "percentage" as "percentage" | "fixed",
+            commission_value: 0,
+            job_title: "",
+            created_at: "",
+            updated_at: "",
+          }));
+          setEmployees(typedEmployees);
+        }
       } catch (error: any) {
         toast({
           title: "خطأ",
@@ -96,12 +131,42 @@ export const useMediaBuyingData = () => {
           // Process data to ensure proper structure with safe type handling
           const processedData: MediaBuyingItem[] = data.map(item => {
             // Type check for employee
-            let employeeData: PartialUser | null = null;
+            let employeeData: User | null = null;
             
             if (item.employee && typeof item.employee === 'object') {
               employeeData = {
-                id: item.employee.id || "",
-                full_name: item.employee.full_name || "غير معروف"
+                id: item.employee?.id || "",
+                full_name: item.employee?.full_name || "غير معروف",
+                email: item.employee?.email || "",
+                department: item.employee?.department || "",
+                role: item.employee?.role || "",
+                permission_level: item.employee?.permission_level || "",
+                employment_type: "full_time",
+                salary_type: "monthly",
+                status: "active",
+                access_rights: "view",
+                commission_type: "percentage",
+                commission_value: 0,
+                job_title: "",
+                created_at: "",
+                updated_at: ""
+              };
+            }
+
+            // Type check for brand
+            let brandData: Brand | null = null;
+            if (item.brand && typeof item.brand === 'object') {
+              brandData = {
+                id: item.brand.id || "",
+                name: item.brand.name || "غير معروف",
+                status: (item.brand.status || "active") as "active" | "inactive" | "pending",
+                product_type: item.brand.product_type || "",
+                logo_url: "",
+                description: "",
+                notes: "",
+                social_links: item.brand.social_links || {},
+                created_at: item.brand.created_at || "",
+                updated_at: item.brand.updated_at || ""
               };
             }
             
@@ -119,7 +184,7 @@ export const useMediaBuyingData = () => {
               notes: (item as any).notes,
               created_at: item.created_at,
               updated_at: item.updated_at,
-              brand: item.brand as PartialBrand,
+              brand: brandData,
               employee: employeeData
             };
           });

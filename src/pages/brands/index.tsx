@@ -1,98 +1,61 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { BrandsList } from "@/components/brands/BrandsList";
 import { BrandsFilters } from "@/components/brands/BrandsFilters";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { BrandsList } from "@/components/brands/BrandsList";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Brand } from "@/types";
+import { useBrandsApi } from "@/hooks/api/useBrandsApi";
 
 export default function BrandsPage() {
-  const [brands, setBrands] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [searchValue, setSearchValue] = useState<string>("");
-  const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchBrands();
-  }, []);
-
-  async function fetchBrands() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("brands")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      
-      // Process the data to ensure social_links is properly handled
-      const processedBrands = data.map(brand => ({
-        ...brand,
-        social_links: brand.social_links ? 
-          (typeof brand.social_links === 'string' ? 
-            JSON.parse(brand.social_links) : 
-            brand.social_links) : 
-          {}
-      }));
-
-      setBrands(processedBrands);
-    } catch (error: any) {
-      console.error("Error fetching brands:", error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const filteredBrands = brands.filter(brand => {
-    return (
-      brand.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      (brand.product_type && brand.product_type.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (brand.social_links && typeof brand.social_links === 'object' && brand.social_links.instagram && 
-        brand.social_links.instagram.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (brand.social_links && typeof brand.social_links === 'object' && brand.social_links.facebook && 
-        brand.social_links.facebook.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (brand.social_links && typeof brand.social_links === 'object' && brand.social_links.tiktok && 
-        brand.social_links.tiktok.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (brand.social_links && typeof brand.social_links === 'object' && brand.social_links.youtube && 
-        brand.social_links.youtube.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (brand.social_links && typeof brand.social_links === 'object' && brand.social_links.linkedin && 
-        brand.social_links.linkedin.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (brand.social_links && typeof brand.social_links === 'object' && brand.social_links.website && 
-        brand.social_links.website.toLowerCase().includes(searchValue.toLowerCase()))
-    );
+  const { toast } = useToast();
+  const { brands, loading, fetchBrands } = useBrandsApi();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  
+  const filteredBrands = brands.filter((brand) => {
+    // Filter by search term
+    const matchesSearch =
+      brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (brand.product_type &&
+        brand.product_type.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Filter by status
+    const matchesStatus = statusFilter === "all" || brand.status === statusFilter;
+    
+    // Filter by category
+    const matchesCategory = categoryFilter === "all" || brand.product_type === categoryFilter;
+    
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const handleAddBrand = () => {
     navigate("/brands/add");
   };
 
-  const handleEdit = (brandId: string) => {
+  const handleEditBrand = (brandId: string) => {
     navigate(`/brands/${brandId}/edit`);
   };
 
-  const handleDelete = async (brandId: string) => {
+  const handleDeleteBrand = async (brandId: string) => {
     try {
       const { error } = await supabase.from("brands").delete().eq("id", brandId);
-
+      
       if (error) throw error;
-
-      setBrands(brands.filter(brand => brand.id !== brandId));
-
+      
       toast({
         title: "تم حذف البراند بنجاح",
+        variant: "default",
       });
+      
+      // Refresh brands list
+      fetchBrands();
+      
     } catch (error: any) {
-      console.error("Error deleting brand:", error);
       toast({
         title: "خطأ في حذف البراند",
         description: error.message,
@@ -100,25 +63,73 @@ export default function BrandsPage() {
       });
     }
   };
+  
+  const handleExport = () => {
+    try {
+      // Convert data to CSV
+      const headers = ["اسم البراند", "الفئة", "الحالة"];
+      const csvData = filteredBrands.map((brand) => [
+        brand.name,
+        brand.product_type || "-",
+        brand.status
+      ]);
+      
+      // Create CSV content
+      const csvContent = [
+        headers.join(","),
+        ...csvData.map((row) => row.join(","))
+      ].join("\n");
+      
+      // Create download link
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "brands.csv");
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "تم تصدير البيانات بنجاح",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error exporting brands:", error);
+      toast({
+        title: "خطأ في تصدير البيانات",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="p-6" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">البراندات</h1>
-        <Button onClick={handleAddBrand}>
-          <Plus className="ml-2 h-4 w-4" />
-          إضافة براند جديد
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">إدارة البراندات</h1>
+        <p className="text-gray-500">إدارة جميع البراندات ومتابعة حالتها</p>
       </div>
-
-      <BrandsFilters searchValue={searchValue} onSearchChange={setSearchValue} />
-
-      <Card className="mt-6">
-        <BrandsList
-          brands={filteredBrands}
-          isLoading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+      
+      {/* Filters */}
+      <BrandsFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        onAddBrand={handleAddBrand}
+        onExport={handleExport}
+      />
+      
+      {/* Brands List */}
+      <Card className="shadow-sm">
+        <BrandsList 
+          brands={filteredBrands} 
+          loading={loading} 
+          onEdit={handleEditBrand} 
+          onDelete={handleDeleteBrand} 
         />
       </Card>
     </div>

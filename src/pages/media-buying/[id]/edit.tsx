@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MediaBuying, PartialBrand } from "@/types";
+import { MediaBuying, Brand, User } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditMediaBuyingPage() {
@@ -32,14 +32,43 @@ export default function EditMediaBuyingPage() {
 
         if (data) {
           // Safe type checking for employee
-          let employeeData = null;
+          let employeeData: User | null = null;
           
           if (data.employee && typeof data.employee === 'object') {
             employeeData = {
-              id: data.employee.id || "",
-              full_name: data.employee.full_name || "",
-              // Only include fields that we need and are confirmed to exist
-              // Others are handled with default values or omitted
+              id: data.employee?.id || "",
+              full_name: data.employee?.full_name || "",
+              email: data.employee?.email || "",
+              department: data.employee?.department || "",
+              role: data.employee?.role || "",
+              permission_level: data.employee?.permission_level || "",
+              employment_type: "full_time",
+              salary_type: "monthly",
+              status: "active",
+              access_rights: "view",
+              commission_type: "percentage",
+              commission_value: 0,
+              job_title: "",
+              created_at: "",
+              updated_at: ""
+            };
+          }
+
+          // Safe type checking for brand
+          let brandData: Brand | null = null;
+          
+          if (data.brand && typeof data.brand === 'object') {
+            brandData = {
+              id: data.brand.id || "",
+              name: data.brand.name || "",
+              status: (data.brand.status || "active") as "active" | "inactive" | "pending",
+              product_type: data.brand.product_type || "",
+              logo_url: "",
+              description: "",
+              notes: "",
+              social_links: data.brand.social_links || {},
+              created_at: data.brand.created_at || "",
+              updated_at: data.brand.updated_at || ""
             };
           }
 
@@ -55,7 +84,7 @@ export default function EditMediaBuyingPage() {
             roas: (data as any).roas || 0,
             campaign_link: (data as any).campaign_link || "",
             notes: (data as any).notes || "",
-            brand: data.brand as PartialBrand,
+            brand: brandData,
             employee: employeeData,
             created_at: data.created_at,
             updated_at: data.updated_at,
