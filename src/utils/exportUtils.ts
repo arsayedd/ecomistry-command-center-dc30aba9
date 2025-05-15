@@ -28,24 +28,30 @@ export const exportToPDF = (fileName: string, title: string, data: any[]) => {
   doc.setFontSize(10);
   doc.text(`تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}`, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
   
-  // Extract headers and data from the first item
-  const headers = Object.keys(data[0]);
-  const rows = data.map(item => Object.values(item));
-  
-  // Create table
-  autoTable(doc, {
-    head: [headers],
-    body: rows,
-    startY: 30,
-    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-    bodyStyles: { textColor: 0 },
-    theme: 'grid',
-    styles: {
-      font: 'helvetica',
-      fontStyle: 'normal',
-      fontSize: 10
-    },
-  });
+  // Extract headers and data from the first item if data exists
+  if (data.length > 0) {
+    const headers = Object.keys(data[0]);
+    const rows = data.map(item => Object.values(item));
+    
+    // Create table
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 30,
+      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+      bodyStyles: { textColor: 0 },
+      theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontStyle: 'normal',
+        fontSize: 10
+      },
+    });
+  } else {
+    // Add a note when there's no data
+    doc.setFontSize(12);
+    doc.text("لا توجد بيانات متاحة للتصدير", doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
+  }
   
   // Save document
   doc.save(`${fileName}.pdf`);

@@ -29,7 +29,7 @@ export default function EditMediaBuyingPage() {
         }
 
         if (data) {
-          // Transform the data to match the MediaBuying type
+          // Transform the data to match the MediaBuying type with proper type safety
           const mediaBuyingData: MediaBuying = {
             id: data.id,
             brand_id: data.brand_id,
@@ -37,15 +37,31 @@ export default function EditMediaBuyingPage() {
             platform: data.platform,
             campaign_date: data.date, // Map date to campaign_date
             ad_spend: data.spend,
+            spend: data.spend, // Keep for compatibility
             orders_count: data.orders_count,
             cpp: data.order_cost,
             order_cost: data.order_cost,
             roas: data.roas || 0,
             campaign_link: data.campaign_link || "",
             notes: data.notes || "",
-            // Safely include brand and employee data if available
-            brand: data.brand || undefined,
-            employee: data.employee && typeof data.employee === 'object' && !('code' in data.employee) ? data.employee : undefined
+            // Safely handle nested objects with proper type checking
+            brand: data.brand ? {
+              id: data.brand.id,
+              name: data.brand.name,
+              product_type: data.brand.product_type || "",
+              status: (data.brand.status as "active" | "inactive" | "pending") || "active",
+              created_at: data.brand.created_at,
+              updated_at: data.brand.updated_at,
+              social_links: data.brand.social_links || {}
+            } : undefined,
+            employee: data.employee && typeof data.employee === 'object' && 'id' in data.employee ? {
+              id: data.employee.id,
+              full_name: data.employee.full_name || "",
+              email: data.employee.email || "",
+              department: data.employee.department || "",
+              role: data.employee.role || "",
+              permission_level: data.employee.permission_level || ""
+            } : null
           };
 
           setMediaBuying(mediaBuyingData);

@@ -27,7 +27,7 @@ export default function AddModerationReportPage() {
       </div>
 
       <ModerationReportForm 
-        onSubmit={() => {
+        onSave={() => {
           navigate("/moderation");
         }} 
       />

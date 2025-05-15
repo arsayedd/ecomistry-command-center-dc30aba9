@@ -144,7 +144,7 @@ export default function MediaBuyingPage() {
         if (error) throw error;
         
         if (data) {
-          // Process data to ensure proper structure
+          // Process data to ensure proper structure with safe type handling
           const processedData: MediaBuyingItem[] = data.map(item => ({
             id: item.id,
             brand_id: item.brand_id,
@@ -160,12 +160,11 @@ export default function MediaBuyingPage() {
             created_at: item.created_at,
             updated_at: item.updated_at,
             brand: item.brand,
-            employee: {
-              id: item.employee.id || "",
-              full_name: typeof item.employee === 'object' && 'full_name' in item.employee 
-                ? item.employee.full_name 
-                : "غير معروف"
-            }
+            employee: item.employee ? {
+              id: typeof item.employee === 'object' && 'id' in item.employee ? item.employee.id : undefined,
+              full_name: typeof item.employee === 'object' && 'full_name' in item.employee ? 
+                item.employee.full_name : "غير معروف"
+            } : null
           }));
           
           setMediaBuying(processedData);
@@ -213,7 +212,7 @@ export default function MediaBuyingPage() {
       'التاريخ': item.date,
       'المنصة': item.platform,
       'البراند': item.brand?.name || '',
-      'الموظف': item.employee && typeof item.employee === 'object' && 'full_name' in item.employee ? item.employee.full_name : '',
+      'الموظف': item.employee && typeof item.employee === 'object' ? item.employee.full_name || 'غير معروف' : 'غير معروف',
       'الإنفاق': item.spend,
       'عدد الطلبات': item.orders_count,
       'تكلفة الطلب': item.order_cost,
@@ -231,7 +230,7 @@ export default function MediaBuyingPage() {
       'التاريخ': item.date,
       'المنصة': item.platform,
       'البراند': item.brand?.name || '',
-      'الموظف': item.employee && typeof item.employee === 'object' && 'full_name' in item.employee ? item.employee.full_name : '',
+      'الموظف': item.employee && typeof item.employee === 'object' ? item.employee.full_name || 'غير معروف' : 'غير معروف',
       'الإنفاق': item.spend,
       'عدد الطلبات': item.orders_count,
       'تكلفة الطلب': item.order_cost
@@ -412,7 +411,7 @@ export default function MediaBuyingPage() {
                   <TableCell>{item.brand?.name}</TableCell>
                   <TableCell>{item.platform}</TableCell>
                   <TableCell>
-                    {item.employee && typeof item.employee === 'object' && 'full_name' in item.employee 
+                    {item.employee && typeof item.employee === 'object' && item.employee.full_name 
                       ? item.employee.full_name 
                       : "غير معروف"}
                   </TableCell>

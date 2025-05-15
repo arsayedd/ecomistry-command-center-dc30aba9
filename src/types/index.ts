@@ -1,4 +1,11 @@
 
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 export interface User {
   id: string;
   full_name: string;
@@ -78,7 +85,7 @@ export interface MediaBuying {
   brand_id: string;
   employee_id: string;
   brand?: Brand;
-  employee?: User;
+  employee?: User | null;
   ad_spend: number;
   orders_count: number;
   cpp?: number;
@@ -88,6 +95,7 @@ export interface MediaBuying {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  spend?: number; // For compatibility with API responses
 }
 
 export interface Order {
