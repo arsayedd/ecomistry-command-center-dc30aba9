@@ -24,11 +24,11 @@ export interface User {
   email: string;
   department: string;
   role: string;
-  permission_level: string; // Changed from number to string
+  permission_level: string;
   job_title?: string;
   status?: string;
-  employment_type?: "full_time" | "part_time" | "contract";
-  salary_type?: "monthly" | "hourly" | "commission";
+  employment_type?: string; // Changed from union type to string
+  salary_type?: string; // Changed from union type to string
   salary_amount?: number;
   commission_type?: string;
   commission_value?: number;
@@ -80,7 +80,7 @@ export interface MediaBuyingRecord {
   orders_count: number;
   order_cost: number;
   roas: number;
-  notes?: string;
+  notes?: string; // Made notes optional to match with MediaBuyingItem
   campaign_link?: string;
   created_at: string;
   updated_at: string;
@@ -98,7 +98,7 @@ export interface MediaBuyingItem {
   orders_count: number;
   order_cost: number;
   roas: number;
-  notes: string;
+  notes: string; // This field is required in MediaBuyingItem
   campaign_link: string;
   created_at: string;
   updated_at: string;

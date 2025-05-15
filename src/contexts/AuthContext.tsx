@@ -1,32 +1,35 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useNavigate } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
+import { useToast } from '@/components/ui/use-toast';
 
 // Define the AuthContext type
 export type AuthContextType = {
   user: User | null;
-  setUser: (user: User | null) => void;
-  isLoading: boolean;
+  loading: boolean; // Added loading property
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string) => Promise<void>; // Fixed parameters
   signOut: () => Promise<void>;
-  signUp?: (email: string, password: string, userData: Partial<User>) => Promise<any>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
-  setUser: () => {},
-  isLoading: true,
-  signOut: async () => {}
+  loading: false, // Added loading property
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
 });
 
 // Create the Auth Provider component
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const getSession = async () => {
-      setIsLoading(true);
+      setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(userData as unknown as User);
         }
       }
-      setIsLoading(false);
+      setLoading(false);
     };
 
     getSession();
@@ -69,49 +72,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const signOut = async () => {
-    setIsLoading(true);
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsLoading(false);
+  const signIn = async (email: string, password: string) => {
+    setLoading(true);
+    const { error } = await supabase.auth.signIn({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Error signing in:', error);
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+
+    setLoading(false);
   };
 
-  // Mock signUp for development
-  const signUp = async (email: string, password: string, userData: Partial<User>) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      setLoading(true);
+      
+      // Sign up the user using Supabase Auth
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: userData.full_name,
-          }
-        }
+            full_name: fullName,
+          },
+        },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
-      return data;
-    } catch (error) {
-      console.error('Error in signUp:', error);
+      toast({
+        title: "تم إنشاء الحساب بنجاح",
+        description: "سيتم مراجعة الحساب من قبل الإدارة وتفعيله قريبًا.",
+      });
+
+      // We don't navigate here, as the user needs to verify email first
+    } catch (error: any) {
+      console.error("Error in signUp:", error.message);
+      toast({
+        title: "خطأ في إنشاء الحساب",
+        description: error.message,
+        variant: "destructive",
+      });
       throw error;
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const signOut = async () => {
+    setLoading(true);
+    await supabase.auth.signOut();
+    setUser(null);
+    setLoading(false);
   };
 
   // Auth state value
   const value = {
     user,
-    setUser,
-    isLoading,
+    loading,
+    signIn,
+    signUp,
     signOut,
-    signUp
-  }
+  };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!isLoading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Hook to use Auth context

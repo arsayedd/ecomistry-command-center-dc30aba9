@@ -62,7 +62,7 @@ export default function MediaBuyingPage() {
   }, [navigate]);
 
   // تصفية بيانات الميديا بناءً على قيمة البحث
-  const filteredData: MediaBuyingRecord[] = mediaBuying.filter((item: MediaBuyingRecord) => 
+  const filteredData = mediaBuying.filter((item: MediaBuyingRecord) => 
     item.platform.toLowerCase().includes(searchValue.toLowerCase()) ||
     (item.brand?.name && item.brand.name.toLowerCase().includes(searchValue.toLowerCase())) ||
     (item.employee?.full_name && item.employee.full_name.toLowerCase().includes(searchValue.toLowerCase()))
@@ -70,7 +70,8 @@ export default function MediaBuyingPage() {
 
   // التعامل مع التصدير إلى CSV
   const handleExportCSV = () => {
-    exportToCSV(filteredData);
+    // Type assertion to ensure compatibility
+    exportToCSV(filteredData as any);
   };
 
   // التعامل مع إضافة سجل ميديا باينج جديد
@@ -90,10 +91,10 @@ export default function MediaBuyingPage() {
 
   return (
     <div className="p-6" dir="rtl">
-      <MediaBuyingPageHeader mediaBuying={filteredData} onAdd={handleAdd} />
+      <MediaBuyingPageHeader mediaBuying={filteredData as any} onAdd={handleAdd} />
       
       {/* لوحة المعلومات والإحصائيات */}
-      <MediaBuyingDashboard data={filteredData} />
+      <MediaBuyingDashboard data={filteredData as any} />
       
       {/* عناصر التصفية */}
       <MediaBuyingFilters
@@ -114,7 +115,7 @@ export default function MediaBuyingPage() {
       />
 
       <Card className="mt-6 shadow-sm">
-        <MediaBuyingDataTable loading={loading} mediaBuying={filteredData} />
+        <MediaBuyingDataTable loading={loading} mediaBuying={filteredData as any} />
       </Card>
     </div>
   );

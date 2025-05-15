@@ -44,8 +44,8 @@ export const useEmployeesApi = (department?: string) => {
         if (employeesData) {
           console.log("Successfully fetched employees:", employeesData.length);
           
-          // Cast the data to match User type
-          const typedEmployees: User[] = employeesData.map(emp => ({
+          // Convert database records to User objects with type assertion
+          const typedEmployees = employeesData.map(emp => ({
             id: emp.id || '',
             email: emp.email || '',
             full_name: emp.full_name || '',
@@ -62,7 +62,7 @@ export const useEmployeesApi = (department?: string) => {
             commission_value: emp.commission_value || 0,
             created_at: emp.created_at || '',
             updated_at: emp.updated_at || ''
-          }));
+          })) as User[];
           
           setEmployees(typedEmployees);
         }
