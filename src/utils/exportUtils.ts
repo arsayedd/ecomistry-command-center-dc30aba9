@@ -1,64 +1,69 @@
 
-import { flatten } from 'flat';
-import { utils, writeFile, WorkBook } from 'xlsx';
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 
-// Function to export data to CSV
-export const exportToCSV = (data: any[], fileName: string) => {
+// Export data to CSV
+export const exportToCSV = (data: any[], filename: string = 'data') => {
   try {
-    const formattedData = formatDataForExport(data);
-    const worksheet = utils.json_to_sheet(formattedData);
-    const workbook: WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] };
+    // Convert data to CSV string
+    let csvContent = '';
     
-    // Generate CSV file
-    const csvOutput = utils.sheet_to_csv(worksheet);
-    const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
-    downloadBlob(blob, `${fileName}.csv`);
+    // Get headers from first item
+    if (data.length > 0) {
+      const headers = Object.keys(data[0]);
+      csvContent += headers.join(',') + '\n';
+      
+      // Add rows
+      data.forEach(item => {
+        const row = headers.map(header => {
+          const value = item[header];
+          // Handle undefined, null and objects
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'object') return JSON.stringify(value);
+          // Escape quotes and wrap strings with commas in quotes
+          if (typeof value === 'string') {
+            const escaped = value.replace(/"/g, '""');
+            return /,/.test(escaped) ? `"${escaped}"` : escaped;
+          }
+          return value;
+        }).join(',');
+        csvContent += row + '\n';
+      });
+    }
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `${filename}.csv`);
+    
+    console.log(`Successfully exported ${data.length} records to ${filename}.csv`);
+    return true;
   } catch (error) {
     console.error('Error exporting to CSV:', error);
+    return false;
   }
 };
 
-// Function to export data to Excel
-export const exportToExcel = (data: any[], fileName: string) => {
+// Export data to Excel
+export const exportToExcel = (data: any[], filename: string = 'data') => {
   try {
-    const formattedData = formatDataForExport(data);
-    const worksheet = utils.json_to_sheet(formattedData);
-    const workbook: WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] };
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
     
     // Generate Excel file
-    writeFile(workbook, `${fileName}.xlsx`);
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    
+    // Create blob and download
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `${filename}.xlsx`);
+    
+    console.log(`Successfully exported ${data.length} records to ${filename}.xlsx`);
+    return true;
   } catch (error) {
     console.error('Error exporting to Excel:', error);
+    return false;
   }
-};
-
-// Helper function to format data for export
-const formatDataForExport = (data: any[]): any[] => {
-  return data.map(item => {
-    const flattened = flatten(item);
-    
-    // Clean up nested object properties
-    Object.keys(flattened).forEach(key => {
-      if (key.includes('.')) {
-        const newKey = key.split('.').pop() || key;
-        flattened[newKey] = flattened[key];
-        delete flattened[key];
-      }
-    });
-    
-    return flattened;
-  });
-};
-
-// Helper function to download a blob
-const downloadBlob = (blob: Blob, fileName: string) => {
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
 };

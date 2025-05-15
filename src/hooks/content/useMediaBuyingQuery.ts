@@ -5,15 +5,16 @@ import { MediaBuyingRecord } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ContentFilters } from "./useContentFilters";
 
-export const useMediaBuyingQuery = (filters: ContentFilters) => {
+export const useContentMediaBuyingQuery = (filters: ContentFilters) => {
   const [mediaBuying, setMediaBuying] = useState<MediaBuyingRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchMediaBuyingData = async () => {
     setLoading(true);
     try {
-      console.log("Fetching media buying data with filters:", filters);
+      console.log("Fetching content media buying data with filters:", filters);
       
       let query = supabase
         .from("media_buying")
@@ -31,11 +32,11 @@ export const useMediaBuyingQuery = (filters: ContentFilters) => {
           updated_at,
           brand_id,
           employee_id,
-          brand:brand_id (
+          brand:brands (
             id,
             name
           ),
-          employee:employee_id (
+          employee:users (
             id,
             full_name,
             email,
@@ -59,11 +60,15 @@ export const useMediaBuyingQuery = (filters: ContentFilters) => {
       if (filters.employee_id) {
         query = query.eq("employee_id", filters.employee_id);
       }
+      if (filters.task_type) {
+        // If we need to filter by task_type in the future, we'll implement it here
+      }
 
       const { data, error } = await query;
 
       if (error) {
         console.error("Media buying fetch error:", error);
+        setError("حدث خطأ أثناء جلب بيانات الميديا باينج");
         throw error;
       }
 
@@ -89,13 +94,16 @@ export const useMediaBuyingQuery = (filters: ContentFilters) => {
       })) as MediaBuyingRecord[];
 
       setMediaBuying(mappedData || []);
-    } catch (error) {
+      setError(null);
+    } catch (error: any) {
       console.error("Error fetching media buying data:", error);
+      setError(error.message || "حدث خطأ أثناء محاولة جلب بيانات الميديا باينج");
       toast({
         title: "خطأ في جلب البيانات",
         description: "حدث خطأ أثناء محاولة جلب بيانات الميديا باينج",
         variant: "destructive",
       });
+      setMediaBuying([]);
     } finally {
       setLoading(false);
     }
@@ -103,10 +111,12 @@ export const useMediaBuyingQuery = (filters: ContentFilters) => {
 
   useEffect(() => {
     fetchMediaBuyingData();
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
 
   return {
     mediaBuying,
-    loading
+    loading,
+    error,
+    refetch: fetchMediaBuyingData
   };
 };
