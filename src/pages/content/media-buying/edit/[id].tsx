@@ -27,9 +27,7 @@ export default function EditContentMediaBuyingPage() {
         
         if (!data.session) {
           console.log("User is not authenticated, redirecting to login");
-          toast({
-            description: "يرجى تسجيل الدخول للوصول إلى هذه الصفحة",
-          });
+          toast.error("يرجى تسجيل الدخول للوصول إلى هذه الصفحة");
           navigate("/auth/login");
           return;
         }

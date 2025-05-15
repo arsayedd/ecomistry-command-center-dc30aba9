@@ -7,4 +7,4 @@ export default function ContentMediaBuyingForm({ initialData }: { initialData?: 
 }
 
 // Re-export types for compatibility
-export { contentMediaBuyingFormSchema, type ContentMediaBuyingFormValues } from "@/components/content/media-buying/ContentMediaBuyingFormWrapper";
+export { contentMediaBuyingFormSchema, type ContentMediaBuyingFormValues } from "@/hooks/useContentMediaBuyingForm";

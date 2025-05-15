@@ -30,9 +30,9 @@ export default function ContentMediaBuyingPage() {
         
         if (!data.session) {
           console.log("User is not authenticated, redirecting to login");
-          toast({
-            description: "يرجى تسجيل الدخول للوصول إلى هذه الصفحة",
-          });
+          toast.error("يرجى تسجيل الدخول للوصول إلى هذه الصفحة");
+          navigate("/auth/login");
+          return;
         }
         
         console.log("Auth check complete");
