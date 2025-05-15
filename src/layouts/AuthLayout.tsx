@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 const AuthLayout = () => {
   const { user, loading } = useAuth();
 
+  console.log("AuthLayout: User:", user ? "Authenticated" : "Not authenticated", "Loading:", loading);
+
   // If still loading, show a loading indicator
   if (loading) {
     return (
@@ -16,6 +18,7 @@ const AuthLayout = () => {
 
   // If user is already authenticated, redirect to dashboard
   if (user) {
+    console.log("AuthLayout: User authenticated, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 

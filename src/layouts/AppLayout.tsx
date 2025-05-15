@@ -7,6 +7,8 @@ import { CustomHeader } from '@/components/layout/CustomHeader';
 const AppLayout = () => {
   const { user, loading } = useAuth();
 
+  console.log("AppLayout: User:", user ? "Authenticated" : "Not authenticated", "Loading:", loading);
+
   // If still loading, show a loading indicator
   if (loading) {
     return (
@@ -18,6 +20,7 @@ const AppLayout = () => {
 
   // If user is not authenticated, redirect to login page
   if (!user) {
+    console.log("AppLayout: No user, redirecting to login");
     return <Navigate to="/auth/login" replace />;
   }
 

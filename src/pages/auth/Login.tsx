@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,11 +21,12 @@ type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signIn } = useAuth();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
+      console.log("User authenticated, redirecting to dashboard");
       navigate('/dashboard');
     }
   }, [user, navigate]);
@@ -40,35 +40,28 @@ export default function Login() {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
+    console.log("Attempting login with:", values.email);
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) {
-        console.error('Login error:', error);
-        let errorMessage = 'فشل تسجيل الدخول';
-        
+      await signIn(values.email, values.password);
+      toast.success('تم تسجيل الدخول بنجاح');
+      console.log("Login successful, should redirect via useEffect");
+    } catch (error) {
+      console.error('Login error:', error);
+      let errorMessage = 'فشل تسجيل الدخول';
+      
+      if (error instanceof Error) {
         // Provide more specific error messages
         if (error.message.includes('Invalid login credentials')) {
           errorMessage = 'بريد إلكتروني أو كلمة مرور غير صحيحة';
         } else if (error.message.includes('Email not confirmed')) {
           errorMessage = 'البريد الإلكتروني غير مؤكد، يرجى التحقق من بريدك';
+        } else {
+          errorMessage = error.message;
         }
-        
-        toast.error(errorMessage);
-        return;
       }
-
-      if (data.session) {
-        toast.success('تم تسجيل الدخول بنجاح');
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('Unknown login error:', error);
-      toast.error('حدث خطأ غير متوقع أثناء تسجيل الدخول');
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

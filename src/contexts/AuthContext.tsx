@@ -32,66 +32,96 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const getSession = async () => {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("AuthContext: Session check result:", session ? "Session found" : "No session");
 
-      if (session) {
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        if (session) {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching user data:', error);
+          if (error) {
+            console.error('Error fetching user data:', error);
+          } else {
+            // Convert the userData to match our User type
+            setUser(userData as unknown as User);
+            console.log("AuthContext: User data loaded:", userData);
+          }
         } else {
-          // Convert the userData to match our User type
-          setUser(userData as unknown as User);
+          setUser(null);
         }
+      } catch (error) {
+        console.error("AuthContext: Error checking session:", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     getSession();
 
     // Listen for changes on auth state
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("AuthContext: Auth state changed:", _event, session ? "Session exists" : "No session");
+      
       if (session) {
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        try {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching user data:', error);
-        } else {
-          // Convert the userData to match our User type
-          setUser(userData as unknown as User);
+          if (error) {
+            console.error('Error fetching user data:', error);
+            setUser(null);
+          } else {
+            // Convert the userData to match our User type
+            setUser(userData as unknown as User);
+            console.log("AuthContext: User data updated:", userData);
+          }
+        } catch (error) {
+          console.error("AuthContext: Error updating user data:", error);
+          setUser(null);
         }
       } else {
         setUser(null);
       }
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ // Fixed method name
-      email,
-      password,
-    });
-
-    if (error) {
-      console.error('Error signing in:', error);
-      toast({
-        title: "خطأ في تسجيل الدخول",
-        description: error.message,
-        variant: "destructive",
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ // Fixed method name
+        email,
+        password,
       });
-      throw error;
-    }
 
-    setLoading(false);
+      if (error) {
+        console.error('Error signing in:', error);
+        toast({
+          title: "خطأ في تسجيل الدخول",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      console.log("AuthContext: Sign in successful");
+    } catch (error) {
+      console.error("AuthContext: Sign in error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -132,9 +162,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    setUser(null);
-    setLoading(false);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      navigate('/auth/login');
+      console.log("AuthContext: Sign out successful, redirecting to login");
+    } catch (error) {
+      console.error("AuthContext: Error signing out:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Auth state value
