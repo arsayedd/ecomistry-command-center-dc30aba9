@@ -1,68 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
-
-// Define MediaBuyingItem type
-interface MediaBuyingItem {
-  id: string;
-  brand_id: string;
-  employee_id: string;
-  platform: string;
-  date: string;
-  spend: number;
-  orders_count: number;
-  order_cost: number;
-  roas?: number;
-  campaign_link?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-  brand?: {
-    id: string;
-    name: string;
-  };
-  employee?: {
-    id?: string;
-    full_name?: string;
-  } | null;
-}
+import { format } from "date-fns";
+import { MediaBuyingItem } from "@/types";
+import MediaBuyingDataTable from "@/components/media-buying/MediaBuyingDataTable";
+import MediaBuyingFilterCard from "@/components/media-buying/MediaBuyingFilterCard";
+import MediaBuyingExportActions from "@/components/media-buying/MediaBuyingExportActions";
 
 export default function MediaBuyingPage() {
   const [mediaBuying, setMediaBuying] = useState<MediaBuyingItem[]>([]);
@@ -161,8 +108,8 @@ export default function MediaBuyingPage() {
             updated_at: item.updated_at,
             brand: item.brand,
             employee: item.employee ? {
-              id: typeof item.employee === 'object' && 'id' in item.employee ? item.employee.id : undefined,
-              full_name: typeof item.employee === 'object' && 'full_name' in item.employee ? 
+              id: typeof item.employee === 'object' && item.employee && 'id' in item.employee ? item.employee.id : undefined,
+              full_name: typeof item.employee === 'object' && item.employee && 'full_name' in item.employee ? 
                 item.employee.full_name : "غير معروف"
             } : null
           }));
@@ -183,8 +130,7 @@ export default function MediaBuyingPage() {
     fetchMediaBuying();
   }, [filters]);
 
-  const handleFilterChange = (e: any) => {
-    const { name, value } = e.target;
+  const handleFilterChange = (name: string, value: string) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       [name]: value,
@@ -205,40 +151,6 @@ export default function MediaBuyingPage() {
     }
   };
 
-  const handleExportCSV = () => {
-    if (!mediaBuying.length) return;
-    
-    const exportData = mediaBuying.map(item => ({
-      'التاريخ': item.date,
-      'المنصة': item.platform,
-      'البراند': item.brand?.name || '',
-      'الموظف': item.employee && typeof item.employee === 'object' ? item.employee.full_name || 'غير معروف' : 'غير معروف',
-      'الإنفاق': item.spend,
-      'عدد الطلبات': item.orders_count,
-      'تكلفة الطلب': item.order_cost,
-      'ROAS': item.roas || 0,
-      'ملاحظات': item.notes || ''
-    }));
-    
-    exportToCSV(exportData, 'media_buying_report');
-  };
-  
-  const handleExportPDF = () => {
-    if (!mediaBuying.length) return;
-    
-    const exportData = mediaBuying.map(item => ({
-      'التاريخ': item.date,
-      'المنصة': item.platform,
-      'البراند': item.brand?.name || '',
-      'الموظف': item.employee && typeof item.employee === 'object' ? item.employee.full_name || 'غير معروف' : 'غير معروف',
-      'الإنفاق': item.spend,
-      'عدد الطلبات': item.orders_count,
-      'تكلفة الطلب': item.order_cost
-    }));
-    
-    exportToPDF('media_buying_report', 'تقرير ميديا بايينج', exportData);
-  };
-
   return (
     <div>
       <div className="mb-6">
@@ -248,187 +160,23 @@ export default function MediaBuyingPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>فلترة البيانات</CardTitle>
-          <CardDescription>
-            استخدم الفلاتر لتضييق نطاق البيانا�� المعروضة
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 grid-cols-1 md:grid-cols-3">
-          <div>
-            <Label htmlFor="brand_id">البراند</Label>
-            <Select name="brand_id" onValueChange={(value) => setFilters({...filters, brand_id: value})}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر براند" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">إظهار الكل</SelectItem>
-                {brands.map((brand) => (
-                  <SelectItem key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="platform">المنصة</Label>
-            <Input
-              type="text"
-              id="platform"
-              name="platform"
-              placeholder="اسم المنصة"
-              value={filters.platform}
-              onChange={handleFilterChange}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="employee_id">الموظف</Label>
-            <Select name="employee_id" onValueChange={(value) => setFilters({...filters, employee_id: value})}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر موظف" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">إظهار الكل</SelectItem>
-                {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-1">
-            <Label>من تاريخ</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !filters.date_from && "text-muted-foreground"
-                  )}
-                >
-                  {filters.date_from ? (
-                    format(new Date(filters.date_from), "yyyy-MM-dd")
-                  ) : (
-                    <span>اختر تاريخ</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center">
-                <Calendar
-                  mode="single"
-                  selected={filters.date_from ? new Date(filters.date_from) : undefined}
-                  onSelect={(date) => handleDateChange("date_from", date)}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("2020-01-01")
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="md:col-span-1">
-            <Label>إلى تاريخ</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !filters.date_to && "text-muted-foreground"
-                  )}
-                >
-                  {filters.date_to ? (
-                    format(new Date(filters.date_to), "yyyy-MM-dd")
-                  ) : (
-                    <span>اختر تاريخ</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center">
-                <Calendar
-                  mode="single"
-                  selected={filters.date_to ? new Date(filters.date_to) : undefined}
-                  onSelect={(date) => handleDateChange("date_to", date)}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date("2020-01-01")
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </CardContent>
-      </Card>
+      <MediaBuyingFilterCard 
+        filters={filters}
+        brands={brands}
+        employees={employees}
+        onFilterChange={handleFilterChange}
+        onDateChange={handleDateChange}
+      />
 
       <div className="my-6 flex justify-between items-center">
         <Button asChild>
           <Link to="/media-buying/add">إضافة ميديا بايينج</Link>
         </Button>
-        <div>
-          <Button onClick={handleExportCSV} className="ml-2">تصدير CSV</Button>
-          <Button onClick={handleExportPDF}>تصدير PDF</Button>
-        </div>
+        <MediaBuyingExportActions mediaBuying={mediaBuying} />
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>البراند</TableHead>
-              <TableHead>المنصة</TableHead>
-              <TableHead>الموظف</TableHead>
-              <TableHead>تاريخ الحملة</TableHead>
-              <TableHead>الإنفاق</TableHead>
-              <TableHead>عدد الطلبات</TableHead>
-              <TableHead>تكلفة الطلب</TableHead>
-              <TableHead className="text-right">الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">
-                  جاري التحميل...
-                </TableCell>
-              </TableRow>
-            ) : mediaBuying.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">
-                  لا توجد بيانات
-                </TableCell>
-              </TableRow>
-            ) : (
-              mediaBuying.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.brand?.name}</TableCell>
-                  <TableCell>{item.platform}</TableCell>
-                  <TableCell>
-                    {item.employee && typeof item.employee === 'object' && item.employee.full_name 
-                      ? item.employee.full_name 
-                      : "غير معروف"}
-                  </TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>{item.spend}</TableCell>
-                  <TableCell>{item.orders_count}</TableCell>
-                  <TableCell>{item.order_cost}</TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild variant="link">
-                      <Link to={`/media-buying/${item.id}/edit`}>تعديل</Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <MediaBuyingDataTable loading={loading} mediaBuying={mediaBuying} />
       </Card>
     </div>
   );

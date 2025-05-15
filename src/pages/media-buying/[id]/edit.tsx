@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import MediaBuyingForm from "@/components/media-buying/MediaBuyingForm";
 import { MediaBuying } from "@/types";
@@ -12,6 +12,7 @@ export default function EditMediaBuyingPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [mediaBuying, setMediaBuying] = useState<MediaBuying | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchMediaBuying = async () => {
@@ -52,7 +53,8 @@ export default function EditMediaBuyingPage() {
               status: (data.brand.status as "active" | "inactive" | "pending") || "active",
               created_at: data.brand.created_at,
               updated_at: data.brand.updated_at,
-              social_links: data.brand.social_links || {}
+              social_links: typeof data.brand.social_links === 'object' ? 
+                data.brand.social_links as Brand['social_links'] : {}
             } : undefined,
             employee: data.employee && typeof data.employee === 'object' && 'id' in data.employee ? {
               id: data.employee.id,
@@ -60,7 +62,16 @@ export default function EditMediaBuyingPage() {
               email: data.employee.email || "",
               department: data.employee.department || "",
               role: data.employee.role || "",
-              permission_level: data.employee.permission_level || ""
+              permission_level: data.employee.permission_level || "",
+              employment_type: "full_time",
+              salary_type: "monthly",
+              status: "active",
+              access_rights: "view",
+              commission_type: "percentage",
+              commission_value: 0,
+              job_title: "",
+              created_at: "",
+              updated_at: ""
             } : null
           };
 
@@ -78,7 +89,7 @@ export default function EditMediaBuyingPage() {
     };
 
     fetchMediaBuying();
-  }, [id]);
+  }, [id, toast]);
 
   const handleSave = async (formData: MediaBuying) => {
     try {

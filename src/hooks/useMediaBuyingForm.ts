@@ -71,7 +71,7 @@ export const useMediaBuyingForm = (initialData?: MediaBuying, onSubmit?: (data: 
 
   // Fetch brands and employees data
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
         // Fetch brands
         const { data: brandsData, error: brandsError } = await supabase
@@ -84,7 +84,7 @@ export const useMediaBuyingForm = (initialData?: MediaBuying, onSubmit?: (data: 
         if (brandsData) {
           // Cast the data to match the Brand type
           const typedBrands: Brand[] = brandsData.map(brand => {
-            let socialLinks = {};
+            let socialLinks: Brand["social_links"] = {};
             
             // Type-safely handle social_links if it exists and is an object
             if (brand.social_links && typeof brand.social_links === 'object') {
@@ -163,12 +163,14 @@ export const useMediaBuyingForm = (initialData?: MediaBuying, onSubmit?: (data: 
       // Format the data for submission
       const formData = {
         platform: values.platform,
-        date: format(values.campaign_date, "yyyy-MM-dd"),
+        date: values.campaign_date instanceof Date ? 
+          format(values.campaign_date, "yyyy-MM-dd") : values.campaign_date,
         brand_id: values.brand_id,
         employee_id: values.employee_id,
         spend: values.ad_spend,
         orders_count: values.orders_count,
         order_cost: values.cpp,
+        roas: values.roas,
         notes: values.notes,
         campaign_link: values.campaign_link,
         created_at: new Date().toISOString(),
