@@ -29,8 +29,8 @@ const AppLayout = () => {
         <CustomSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <CustomHeader />
-          <main className="flex-1 overflow-y-auto p-2 md:p-4 bg-[#FAF9F5]">
-            <div className={isMobile ? "px-2" : "container mx-auto px-4"}>
+          <main className="flex-1 overflow-y-auto p-2 md:p-6 bg-[#FAF9F5]">
+            <div className={isMobile ? "px-1 max-w-full" : "container mx-auto px-4"}>
               <Outlet />
             </div>
           </main>

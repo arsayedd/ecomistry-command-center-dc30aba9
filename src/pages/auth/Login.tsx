@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -18,7 +18,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, setUser, signIn } = useAuth();
+  const { user, signIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -55,12 +55,12 @@ export default function Login() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-4">
-        <Card className="w-full">
-          <CardHeader className="text-center">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4">
+      <div className="w-full max-w-md">
+        <Card className="w-full shadow-lg">
+          <CardHeader className="text-center pb-6">
             <CardTitle className="text-2xl font-bold">تسجيل الدخول</CardTitle>
-            <CardDescription>أدخل بياناتك لتسجيل الدخول إلى حسابك</CardDescription>
+            <CardDescription className="mt-2">أدخل بياناتك لتسجيل الدخول إلى حسابك</CardDescription>
           </CardHeader>
           <CardContent>
             {authError && (
@@ -69,15 +69,19 @@ export default function Login() {
               </div>
             )}
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>البريد الإلكتروني</FormLabel>
+                      <FormLabel className="text-base">البريد الإلكتروني</FormLabel>
                       <FormControl>
-                        <Input placeholder="أدخل بريدك الإلكتروني" {...field} />
+                        <Input 
+                          placeholder="أدخل بريدك الإلكتروني" 
+                          {...field} 
+                          className="h-11"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -88,18 +92,23 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>كلمة المرور</FormLabel>
+                      <FormLabel className="text-base">كلمة المرور</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="أدخل كلمة المرور" {...field} />
+                        <Input 
+                          type="password" 
+                          placeholder="أدخل كلمة المرور" 
+                          {...field} 
+                          className="h-11"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
                   {loading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="ml-2 h-5 w-5 animate-spin" />
                       جاري تسجيل الدخول...
                     </div>
                   ) : (
@@ -109,11 +118,11 @@ export default function Login() {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="link" onClick={() => navigate('/auth/register')}>
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
+            <Button variant="link" onClick={() => navigate('/auth/register')} className="w-full sm:w-auto">
               إنشاء حساب جديد
             </Button>
-            <Button variant="link" onClick={() => navigate('/auth/forgot-password')}>
+            <Button variant="link" onClick={() => navigate('/auth/forgot-password')} className="w-full sm:w-auto">
               نسيت كلمة المرور؟
             </Button>
           </CardFooter>
