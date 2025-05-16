@@ -20,8 +20,10 @@ const AuthLayout = () => {
   }
 
   return (
-    <div dir="rtl" lang="ar" className="min-h-screen bg-gray-50">
-      <Outlet />
+    <div dir="rtl" lang="ar" className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-1">
+        <Outlet />
+      </div>
     </div>
   );
 };

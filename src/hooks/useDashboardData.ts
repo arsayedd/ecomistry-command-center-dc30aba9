@@ -3,11 +3,8 @@ import { useEffect } from "react";
 import { useDateRangeFilter } from "@/hooks/dashboard/useDateRangeFilter";
 import { useMetricsData } from "@/hooks/dashboard/useMetricsData";
 import { useChartsData } from "@/hooks/dashboard/useChartsData";
-import { useToast } from "@/hooks/use-toast";
-import { DateRange } from "react-day-picker";
 
 export const useDashboardData = () => {
-  const { toast } = useToast();
   const { dateRange, handleDateRangeChange, fromDate, toDate } = useDateRangeFilter();
   
   // Fetch metrics data
@@ -22,16 +19,12 @@ export const useDashboardData = () => {
   // Combined errors state
   const hasErrors = metricsHasErrors || chartsHasErrors;
   
-  // Display toast error if any of the queries had an error
+  // Log any errors to console for debugging
   useEffect(() => {
     if (hasErrors) {
-      toast({
-        title: "خطأ في تحميل البيانات",
-        description: "حدث خطأ أثناء تحميل بيانات لوحة المعلومات. الرجاء المحاولة مرة أخرى.",
-        variant: "destructive",
-      });
+      console.error("Error loading dashboard data");
     }
-  }, [hasErrors, toast]);
+  }, [hasErrors]);
   
   return {
     dateRange,
