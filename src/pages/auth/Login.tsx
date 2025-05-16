@@ -55,79 +55,77 @@ export default function Login() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4 py-6">
-      <div className="w-full max-w-md">
-        <Card className="w-full shadow-lg">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl md:text-2xl font-bold">تسجيل الدخول</CardTitle>
-            <CardDescription className="mt-2">أدخل بياناتك لتسجيل الدخول إلى حسابك</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {authError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                {authError}
-              </div>
-            )}
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">البريد الإلكتروني</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="أدخل بريدك الإلكتروني" 
-                          {...field} 
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">كلمة المرور</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="أدخل كلمة المرور" 
-                          {...field} 
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full h-11 text-base mt-2" disabled={loading}>
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="ml-2 h-5 w-5 animate-spin" />
-                      جاري تسجيل الدخول...
-                    </div>
-                  ) : (
-                    'تسجيل الدخول'
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2 pt-2">
-            <Button variant="link" onClick={() => navigate('/auth/register')} className="w-full">
-              إنشاء حساب جديد
-            </Button>
-            <Button variant="link" onClick={() => navigate('/auth/forgot-password')} className="w-full">
-              نسيت كلمة المرور؟
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+    <div className="w-full px-4 sm:px-0 sm:max-w-md">
+      <Card className="w-full shadow-lg">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-xl md:text-2xl font-bold">تسجيل الدخول</CardTitle>
+          <CardDescription className="mt-2">أدخل بياناتك لتسجيل الدخول إلى حسابك</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {authError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {authError}
+            </div>
+          )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">البريد الإلكتروني</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="أدخل بريدك الإلكتروني" 
+                        {...field} 
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">كلمة المرور</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="أدخل كلمة المرور" 
+                        {...field} 
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full h-11 text-base mt-2" disabled={loading}>
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                    جاري تسجيل الدخول...
+                  </div>
+                ) : (
+                  'تسجيل الدخول'
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2 pt-2">
+          <Button variant="link" onClick={() => navigate('/auth/register')} className="w-full">
+            إنشاء حساب جديد
+          </Button>
+          <Button variant="link" onClick={() => navigate('/auth/forgot-password')} className="w-full">
+            نسيت كلمة المرور؟
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

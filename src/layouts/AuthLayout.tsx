@@ -21,7 +21,7 @@ const AuthLayout = () => {
 
   return (
     <div dir="rtl" lang="ar" className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex-1">
+      <div className="flex-1 flex items-center justify-center py-8 px-4">
         <Outlet />
       </div>
     </div>

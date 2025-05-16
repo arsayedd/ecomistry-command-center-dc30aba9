@@ -30,7 +30,7 @@ const AppLayout = () => {
         <div className="flex flex-col flex-1 overflow-hidden">
           <CustomHeader />
           <main className="flex-1 overflow-y-auto p-2 md:p-6 bg-[#FAF9F5]">
-            <div className={isMobile ? "px-1 py-2 max-w-full" : "container mx-auto px-4"}>
+            <div className={isMobile ? "px-2 py-3 max-w-full" : "container mx-auto px-4"}>
               <Outlet />
             </div>
           </main>
