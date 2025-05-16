@@ -1,6 +1,6 @@
 
 import { useTheme } from "next-themes"
-import { Toaster as Sonner, toast } from "sonner"
+import { Toaster as Sonner } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -20,12 +20,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          closeButton:
+            "group-[.toast]:bg-transparent group-[.toast]:text-foreground group-[.toast]:opacity-70 group-[.toast]:hover:opacity-100",
         },
-        duration: 5000,
+        duration: 3000, // Changed from 5000 to 3000
+        closeButton: true,
       }}
+      expand={false}
+      position="bottom-center"
+      hotkey={["altKey", "KeyT"]}
       {...props}
     />
   )
 }
 
-export { Toaster, toast }
+export { Toaster, toast } from "sonner"

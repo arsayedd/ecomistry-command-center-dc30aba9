@@ -35,14 +35,6 @@ import AddModerationPage from "./pages/moderation/add";
 import ContentPage from "./pages/content/index";
 import AddContentTaskPage from "./pages/content/add";
 
-// Media Buying pages
-import MediaBuyingPage from "./pages/media-buying/index";
-import AddMediaBuyingPage from "./pages/media-buying/add";
-import EditMediaBuyingPage from "./pages/media-buying/[id]/edit";
-import ContentMediaBuyingPage from "./pages/media-buying/content/index";
-import AddContentMediaBuyingPage from "./pages/media-buying/content/add";
-import EditContentMediaBuyingPage from "./pages/media-buying/content/edit/[id]";
-
 // Finance pages
 import FinancePage from "./pages/finance/index";
 import AddExpensePage from "./pages/finance/expenses/add";
@@ -105,21 +97,6 @@ const App = () => (
                 {/* Content Routes */}
                 <Route path="content" element={<ContentPage />} />
                 <Route path="content/add" element={<AddContentTaskPage />} />
-                
-                {/* Media Buying Routes */}
-                <Route path="media-buying" element={<MediaBuyingPage />} />
-                <Route path="media-buying/add" element={<AddMediaBuyingPage />} />
-                <Route path="media-buying/:id/edit" element={<EditMediaBuyingPage />} />
-                
-                {/* Content Media Buying Routes (moved from content to media-buying) */}
-                <Route path="media-buying/content" element={<ContentMediaBuyingPage />} />
-                <Route path="media-buying/content/add" element={<AddContentMediaBuyingPage />} />
-                <Route path="media-buying/content/edit/:id" element={<EditContentMediaBuyingPage />} />
-                
-                {/* Redirect old routes to new ones */}
-                <Route path="content/media-buying" element={<Navigate to="/media-buying/content" replace />} />
-                <Route path="content/media-buying/add" element={<Navigate to="/media-buying/content/add" replace />} />
-                <Route path="content/media-buying/edit/:id" element={<Navigate to="/media-buying/content/edit/:id" replace />} />
                 
                 {/* Finance Routes */}
                 <Route path="finance" element={<FinancePage />} />

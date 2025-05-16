@@ -8,6 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { X } from "lucide-react"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -24,11 +25,13 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose />
+            <ToastClose className="p-2 rounded-full hover:bg-muted transition-colors">
+              <X size={18} /> {/* Using X icon explicitly */}
+            </ToastClose>
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport className="p-4 md:p-6" />
     </ToastProvider>
   )
 }
